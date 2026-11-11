@@ -2,6 +2,6 @@
   "name": "lapazimpresion3d",
   "compatibility_date": "2026-11-03",
   "assets": {
-    "directory": "./lapazimpresion3d"
+    "directory": "./public"
   }
 }
