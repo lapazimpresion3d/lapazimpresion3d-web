@@ -316,6 +316,17 @@ footer { text-align: center; margin: 42px 16px 24px; color: var(--suave); font-s
 .web textarea { resize: vertical; }
 
 @media (width < 768px) {
+  .portada {
+    min-height: 0;
+    aspect-ratio: 3 / 1;
+    align-items: start;
+    padding: 8px 12px;
+  }
+  .portada-fondo { object-fit: contain; }
+  .portada::after {
+    background: linear-gradient(180deg, rgb(4 12 26 / 78%), rgb(4 12 26 / 12%) 48%, transparent);
+  }
+  .portada h1 { font-size: clamp(1rem, 4.2vw, 1.55rem); line-height: 1.15; }
   .cabecera-inicio .cabecera-interior { column-gap: 10px; }
   .cabecera-inicio .identidad { gap: 8px; }
   .cabecera-inicio .identidad img { width: 36px; height: 36px; }
