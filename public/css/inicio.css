@@ -14,6 +14,8 @@
   --fondo: #f5f6f8;
   --tarjeta: #ffffff;
   --texto: #16203a;
+  --titulo: #174ab8;
+  --subtitulo: #304a78;
   --suave: #56607a;
   --borde: #d9dde6;
 }
@@ -22,6 +24,8 @@
     --fondo: #0c1220;
     --tarjeta: #151d33;
     --texto: #eef1f8;
+    --titulo: #9ec4ff;
+    --subtitulo: #c2d4ef;
     --suave: #a6aec4;
     --borde: #263150;
   }
@@ -88,10 +92,11 @@ a { color: inherit; }
 }
 
 section { margin-top: clamp(38px, 6vw, 76px); }
-h1, h2, h3 { line-height: 1.12; margin: 0 0 12px; }
-h1 { font-size: clamp(2.5rem, 6.2vw, 4.8rem); font-weight: var(--peso-titulo); letter-spacing: -.055em; }
-h2 { font-size: clamp(1.55rem, 3.3vw, 2.45rem); font-weight: var(--peso-negrita); letter-spacing: -.035em; }
-h3 { font-size: clamp(1.45rem, 3vw, 2.1rem); letter-spacing: -.025em; }
+h1, h2, h3 { line-height: 1.18; margin: 0 0 12px; }
+h1, h2 { color: var(--titulo); }
+h1 { font-size: clamp(2rem, 4.3vw, 3.25rem); font-weight: var(--peso-titulo); letter-spacing: -.04em; }
+h2 { font-size: clamp(1.55rem, 2.9vw, 2.25rem); font-weight: var(--peso-titulo); letter-spacing: -.03em; }
+h3 { color: var(--subtitulo); font-size: clamp(1.125rem, 1.75vw, 1.5rem); font-weight: var(--peso-negrita); letter-spacing: -.015em; }
 .introduccion { max-width: 66ch; color: var(--suave); font-size: 1.08rem; margin: 0 0 22px; }
 
 .caja {
@@ -192,6 +197,7 @@ summary { font-weight: var(--peso-negrita); cursor: pointer; }
 }
 .demo img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 1; min-height: 160px; object-fit: cover; }
 .demo-contenido { padding: clamp(18px, 4vw, 38px); }
+.demo h3 { color: var(--amarillo); }
 .demo p { margin: 0 0 18px; color: var(--suave-inverso); }
 
 .acciones { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -240,8 +246,6 @@ footer { text-align: center; margin: 42px 16px 24px; color: var(--suave); font-s
 .nota { font-size: .9rem; color: var(--suave); }
 
 .envoltura-cotizacion { max-width: 730px; }
-.envoltura-cotizacion h1 { font-size: clamp(2rem, 5vw, 3.5rem); }
-.envoltura-cotizacion h2 { font-size: clamp(1.4rem, 4vw, 2rem); }
 .aviso-cotizacion { border-left: 4px solid var(--amarillo); padding-block: 12px; }
 .web fieldset { min-inline-size: 0; margin: 0 0 22px; padding: 0; border: 0; }
 .web legend { padding: 0; margin-bottom: 8px; font-weight: var(--peso-titulo); }
