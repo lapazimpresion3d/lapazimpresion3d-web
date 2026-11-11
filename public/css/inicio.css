@@ -146,6 +146,43 @@ summary { font-weight: var(--peso-negrita); cursor: pointer; }
 .bloque-qr img { display: block; border-radius: 10px; background: #fff; }
 .bloque-qr figcaption { margin-top: 5px; color: var(--suave); font-size: .85rem; }
 
+.resina-acabados { margin: 0 0 26px; }
+.resina-escala-paquetes { margin: -4px 0 14px; color: var(--suave); }
+.resina-paquetes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 28px;
+  padding: 0;
+  list-style: none;
+}
+.resina-paquete h4 { margin: 0; font-size: 1.05rem; }
+.resina-precio { margin: 8px 0 0; font-variant-numeric: tabular-nums; }
+.resina-precio strong { font-size: clamp(1.7rem, 3.7vw, 2.5rem); line-height: 1.2; }
+.resina-unitario { margin: 4px 0 0; color: var(--suave); }
+.resina-paquete-destacado { border-color: var(--amarillo); }
+.resina-insignia {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--amarillo);
+  color: var(--texto-acento);
+  font-size: .82rem;
+  font-weight: var(--peso-negrita);
+}
+.resina-escalas { margin: 0; }
+.resina-escalas > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2.4fr) minmax(0, 1.6fr);
+  gap: 8px 16px;
+}
+.resina-escalas > div + div { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--borde); }
+.resina-escalas dt { font-weight: var(--peso-negrita); }
+.resina-escalas dd { margin: 0; color: var(--suave); }
+.resina-desde strong { color: var(--texto); }
+.resina-ahorro { margin: 16px 0; border-inline-start: 4px solid var(--amarillo); }
+
 .demo {
   overflow: hidden;
   border-radius: 16px;
@@ -236,6 +273,7 @@ footer { text-align: center; margin: 42px 16px 24px; color: var(--suave); font-s
   .galeria-fotos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bloque-qr { grid-template-columns: 1fr; }
   .bloque-qr figure { justify-self: start; }
+  .resina-paquetes, .resina-escalas > div { grid-template-columns: 1fr; }
 }
 @media (max-width: 420px) {
   .acciones > .accion { width: 100%; }
