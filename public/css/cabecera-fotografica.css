@@ -18,6 +18,6 @@
 }
 
 @media (min-width: 768px) {
-  .cabecera-fotografica { --alto-cabecera: 25vw; }
+  .cabecera-fotografica { --alto-cabecera: clamp(150px, 15vw, 240px); }
   .cabecera-fondo { object-fit: cover; object-position: center; }
 }
