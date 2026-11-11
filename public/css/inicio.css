@@ -178,14 +178,10 @@ summary { font-weight: var(--peso-negrita); cursor: pointer; }
 .resina-precio strong { font-size: clamp(1.7rem, 3.7vw, 2.5rem); line-height: 1.2; }
 .resina-unitario { margin: 4px 0 0; color: var(--suave); }
 .resina-paquete-destacado { border-color: var(--amarillo); }
-.resina-insignia {
-  display: inline-block;
-  margin-top: 12px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  background: var(--amarillo);
-  color: var(--texto-acento);
-  font-size: .82rem;
+.resina-nota-volumen {
+  margin: 8px 0 0;
+  color: var(--subtitulo);
+  font-size: .875rem;
   font-weight: var(--peso-negrita);
 }
 .resina-escalas { margin: 0; }

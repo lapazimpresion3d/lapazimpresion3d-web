@@ -16,3 +16,8 @@
   content: "";
   background: rgb(4 12 26 / 64%);
 }
+
+@media (min-width: 768px) {
+  .cabecera-fotografica { --alto-cabecera: 25vw; }
+  .cabecera-fondo { object-fit: cover; object-position: center; }
+}
