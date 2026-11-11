@@ -118,13 +118,15 @@ h3 { color: var(--subtitulo); font-size: clamp(1.125rem, 1.75vw, 1.5rem); font-w
   content: "";
   background: linear-gradient(90deg, rgb(4 12 26 / 46%), rgb(4 12 26 / 77%) 50%, rgb(4 12 26 / 46%));
 }
-.portada-contenido { position: relative; z-index: 1; max-width: 100%; }
-.portada h1 { color: var(--amarillo); font-size: clamp(1.8rem, 6.2vw, 4.4rem); overflow-wrap: anywhere; }
-.portada p { margin: 0 0 20px; color: var(--texto-inverso); }
-.portada .acciones { justify-content: center; }
-.portada .accion:hover { color: var(--texto-acento); }
-.portada .accion.secundaria { color: var(--texto-inverso); background: var(--marino); border-color: var(--suave-inverso); }
-.portada .accion.secundaria:hover { border-color: var(--amarillo); }
+.portada h1 {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin: 0;
+  color: var(--amarillo);
+  font-size: clamp(1.8rem, 5.2vw, 3.75rem);
+  text-wrap: balance;
+}
 
 .presentacion { margin: clamp(24px, 4vw, 48px) 0 0; }
 .presentacion + section { margin-top: clamp(24px, 4vw, 44px); }
