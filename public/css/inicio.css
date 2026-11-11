@@ -98,13 +98,33 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.25rem); font-weight: var(--peso-titulo); le
 h2 { font-size: clamp(1.55rem, 2.9vw, 2.25rem); font-weight: var(--peso-titulo); letter-spacing: -.03em; }
 h3 { color: var(--subtitulo); font-size: clamp(1.125rem, 1.75vw, 1.5rem); font-weight: var(--peso-negrita); letter-spacing: -.015em; }
 .introduccion { max-width: 66ch; color: var(--suave); font-size: 1.08rem; margin: 0 0 22px; }
-.banner-inicio {
-  display: block;
-  width: 100%;
-  height: auto;
-  margin-top: clamp(16px, 2.5vw, 28px);
-  border-radius: 16px;
+.portada {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  min-height: clamp(290px, 25vw, 420px);
+  padding: 32px 18px;
+  text-align: center;
 }
+.portada-fondo, .portada::after {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.portada-fondo { object-fit: cover; }
+.portada::after {
+  content: "";
+  background: linear-gradient(90deg, rgb(4 12 26 / 46%), rgb(4 12 26 / 77%) 50%, rgb(4 12 26 / 46%));
+}
+.portada-contenido { position: relative; z-index: 1; max-width: 100%; }
+.portada h1 { color: var(--amarillo); font-size: clamp(1.8rem, 6.2vw, 4.4rem); overflow-wrap: anywhere; }
+.portada p { margin: 0 0 20px; color: var(--texto-inverso); }
+.portada .acciones { justify-content: center; }
+.portada .accion:hover { color: var(--texto-acento); }
+.portada .accion.secundaria { color: var(--texto-inverso); background: var(--marino); border-color: var(--suave-inverso); }
+.portada .accion.secundaria:hover { border-color: var(--amarillo); }
 
 .presentacion { margin: clamp(24px, 4vw, 48px) 0 0; }
 .presentacion + section { margin-top: clamp(24px, 4vw, 44px); }
