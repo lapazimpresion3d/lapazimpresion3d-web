@@ -6,23 +6,29 @@
   <title>Cotiza tu página web · Lapazimpresion3d</title>
   <meta name="description" content="Cuéntanos qué página web necesita tu negocio y prepara tu solicitud de cotización con Lapazimpresion3d.">
   <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="css/cabecera-fotografica.css">
   <link rel="stylesheet" href="css/inicio.css">
+  <link rel="stylesheet" href="css/cotizacion-web.css">
   <script src="js/cotizacion-web.js" defer></script>
 </head>
-<body>
-  <header class="cabecera">
-    <div class="cabecera-interior">
-      <a class="identidad" href="index.html" aria-label="Lapazimpresion3d, inicio">
-        <img src="images/logo.png" width="48" height="48" alt="">
-        <span class="marca">Lapaz<b>impresion</b>3d</span>
-      </a>
-      <a class="regreso" href="index.html#paginas-web">← Servicios digitales</a>
+<body class="pagina-cotizacion">
+  <header class="cabecera cabecera-fotografica cabecera-cotizacion">
+    <picture>
+      <source media="(min-width: 768px)"
+              srcset="images/portada-impresion-3d-pc-768.webp 768w, images/portada-impresion-3d-pc-1200.webp 1200w, images/portada-impresion-3d-pc.webp 2160w" sizes="100vw">
+      <img class="cabecera-fondo" src="images/portada-impresion-3d.webp"
+             srcset="images/portada-impresion-3d-480.webp 480w, images/portada-impresion-3d-768.webp 768w, images/portada-impresion-3d-1200.webp 1200w, images/portada-impresion-3d.webp 2160w"
+             sizes="100vw" width="2160" height="720" alt="" fetchpriority="high">
+    </picture>
+    <div>
+      <h1 id="titulo-cotizacion">Cotiza tu página web</h1>
+      <p><a href="index.html">Lapazimpresion3d · La Paz, BCS</a></p>
     </div>
   </header>
 
   <main class="envoltura envoltura-cotizacion">
+    <a class="regreso" href="index.html#paginas-web">← Servicios digitales</a>
   <section id="cotizacion-web" aria-labelledby="titulo-cotizacion">
-    <h1 id="titulo-cotizacion">Cotiza tu página web</h1>
     <p class="introduccion">Elige el tipo de sitio que necesita tu negocio y las funciones que te gustaría incluir. Con esos datos podremos preparar una propuesta a la medida.</p>
     <p class="caja aviso-cotizacion">Completa el formulario, revisa tu mensaje y envíalo desde tu cuenta de WhatsApp.</p>
     <form id="form-web" class="caja web" hidden>
