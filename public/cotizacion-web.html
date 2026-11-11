@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cotiza tu página web · Lapazimpresion3d</title>
+  <meta name="description" content="Cuéntanos qué página web necesita tu negocio y prepara tu solicitud de cotización con Lapazimpresion3d.">
+  <link rel="stylesheet" href="css/inicio.css">
+  <script src="js/cotizacion-web.js" defer></script>
+</head>
+<body>
+  <header class="cabecera">
+    <div class="cabecera-interior">
+      <a class="identidad" href="index.html" aria-label="Lapazimpresion3d, inicio">
+        <img src="images/logo.png" width="48" height="48" alt="">
+        <span class="marca">Lapaz<b>impresion</b>3d</span>
+      </a>
+      <a class="regreso" href="index.html#paginas-web">← Servicios digitales</a>
+    </div>
+  </header>
+
+  <main class="envoltura envoltura-cotizacion">
+  <section id="cotizacion-web" aria-labelledby="titulo-cotizacion">
+    <h1 id="titulo-cotizacion">Cotiza tu página web</h1>
+    <p class="introduccion">Elige el tipo de sitio que necesita tu negocio y las funciones que te gustaría incluir. Con esos datos podremos preparar una propuesta a la medida.</p>
+    <p class="caja aviso-cotizacion">Completa el formulario, revisa tu mensaje y envíalo desde tu cuenta de WhatsApp.</p>
+    <form id="form-web" class="caja web" hidden>
+      <fieldset>
+        <legend>Tipo de página</legend>
+        <label class="opcion">
+          <input type="radio" name="tipo" value="Página de contacto digital" data-tipo="contacto" required>
+          <span>Página de contacto digital<small>WhatsApp, redes, ubicación y contacto para guardar en el teléfono.</small></span>
+        </label>
+        <label class="opcion">
+          <input type="radio" name="tipo" value="Página web para mi negocio" data-tipo="negocio">
+          <span>Página web para mi negocio<small>Presentación, servicios, fotos, horarios, ubicación y contacto.</small></span>
+        </label>
+        <label class="opcion">
+          <input type="radio" name="tipo" value="Página con menú digital" data-tipo="menu">
+          <span>Página con menú digital<small>Fotos, precios, categorías, buscador, extras y promociones.</small></span>
+        </label>
+        <label class="opcion">
+          <input type="radio" name="tipo" value="Página con catálogo de productos" data-tipo="catalogo">
+          <span>Página con catálogo de productos<small>Fotos, precios, variantes y consultas por WhatsApp.</small></span>
+        </label>
+      </fieldset>
+
+      <fieldset id="funciones-web" hidden>
+        <legend>Funciones opcionales</legend>
+        <label class="opcion" data-paginas="productos">
+          <input type="checkbox" id="pedidos-web" name="funciones" value="Pedidos desde la página o por WhatsApp">
+          <span>Pedidos desde la página o por WhatsApp<small>Carrito, extras y registro de pedidos.</small></span>
+        </label>
+        <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
+          <input type="checkbox" name="funciones" value="Pedidos para recoger o a domicilio">
+          <span>Pedidos para recoger o a domicilio<small>Dirección y costo de envío. Requiere pedidos desde la página.</small></span>
+        </label>
+        <label class="opcion" data-paginas="menu" data-requiere="pedidos-web">
+          <input type="checkbox" name="funciones" value="Pedidos desde las mesas">
+          <span>Pedidos desde las mesas<small>QR por mesa. Requiere pedidos desde la página.</small></span>
+        </label>
+        <label class="opcion" data-paginas="negocio">
+          <input type="checkbox" name="funciones" value="Reservaciones y agenda">
+          <span>Reservaciones y agenda<small>Consulta de horarios, solicitudes por WhatsApp y gestión de reservaciones.</small></span>
+        </label>
+        <label class="opcion" data-paginas="negocio">
+          <input type="checkbox" name="funciones" value="Panel privado">
+          <span>Panel privado<small>Edita contenido, precios, horarios o disponibilidad según tu página.</small></span>
+        </label>
+        <label class="opcion" data-paginas="menu" data-requiere="pedidos-web">
+          <input type="checkbox" name="funciones" value="Pantalla de cocina y comandas">
+          <span>Pantalla de cocina y comandas<small>Preparación y comandas imprimibles. Requiere pedidos desde la página.</small></span>
+        </label>
+        <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
+          <input type="checkbox" name="funciones" value="Seguimiento de pedidos">
+          <span>Seguimiento de pedidos<small>Estado de preparación, entrega y pago por folio. Requiere pedidos desde la página.</small></span>
+        </label>
+        <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
+          <input type="checkbox" name="funciones" value="Transferencias y registro de cobros">
+          <span>Transferencias y registro de cobros<small>Instrucciones de pago y verificación manual. Requiere pedidos desde la página.</small></span>
+        </label>
+        <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
+          <input type="checkbox" name="funciones" value="Reportes de pedidos y cobros">
+          <span>Reportes de pedidos y cobros<small>Exportación en CSV. Requiere pedidos desde la página.</small></span>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Servicios complementarios</legend>
+        <label class="opcion"><input type="checkbox" name="complementos" value="Código QR"><span>Código QR para la página</span></label>
+        <label class="opcion"><input type="checkbox" name="complementos" value="Soportes QR o llaveros con NFC opcional"><span>Soportes QR o llaveros con NFC opcional</span></label>
+        <label class="opcion"><input type="checkbox" name="complementos" value="Carga inicial de contenido"><span>Carga inicial de productos, precios y fotografías</span></label>
+        <label class="opcion"><input type="checkbox" name="complementos" value="Configuración inicial para buscadores y aviso de privacidad"><span>Configuración inicial para buscadores y aviso de privacidad</span></label>
+        <label class="opcion"><input type="checkbox" name="complementos" value="Capacitación"><span>Capacitación para administrar la página</span></label>
+      </fieldset>
+
+      <fieldset class="datos">
+        <legend>Datos de tu negocio</legend>
+        <label>Nombre del negocio <input name="negocio" autocomplete="organization" maxlength="100" required></label>
+        <label>Giro <input name="giro" maxlength="80" placeholder="Ej. cafetería" required></label>
+        <label>WhatsApp de contacto <input type="tel" name="telefono" autocomplete="tel" maxlength="25" pattern="\+?[0-9](?:[0-9\s.\(\)\-]*[0-9])?" aria-describedby="ayuda-telefono" required></label>
+        <small id="ayuda-telefono">Escribe tu número con 10 a 15 dígitos. Puedes incluir el código de país.</small>
+        <label>Cuéntanos qué necesitas <textarea name="detalles" rows="4" maxlength="500" placeholder="Ej. Quiero mostrar mi menú con fotos y recibir pedidos para recoger." required></textarea></label>
+      </fieldset>
+
+      <button type="submit" class="accion">Revisar solicitud</button>
+    </form>
+    <noscript><p>Para preparar tu solicitud, activa JavaScript o <a href="https://wa.me/526121999963">escríbenos por WhatsApp</a>.</p></noscript>
+
+    <div id="revision-web" class="caja web" hidden>
+      <h2 id="titulo-revision" tabindex="-1">Revisa tu solicitud</h2>
+      <label class="mensaje-web">Mensaje para WhatsApp
+        <textarea id="mensaje-web" rows="12" maxlength="2600" required></textarea>
+      </label>
+      <p class="nota">Puedes editar este mensaje antes de abrir WhatsApp. Una vez allí, pulsa Enviar para completar la solicitud.</p>
+      <div class="acciones">
+        <a class="accion" id="abrir-whatsapp" href="https://wa.me/526121999963" target="_blank" rel="noopener noreferrer">Continuar a WhatsApp</a>
+        <button type="button" class="accion secundaria" id="editar-cotizacion">Volver al formulario</button>
+      </div>
+    </div>
+  </section>
+
+  </main>
+  <footer>Lapazimpresion3d · La Paz, BCS</footer>
+</body>
+</html>
