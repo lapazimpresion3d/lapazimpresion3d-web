@@ -27,29 +27,43 @@
     <form id="form-web" class="caja web" hidden>
       <fieldset>
         <legend>Tipo de página</legend>
+        <p class="ayuda-cotizacion">Elige según lo que quieres mostrar. Tanto el menú como el catálogo pueden incluir carrito, pedidos y pagos.</p>
         <label class="opcion">
           <input type="radio" name="tipo" value="Página de contacto digital" data-tipo="contacto" required>
-          <span>Página de contacto digital<small>WhatsApp, redes, ubicación y contacto para guardar en el teléfono.</small></span>
+          <span>Página de contacto digital<small>Para compartir en una sola página tu WhatsApp, redes, ubicación y datos de contacto. Útil como tarjeta de presentación digital.</small></span>
         </label>
         <label class="opcion">
           <input type="radio" name="tipo" value="Página web para mi negocio" data-tipo="negocio">
-          <span>Página web para mi negocio<small>Presentación, servicios, fotos, horarios, ubicación y contacto.</small></span>
+          <span>Página web para mi negocio<small>Para presentar quién eres, qué servicios ofreces y cómo visitarte o contratarte. Incluye espacio para fotos, horarios, ubicación y contacto.</small></span>
         </label>
         <label class="opcion">
-          <input type="radio" name="tipo" value="Página con menú digital" data-tipo="menu">
-          <span>Página con menú digital<small>Fotos, precios, categorías, buscador, extras y promociones.</small></span>
+          <input type="radio" name="tipo" value="Menú digital para restaurantes" data-tipo="menu">
+          <span>Menú digital para restaurantes<small>Para taquerías, cafeterías y otros negocios de comida. Organiza platillos y bebidas por categoría, con precios, fotos y extras. Puedes solicitar pedidos para recoger, a domicilio o desde las mesas.</small></span>
         </label>
         <label class="opcion">
-          <input type="radio" name="tipo" value="Página con catálogo de productos" data-tipo="catalogo">
-          <span>Página con catálogo de productos<small>Fotos, precios, variantes y consultas por WhatsApp.</small></span>
+          <input type="radio" name="tipo" value="Catálogo de productos para comercios" data-tipo="catalogo">
+          <span>Catálogo de productos para comercios<small>Para mostrar artículos con fotos, precios y variantes como tallas, colores o modelos. Puedes usarlo como escaparate para consultas o agregar carrito y cobro para vender en línea.</small></span>
         </label>
       </fieldset>
 
       <fieldset id="funciones-web" hidden>
         <legend>Funciones opcionales</legend>
+        <p id="ayuda-pedidos" class="ayuda-cotizacion" hidden>Para vender desde tu sitio, marca <strong>Carrito y pedidos desde la página</strong>. Eso habilita las opciones de cobro. Si prefieres atender los pedidos en el chat, selecciona <strong>Pedidos por WhatsApp</strong>.</p>
         <label class="opcion" data-paginas="productos">
-          <input type="checkbox" id="pedidos-web" name="funciones" value="Pedidos desde la página o por WhatsApp">
-          <span>Pedidos desde la página o por WhatsApp<small>Carrito, extras y registro de pedidos.</small></span>
+          <input type="checkbox" id="pedidos-web" name="funciones" value="Carrito y pedidos desde la página">
+          <span>Carrito y pedidos desde la página<small>El cliente agrega artículos, elige cantidades y confirma su pedido en el sitio. El negocio recibe el pedido registrado.</small></span>
+        </label>
+        <label class="opcion" data-paginas="productos">
+          <input type="checkbox" name="funciones" value="Pedidos por WhatsApp">
+          <span>Pedidos por WhatsApp<small>El cliente abre el chat con su solicitud y el negocio confirma el pedido por WhatsApp. Puedes elegir esta opción por sí sola o junto al carrito.</small></span>
+        </label>
+        <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
+          <input type="checkbox" name="funciones" value="Efectivo y transferencias con registro manual">
+          <span>Efectivo y transferencias<small>Muestra las instrucciones de pago. El encargado verifica las transferencias o registra el cobro en efectivo. Requiere carrito.</small></span>
+        </label>
+        <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
+          <input type="checkbox" name="funciones" value="Cotizar integración de pagos en línea con tarjeta">
+          <span>Pagos en línea con tarjeta<small>Solicita cotización para integrar una plataforma de pagos. Requiere carrito y una cuenta del negocio con el proveedor de pagos.</small></span>
         </label>
         <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Pedidos para recoger o a domicilio">
@@ -76,10 +90,6 @@
           <span>Seguimiento de pedidos<small>Estado de preparación, entrega y pago por folio. Requiere pedidos desde la página.</small></span>
         </label>
         <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
-          <input type="checkbox" name="funciones" value="Transferencias y registro de cobros">
-          <span>Transferencias y registro de cobros<small>Instrucciones de pago y verificación manual. Requiere pedidos desde la página.</small></span>
-        </label>
-        <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Reportes de pedidos y cobros">
           <span>Reportes de pedidos y cobros<small>Exportación en CSV. Requiere pedidos desde la página.</small></span>
         </label>
@@ -87,11 +97,27 @@
 
       <fieldset>
         <legend>Servicios complementarios</legend>
-        <label class="opcion"><input type="checkbox" name="complementos" value="Código QR"><span>Código QR para la página</span></label>
-        <label class="opcion"><input type="checkbox" name="complementos" value="Soportes QR o llaveros con NFC opcional"><span>Soportes QR o llaveros con NFC opcional</span></label>
-        <label class="opcion"><input type="checkbox" name="complementos" value="Carga inicial de contenido"><span>Carga inicial de productos, precios y fotografías</span></label>
-        <label class="opcion"><input type="checkbox" name="complementos" value="Configuración inicial para buscadores y aviso de privacidad"><span>Configuración inicial para buscadores y aviso de privacidad</span></label>
-        <label class="opcion"><input type="checkbox" name="complementos" value="Capacitación"><span>Capacitación para administrar la página</span></label>
+        <p class="ayuda-cotizacion">Marca los servicios que quieras incluir en tu cotización.</p>
+        <label class="opcion">
+          <input type="checkbox" name="complementos" value="Código QR para la página">
+          <span>Código QR para la página<small>Recibe un archivo digital de alta resolución listo para imprimir en volantes, lonas o tarjetas de presentación. Al escanearlo, se abre tu página.</small></span>
+        </label>
+        <label class="opcion">
+          <input type="checkbox" name="complementos" value="Soportes QR o llaveros con NFC opcional">
+          <span>Soportes QR o llaveros con NFC opcional<small>Fabricamos en impresión 3D soportes para mesas o mostradores y llaveros personalizados. Puedes solicitar un chip NFC para abrir la página al acercar un teléfono compatible.</small></span>
+        </label>
+        <label class="opcion">
+          <input type="checkbox" name="complementos" value="Carga inicial de productos, precios y fotografías">
+          <span>Carga inicial de productos, precios y fotografías<small>Organizamos y cargamos las categorías, descripciones, precios y fotos que nos compartas. Optimizamos las imágenes en WebP para que pesen menos al cargar la página.</small></span>
+        </label>
+        <label class="opcion">
+          <input type="checkbox" name="complementos" value="Configuración inicial para buscadores y aviso de privacidad">
+          <span>Configuración inicial para buscadores y aviso de privacidad<small>Configuramos títulos y descripciones básicos para buscadores (SEO), y la vista previa del enlace al compartirlo en redes (Open Graph). Integramos el aviso de privacidad con el contenido que nos proporcione tu negocio.</small></span>
+        </label>
+        <label class="opcion">
+          <input type="checkbox" name="complementos" value="Capacitación para administrar la página">
+          <span>Capacitación para administrar la página<small>Sesión práctica o guía paso a paso para que tú o tu encargado aprendan a actualizar precios, textos u horarios y a usar el panel, según las funciones contratadas.</small></span>
+        </label>
       </fieldset>
 
       <fieldset class="datos">

@@ -1,9 +1,9 @@
 const formularioWeb = document.querySelector('#form-web');
 const funcionesWeb = document.querySelector('#funciones-web');
 const opcionesWeb = funcionesWeb.querySelectorAll('[data-paginas]');
+const ayudaPedidos = document.querySelector('#ayuda-pedidos');
 const revisionWeb = document.querySelector('#revision-web');
 const mensajeWeb = document.querySelector('#mensaje-web');
-const whatsappComercial = document.querySelector('.enlaces a[href^="https://wa.me/"]');
 
 function actualizarFunciones() {
   const tipo = formularioWeb.querySelector('[name="tipo"]:checked')?.dataset.tipo;
@@ -23,6 +23,7 @@ function actualizarFunciones() {
     hayFunciones ||= !opcion.hidden;
   }
 
+  ayudaPedidos.hidden = !disponibles.productos;
   funcionesWeb.hidden = !hayFunciones;
 }
 
