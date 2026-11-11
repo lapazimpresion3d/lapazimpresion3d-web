@@ -110,14 +110,9 @@ h3 { color: var(--subtitulo); font-size: clamp(1.125rem, 1.75vw, 1.5rem); font-w
 }
 .caja p:first-child { margin-top: 0; }
 .caja p:last-child { margin-bottom: 0; }
-.oferta {
-  margin: 18px 0 14px;
-  padding: 10px 14px;
-  border-left: 4px solid var(--amarillo);
-  color: var(--suave);
-}
-.oferta strong { color: var(--texto); }
-.detalles-llaveros { margin-top: 14px; padding-block: 14px; }
+.detalles-llaveros { max-width: 66ch; margin: 22px 0 18px; }
+.detalles-llaveros p { margin: 0 0 8px; color: var(--suave); }
+.detalles-llaveros strong { color: var(--texto); }
 summary { font-weight: var(--peso-negrita); cursor: pointer; }
 
 .galeria-fotos {
