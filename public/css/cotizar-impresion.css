@@ -1,0 +1,85 @@
+/* Estilos exclusivos de cotización de impresión 3D */
+#form-servicio {
+  display: grid;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+}
+#form-servicio fieldset {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+#form-servicio legend {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 14px;
+  color: var(--titulo);
+}
+#form-servicio label:not(.privacidad-web) {
+  display: block;
+  min-width: 0;
+  font-weight: 600;
+  line-height: 1.45;
+}
+#form-servicio #opciones-servicio > div:not([hidden]),
+#form-servicio .datos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+#form-servicio input:not([type="checkbox"]),
+#form-servicio select,
+#form-servicio textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  margin-top: 7px;
+  padding: 11px 12px;
+  font: inherit;
+  font-weight: 400;
+  color: var(--texto);
+  background: #fff;
+  border: 1px solid var(--borde);
+  border-radius: 9px;
+}
+#form-servicio textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+#form-servicio select {
+  white-space: normal;
+}
+#form-servicio .campo-adjuntos {
+  min-width: 0;
+}
+#form-servicio input[type="file"] {
+  height: auto;
+  overflow: hidden;
+}
+#form-servicio .privacidad-web {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+#form-servicio .privacidad-web input {
+  flex: none;
+  width: 19px;
+  height: 19px;
+  margin-top: 3px;
+}
+#form-servicio .datos-academicos {
+  display: grid;
+  gap: 14px;
+}
+@media (max-width: 600px) {
+  .envoltura-cotizacion .caja { padding: 18px 14px; }
+  #form-servicio { gap: 18px; }
+  #form-servicio input,
+  #form-servicio select,
+  #form-servicio textarea { font-size: 16px; }
+}
