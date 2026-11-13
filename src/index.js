@@ -340,28 +340,64 @@ async function api(request,env,ctx) {
     return json({ok:true,folio},201);
   }
   if(path==="/api/quiz/propuestas" && request.method==="POST") {
-    if(!sameOrigin(request)) return error("Origen no autorizado",403);
-    if(!await verificarLimite(request,env,"propuesta",6,3600)) return error("Demasiadas solicitudes. Intenta más tarde.",429);
-    const data=await leerJson(request,8500);
-    if(!data || !fichaValida(data.ficha)) return error("Diagnóstico inválido",400);
-    if(!contactoValido(data.contacto)) return error("Datos de contacto inválidos",400);
-    if(data.acepta_privacidad!==true) return error("Debes aceptar el aviso de privacidad",400);
-    const id=ID_UUID.test(data.ficha.id_diagnostico||"")?data.ficha.id_diagnostico:crypto.randomUUID();
-    const ficha=normalizarFicha(data.ficha,id);
-    const c=data.contacto;
-    const nombre=c.nombre.trim(), proyecto=c.proyecto.trim(),telefono=c.telefono,comentario=c.comentario.trim();
-    // Folio legible, derivado de UUID pero sin exponer información personal.
-    const folio=`LP-${id.replace(/-/g,"").slice(0,10).toUpperCase()}`;
-    const result=await env.QUIZ_DB.prepare("INSERT OR IGNORE INTO quiz_propuestas (id,folio,fecha,nombre,proyecto,telefono,comentario,servicio_id,ficha_json,estado,privacidad_aceptada) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,'nueva',1)")
-      .bind(id,folio,ficha.fecha_generacion,nombre,proyecto,telefono,comentario,ficha.recomendacion.id,JSON.stringify(ficha)).run();
-    if(result.meta.changes===0) {
-      // Reenvío de una misma ficha: solo devolver el folio si el teléfono coincide.
-      // Un ID reutilizado con otro contacto no debe simular una solicitud recibida.
-      const anterior=await env.QUIZ_DB.prepare("SELECT telefono FROM quiz_propuestas WHERE id=?1").bind(id).first();
-      if(!anterior || anterior.telefono!==telefono) return error("Referencia repetida; vuelve a iniciar la solicitud",409);
+    if(!sameOrigin(request))return error("Origen no autorizado",403);
+    if(!await verificarLimite(request,env,"propuesta",6,3600))return error("Demasiadas solicitudes. Intenta más tarde.",429);
+    const tipo=request.headers.get("content-type")?.toLowerCase()||"";
+    let data, fotos=[];
+    if(tipo.startsWith("multipart/form-data")){
+      const largo=Number(request.headers.get("content-length")||0);
+      if(largo>13*1024*1024)return error("Los archivos superan el límite permitido.",413);
+      let form;
+      try{form=await request.formData();}catch{return error("No se pudieron leer los archivos.",400);}
+      const solicitud=form.get("solicitud");
+      if(typeof solicitud!=="string"||solicitud.length>8500)return error("Datos de solicitud inválidos.",400);
+      try{data=JSON.parse(solicitud);}catch{return error("Datos de solicitud inválidos.",400);}
+      fotos=form.getAll("imagenes");
+    }else{
+      // Mantener compatibilidad con formularios antiguos que aún envían JSON.
+      data=await leerJson(request,8500);
     }
-    if(result.meta.changes>0 && ctx?.waitUntil) ctx.waitUntil(notificarPropuesta(env,{folio,servicio:TITULOS[ficha.recomendacion.id],nombre,telefono,proyecto,presupuesto:ficha.respuestas.presupuesto,respuestas:ficha.respuestas,recomendacion:ficha.recomendacion.titulo,comentario}).catch(e=>console.error("Aviso por correo",e)));
-    return json({ok:true,folio},result.meta.changes>0?201:200);
+    if(!data || !fichaValida(data.ficha))return error("Diagnóstico inválido",400);
+    if(!contactoValido(data.contacto))return error("Datos de contacto inválidos",400);
+    if(data.acepta_privacidad!==true)return error("Debes aceptar el aviso de privacidad",400);
+    if(fotos.length>3 || fotos.some(f=>!(f instanceof File)||!Object.hasOwn(IMG_MIME,f.type)||f.size===0||f.size>IMG_MAX))
+      return error("Adjunta máximo 3 imágenes JPG, PNG o WebP de hasta 4 MB cada una.",400);
+    if(fotos.length&&!env.COTIZACIONES_R2)return error("La recepción de imágenes no está disponible.",503);
+    const id=ID_UUID.test(data.ficha.id_diagnostico||"")?data.ficha.id_diagnostico:crypto.randomUUID();
+    const c=data.contacto;
+    const nombre=c.nombre.trim(),proyecto=c.proyecto.trim(),telefono=c.telefono,comentario=c.comentario.trim();
+    const folio=`LP-${id.replace(/-/g,"").slice(0,10).toUpperCase()}`;
+    // No sobrescribir ni adjuntar archivos si ya existe una solicitud con este identificador.
+    const existente=await env.QUIZ_DB.prepare("SELECT telefono FROM quiz_propuestas WHERE id=?1").bind(id).first();
+    if(existente){
+      if(existente.telefono!==telefono)return error("Referencia repetida; vuelve a iniciar la solicitud",409);
+      return json({ok:true,folio},200);
+    }
+    const ficha=normalizarFicha(data.ficha,id);
+    const imagenes=[];
+    try{
+      for(const f of fotos){
+        const bytes=new Uint8Array(await f.arrayBuffer());
+        if(!imagenReal(bytes,f.type))throw new Error("Una imagen no tiene un formato válido.");
+        const clave=`solicitudes/${id}/${crypto.randomUUID()}.${IMG_MIME[f.type]}`;
+        await env.COTIZACIONES_R2.put(clave,bytes,{httpMetadata:{contentType:f.type}});
+        imagenes.push({clave,nombre:f.name.slice(0,120),tipo:f.type,tamano:f.size});
+      }
+    }catch(e){await limpiarImagenes(env,imagenes);return error(e?.message||"No fue posible guardar las imágenes.",400);}
+    if(imagenes.length)ficha.imagenes=imagenes;
+    let result;
+    try{
+      result=await env.QUIZ_DB.prepare("INSERT OR IGNORE INTO quiz_propuestas (id,folio,fecha,nombre,proyecto,telefono,comentario,servicio_id,ficha_json,estado,privacidad_aceptada) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,'nueva',1)")
+        .bind(id,folio,ficha.fecha_generacion,nombre,proyecto,telefono,comentario,ficha.recomendacion.id,JSON.stringify(ficha)).run();
+    }catch(e){await limpiarImagenes(env,imagenes);throw e;}
+    if(result.meta.changes===0){
+      await limpiarImagenes(env,imagenes);
+      const anterior=await env.QUIZ_DB.prepare("SELECT telefono FROM quiz_propuestas WHERE id=?1").bind(id).first();
+      if(!anterior || anterior.telefono!==telefono)return error("Referencia repetida; vuelve a iniciar la solicitud",409);
+      return json({ok:true,folio},200);
+    }
+    if(ctx?.waitUntil)ctx.waitUntil(notificarPropuesta(env,{folio,servicio:TITULOS[ficha.recomendacion.id],nombre,telefono,proyecto,presupuesto:ficha.respuestas.presupuesto,respuestas:ficha.respuestas,recomendacion:ficha.recomendacion.titulo,comentario,imagenes}).catch(e=>console.error("Aviso por correo",e)));
+    return json({ok:true,folio},201);
   }
   // La ruta histórica no crea prospectos identificables. Conservar solo consulta de registros anteriores.
   if(path==="/api/quiz/solicitudes" && request.method==="POST") return error("Este registro fue reemplazado por el formulario de propuestas",410);
