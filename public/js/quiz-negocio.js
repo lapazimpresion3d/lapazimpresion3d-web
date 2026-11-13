@@ -368,6 +368,24 @@
     const proyecto = campo("proyecto", "Negocio, evento o proyecto (opcional)", {max:120});
     const telefono = campo("telefono", "WhatsApp de contacto (10 dígitos) *", {required:true,type:"tel",max:25,autocomplete:"tel",placeholder:"Ej. 6121234567"});
     const comentario = campo("comentario", "Cuéntanos algo más (opcional)", {multiline:true,max:800});
+    const adjuntosLabel=document.createElement("label");
+    adjuntosLabel.textContent="Imágenes de referencia (opcional)";
+    const imagenes=document.createElement("input");
+    imagenes.type="file";imagenes.name="imagenes";imagenes.multiple=true;
+    imagenes.accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp";
+    imagenes.setAttribute("aria-describedby","quiz-ayuda-imagenes");
+    const ayudaImagenes=document.createElement("small");
+    ayudaImagenes.id="quiz-ayuda-imagenes";
+    ayudaImagenes.textContent="Hasta 3 imágenes JPG, PNG o WebP de máximo 4 MB cada una. Puedes enviar la solicitud sin imágenes.";
+    adjuntosLabel.append(imagenes,ayudaImagenes);formulario.append(adjuntosLabel);
+    function validarImagenes(){
+      const fotos=Array.from(imagenes.files||[]);
+      const error=fotos.length>3?"Puedes adjuntar como máximo 3 imágenes.":fotos.some(f=>!["image/jpeg","image/png","image/webp"].includes(f.type)||!f.size||f.size>4*1024*1024)?"Solo se aceptan imágenes JPG, PNG o WebP de hasta 4 MB cada una.":"";
+      imagenes.setCustomValidity(error);
+      return !error;
+    }
+    imagenes.addEventListener("change",validarImagenes);
+
     const consentimiento = document.createElement("label");
     consentimiento.className = "quiz-consentimiento";
     const check = document.createElement("input"); check.type="checkbox"; check.required=true;
@@ -381,6 +399,7 @@
     botonPropuesta.addEventListener("click",()=>{formulario.hidden=false;botonPropuesta.hidden=true;nombre.focus();});
     formulario.addEventListener("submit",async e=>{
       e.preventDefault();
+      validarImagenes();
       if (!formulario.reportValidity()) return;
       const numero=telefono.value.replace(/\D/g,"");
       if (!/^\d{10}$/.test(numero)) {estadoSolicitud.textContent="Introduce un WhatsApp de 10 dígitos.";telefono.focus();return;}
@@ -388,7 +407,11 @@
       const ficha=crearFichaDiagnostico(respuestas);
       ficha.id_diagnostico=obtenerIdSolicitud();
       try {
-        const r=await fetch("/api/quiz/propuestas",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify({ficha,contacto:{nombre:nombre.value.trim(),proyecto:proyecto.value.trim(),telefono:numero,comentario:comentario.value.trim()},acepta_privacidad:check.checked})});
+        const solicitud={ficha,contacto:{nombre:nombre.value.trim(),proyecto:proyecto.value.trim(),telefono:numero,comentario:comentario.value.trim()},acepta_privacidad:check.checked};
+        const cuerpo=new FormData();
+        cuerpo.set("solicitud",JSON.stringify(solicitud));
+        for(const archivo of imagenes.files)cuerpo.append("imagenes",archivo,archivo.name);
+        const r=await fetch("/api/quiz/propuestas",{method:"POST",credentials:"same-origin",body:cuerpo});
         const data=await r.json().catch(()=>({}));
         if(!r.ok || !data.ok) throw new Error(data.error||"No se pudo registrar. Intenta de nuevo.");
         const confirmacion=document.createElement("div");confirmacion.className="quiz-confirmacion";
