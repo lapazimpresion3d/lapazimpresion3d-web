@@ -36,13 +36,19 @@ function recomendacionEsperada(r) {
   const operativo = r.objetivo === "automatizar" || ["menos_mensajes","organizar_trabajo"].includes(r.mejora_deseada);
   const info = r.mejora_deseada === "acceso_inmediato";
   const presencial = r.contacto_actual === "en_persona";
-  const funcional = r.objetivo === "pieza_funcional" || r.situacion === "pieza_reproducir" || r.contacto_actual === "uso_funcional" || r.mejora_deseada === "ajuste_resistencia";
-  const figura = r.objetivo === "figura_detallada" || r.contacto_actual === "pieza_visual" || r.mejora_deseada === "detalle_acabado";
+  // Un único detalle técnico no puede desplazar objetivos de evento o negocio.
+  const contextoMecanico = r.situacion === "pieza_reproducir"
+    || (r.situacion === "modelo_fabricar" && [r.preparacion === "medidas_modelo", r.contacto_actual === "uso_funcional", r.mejora_deseada === "ajuste_resistencia"].some(Boolean))
+    || (r.contacto_actual === "uso_funcional" && (r.mejora_deseada === "ajuste_resistencia" || r.preparacion === "medidas_modelo"))
+    || (r.mejora_deseada === "ajuste_resistencia" && r.preparacion === "medidas_modelo");
+  const contextoFigura = (r.situacion === "modelo_fabricar" && (r.preparacion === "referencia_figura" || r.contacto_actual === "pieza_visual" || r.mejora_deseada === "detalle_acabado"))
+    || (r.contacto_actual === "pieza_visual" && (r.mejora_deseada === "detalle_acabado" || r.preparacion === "referencia_figura"))
+    || (r.mejora_deseada === "detalle_acabado" && r.preparacion === "referencia_figura");
+  const funcional = r.objetivo === "pieza_funcional" || (!evento && !operativo && contextoMecanico);
+  const figura = r.objetivo === "figura_detallada" || (!evento && !operativo && contextoFigura);
   let id;
   if(funcional) id="R6";
   else if(figura) id="R7";
-  else if(r.situacion === "modelo_fabricar" && r.preparacion === "medidas_modelo") id="R6";
-  else if(r.situacion === "modelo_fabricar" && r.preparacion === "referencia_figura") id="R7";
   else if(operativo) id="R4";
   else if(evento && (fisicoExplicito || r.contacto_actual === "fecha_fija" || !info)) id="R1";
   else if(fisicoExplicito) id="R1";
