@@ -123,7 +123,7 @@ async function autorizado(request,env) {
 // Tokens de proyecto de 256 bits: solo se guarda SHA-256 en D1.
 function tokenCliente() {
   const bytes=crypto.getRandomValues(new Uint8Array(32));
-  return btoa(String.fromCharCode(...bytes)).replace(/\\+/g,"-").replace(/\\//g,"_").replace(/=+$/,"");
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 }
 async function hashTokenCliente(token) {
   const buffer=await crypto.subtle.digest("SHA-256",enc.encode(token));
