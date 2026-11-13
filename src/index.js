@@ -174,9 +174,9 @@ function solicitudWebValida(d) {
 // Servicio físico: formulario único con campos específicos, registro en quiz_propuestas.
 const TIPOS_FISICOS = Object.freeze({llaveros:"Llaveros personalizados",fdm_medida:"Impresión 3D a medida",resina:"Figuras y miniaturas en resina",soporte_qr:"Soportes QR/NFC"});
 const CAMPOS_FISICOS = Object.freeze({
- llaveros:["cantidad","tamano","diseno","colores","nfc","acabado","uso"],
+ llaveros:["cantidad","tamano","diseno","colores","nfc","uso"],
  fdm_medida:["cantidad","tamano","uso","material","resistencia","referencia"],
- resina:["cantidad","tamano","uso","detalle","acabado","referencia"],
+ resina:["cantidad","tamano","uso","detalle","referencia"],
  soporte_qr:["cantidad","tamano","uso","logo","destino_qr","contenido_existente","nfc"]
 });
 const PRESUPUESTOS = new Set(["menos_500","500_1500","1500_3000","3000_6000","mas_6000","sin_definir",""]);
@@ -196,23 +196,55 @@ async function notificarPropuesta(env,folio) {
  const res=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":`Bearer ${env.RESEND_API_KEY}`,"Content-Type":"application/json","Idempotency-Key":`quiz-${folio}`},body:JSON.stringify({from:env.EMAIL_FROM,to:[env.NOTIFY_EMAIL],subject:`Nueva solicitud Lapazimpresion3d · ${folio}`,text:`Se registró una solicitud de propuesta: ${folio}.\nConsúltala en el panel privado: ${link}\nEl correo no contiene datos personales.`})});
  if(!res.ok) console.error("No se envió el aviso de propuesta",res.status);
 }
+// Adjuntos opcionales: solo imágenes seguras, privadas, por solicitud.
+const IMG_MIME={"image/jpeg":"jpg","image/png":"png","image/webp":"webp"};
+const IMG_MAX=4*1024*1024;
+function imagenReal(bytes,mime){
+ if(mime==='image/jpeg')return bytes[0]===255&&bytes[1]===216&&bytes[2]===255;
+ if(mime==='image/png')return [137,80,78,71,13,10,26,10].every((x,i)=>bytes[i]===x);
+ if(mime==='image/webp')return String.fromCharCode(...bytes.slice(0,4))==='RIFF'&&String.fromCharCode(...bytes.slice(8,12))==='WEBP';
+ return false;
+}
+async function limpiarImagenes(env,imagenes){if(!env.COTIZACIONES_R2)return;await Promise.allSettled((imagenes||[]).map(a=>env.COTIZACIONES_R2.delete(a.clave)));}
 async function api(request,env,ctx) {
   const url=new URL(request.url), path=url.pathname;
   if(!env.QUIZ_DB) return error("Base de datos no configurada",503);
   if(path==="/api/servicios/propuestas" && request.method==="POST") {
     if(!sameOrigin(request)) return error("Origen no autorizado",403);
     if(!await verificarLimite(request,env,"propuesta_servicio",6,3600)) return error("Demasiadas solicitudes. Intenta más tarde.",429);
-    const d=await leerJson(request,6500);
+    const largo=Number(request.headers.get('content-length')||0);
+    if(largo>13*1024*1024) return error("Los archivos superan el límite permitido.",413);
+    if(!request.headers.get('content-type')?.toLowerCase().startsWith('multipart/form-data')) return error("Formato de solicitud inválido.",415);
+    let form;
+    try {form=await request.formData();}catch{return error("No se pudieron leer los archivos.",400);}
+    const datos=form.get('solicitud');
+    if(typeof datos!=='string'||datos.length>6500)return error("Datos de solicitud inválidos.",400);
+    let d;try{d=JSON.parse(datos);}catch{return error("Datos de solicitud inválidos.",400);}
     if(!solicitudFisicaValida(d)) return error("Revisa los campos y acepta el aviso de privacidad.",400);
+    const fotos=form.getAll('imagenes');
+    if(fotos.length>3||fotos.some(f=>!(f instanceof File)||!Object.hasOwn(IMG_MIME,f.type)||f.size>IMG_MAX||f.size===0))return error("Adjunta máximo 3 imágenes JPG, PNG o WebP de hasta 4 MB cada una.",400);
+    if(fotos.length&&!env.COTIZACIONES_R2)return error("La recepción de imágenes aún no está habilitada. Envía tu solicitud sin imágenes.",503);
     const id=crypto.randomUUID(), fecha=new Date().toISOString();
+    const imagenes=[];
+    try{
+      for(const f of fotos){
+        const bytes=new Uint8Array(await f.arrayBuffer());
+        if(!imagenReal(bytes,f.type))throw new Error('El formato de una imagen no es válido.');
+        const clave=`solicitudes/${id}/${crypto.randomUUID()}.${IMG_MIME[f.type]}`;
+        await env.COTIZACIONES_R2.put(clave,bytes,{httpMetadata:{contentType:f.type}});
+        imagenes.push({clave,nombre:f.name.slice(0,120),tipo:f.type,tamano:f.size});
+      }
+    }catch(e){await limpiarImagenes(env,imagenes);return error(e?.message||"No se pudieron guardar las imágenes.",400);}
     const prefijo={llaveros:"LLA",fdm_medida:"FDM",resina:"RES",soporte_qr:"QR"}[d.servicio];
     const folio=`${prefijo}-${id.replace(/-/g,"").slice(0,10).toUpperCase()}`;
     const ficha={tipo_documento:"solicitud_servicio",version_esquema:"1.0",id_solicitud:id,origen:"formulario_directo",fecha_generacion:fecha,
       servicio:d.servicio,titulo_servicio:TIPOS_FISICOS[d.servicio],presupuesto:d.presupuesto,fecha_deseada:d.fecha_deseada,
-      contexto:d.contexto||"",fecha_prioritaria:d.fecha_prioritaria||"",campos:d.campos,detalles:d.detalles};
-    const result=await env.QUIZ_DB.prepare("INSERT INTO quiz_propuestas (id,folio,fecha,nombre,proyecto,telefono,comentario,servicio_id,ficha_json,estado,privacidad_aceptada) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,'nueva',1)")
-      .bind(id,folio,fecha,d.nombre.trim(),(d.proyecto||TIPOS_FISICOS[d.servicio]).trim(),d.telefono,d.detalles.trim(),prefijo,JSON.stringify(ficha)).run();
-    if(result.meta.changes!==1) return error("No se pudo registrar la solicitud",500);
+      contexto:d.contexto||"",fecha_prioritaria:d.fecha_prioritaria||"",campos:d.campos,detalles:d.detalles,imagenes};
+    let result;
+    try{result=await env.QUIZ_DB.prepare("INSERT INTO quiz_propuestas (id,folio,fecha,nombre,proyecto,telefono,comentario,servicio_id,ficha_json,estado,privacidad_aceptada) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,'nueva',1)")
+      .bind(id,folio,fecha,d.nombre.trim(),(d.proyecto||TIPOS_FISICOS[d.servicio]).trim(),d.telefono,d.detalles.trim(),prefijo,JSON.stringify(ficha)).run();}
+    catch(e){await limpiarImagenes(env,imagenes);throw e;}
+    if(result.meta.changes!==1){await limpiarImagenes(env,imagenes);return error("No se pudo registrar la solicitud",500);}
     if(ctx?.waitUntil)ctx.waitUntil(notificarPropuesta(env,folio).catch(e=>console.error("Aviso",e)));
     return json({ok:true,folio},201);
   }
@@ -289,6 +321,17 @@ async function api(request,env,ctx) {
        .bind(estado,busqueda,filtro).all();
       return json({items:results.results.map(x=>({...x,ficha:JSON.parse(x.ficha_json),ficha_json:undefined}))});
     }
+    const imagenSolicitud=path.match(/^\/api\/admin\/propuestas\/([0-9a-f-]{36})\/imagen\/([0-2])$/i);
+    if(imagenSolicitud && request.method==='GET'){
+      if(!env.COTIZACIONES_R2)return error('Almacenamiento no configurado',503);
+      const fila=await env.QUIZ_DB.prepare('SELECT ficha_json FROM quiz_propuestas WHERE id=?1').bind(imagenSolicitud[1]).first();
+      if(!fila)return error('Solicitud no encontrada',404);
+      const adj=JSON.parse(fila.ficha_json).imagenes?.[Number(imagenSolicitud[2])];
+      if(!adj||!adj.clave?.startsWith(`solicitudes/${imagenSolicitud[1]}/`))return error('Imagen no encontrada',404);
+      const objeto=await env.COTIZACIONES_R2.get(adj.clave);
+      if(!objeto)return error('Imagen no encontrada',404);
+      return new Response(objeto.body,{headers:{'Content-Type':adj.tipo,'Content-Disposition':`inline; filename="referencia.${IMG_MIME[adj.tipo]||'jpg'}"`,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; sandbox"}});
+    }
     const propuesta=path.match(/^\/api\/admin\/propuestas\/([0-9a-f-]{36})$/i);
     if(propuesta && request.method==="PATCH") {
       if(!sameOrigin(request)) return error("Origen no autorizado",403);
@@ -299,7 +342,9 @@ async function api(request,env,ctx) {
     }
     if(propuesta && request.method==="DELETE") {
       if(!sameOrigin(request)) return error("Origen no autorizado",403);
+      const fila=await env.QUIZ_DB.prepare('SELECT ficha_json FROM quiz_propuestas WHERE id=?1').bind(propuesta[1]).first();
       const result=await env.QUIZ_DB.prepare("DELETE FROM quiz_propuestas WHERE id=?1").bind(propuesta[1]).run();
+      if(result.meta.changes>0&&fila){const imagenes=JSON.parse(fila.ficha_json).imagenes||[];if(ctx?.waitUntil)ctx.waitUntil(limpiarImagenes(env,imagenes));else await limpiarImagenes(env,imagenes);}
       return json({ok:result.meta.changes>0});
     }
     if(path==="/api/admin/diagnosticos" && request.method==="GET") {

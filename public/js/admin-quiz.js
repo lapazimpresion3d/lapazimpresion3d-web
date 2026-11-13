@@ -166,6 +166,14 @@ async function cargarPropuestas(){
      const det=elem("details");det.append(elem("summary",null,"Ver respuestas"));const dl=elem("dl");
      for(const [c,t] of Object.entries(nombres)){dl.append(elem("dt",null,t),elem("dd",null,etiquetasPresupuesto[x.ficha?.respuestas?.[c]]||etiquetas[x.ficha?.respuestas?.[c]]||x.ficha?.respuestas?.[c]||"Sin respuesta"));}det.append(dl);box.append(det);
    }
+   if(Array.isArray(x.ficha?.imagenes)&&x.ficha.imagenes.length){
+     const imagenesPanel=elem('section','adjuntos-panel'),heading=elem('h4',null,'Imágenes de referencia');imagenesPanel.append(heading);
+     x.ficha.imagenes.forEach((foto,i)=>{
+       const enlace=elem('a','boton-enlace',`Ver imagen ${i+1}: ${foto.nombre||'Referencia'}`);
+       enlace.href=`/api/admin/propuestas/${encodeURIComponent(x.id)}/imagen/${i}`;
+       enlace.target='_blank';enlace.rel='noopener noreferrer';imagenesPanel.append(enlace);
+     });box.append(imagenesPanel);
+   }
    art.append(box);
    const actions=elem("div","acciones");
    const wa=elem("a","boton-enlace","Contactar por WhatsApp");wa.href=`https://wa.me/52${x.telefono}?text=${encodeURIComponent(`Hola ${x.nombre}, te contactamos de Lapazimpresion3d sobre tu solicitud ${x.folio}.`)}`;wa.target="_blank";wa.rel="noopener noreferrer";actions.append(wa);
