@@ -85,3 +85,10 @@
   .tabla-cuotas tbody td:last-child { border-bottom: 0; color: var(--titulo); font-weight: 800; }
   .tabla-cuotas tbody tr:last-child { margin-bottom: 0; }
 }
+
+/* Dominio: descripciones cómodas y legibles en pantallas estrechas */
+.dominio-web .opcion { align-items: flex-start; }
+.dominio-web .opcion span { min-width: 0; overflow-wrap: anywhere; }
+.dominio-web .opcion small { display: block; line-height: 1.45; overflow-wrap: anywhere; }
+.dominio-web .opcion small strong { font-weight: 750; }
+@media (max-width: 480px) { .dominio-web .opcion { padding-block: 12px; } .dominio-web .opcion small { font-size: .9em; } }

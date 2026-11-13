@@ -162,13 +162,21 @@ const WEB_FUNCIONES = new Set(["Carrito y pedidos desde la página", "Pedidos po
 const WEB_COMPLEMENTOS = new Set(["Código QR para la página", "Soportes QR o llaveros con NFC opcional", "Carga inicial de productos, precios y fotografías", "Configuración inicial para buscadores y aviso de privacidad", "Capacitación para administrar la página"]);
 function textoWeb(v,min,max) {return typeof v==='string' && v.trim().length>=min && v.trim().length<=max;}
 function listaWeb(v,permitidos) {return Array.isArray(v) && v.length<=permitidos.size && v.every(x=>typeof x==='string' && permitidos.has(x)) && new Set(v).size===v.length;}
+const WEB_DOMINIO_ESTADOS = new Set(["subdominio", "necesito_dominio", "tengo_dominio", "orientacion"]);
+function dominioWebValido(d) {
+  // Compatible con solicitudes abiertas antes de esta actualización.
+  if (d.situacion_dominio == null) return true;
+  return WEB_DOMINIO_ESTADOS.has(d.situacion_dominio) &&
+    (d.dominio_actual == null || (typeof d.dominio_actual === "string" && d.dominio_actual.length <= 120 && !/[<>\r\n]/.test(d.dominio_actual))) &&
+    (d.situacion_dominio === "tengo_dominio" || !d.dominio_actual);
+}
 function solicitudWebValida(d) {
  return d && typeof d==='object' && !Array.isArray(d) &&
    textoWeb(d.nombre,2,100) && textoWeb(d.negocio,2,100) && textoWeb(d.giro,2,80) &&
    typeof d.telefono==='string' && /^\d{10}$/.test(d.telefono) &&
    WEB_TIPOS.has(d.tipo_pagina) && listaWeb(d.funciones,WEB_FUNCIONES) &&
    listaWeb(d.complementos,WEB_COMPLEMENTOS) && textoWeb(d.detalles,5,500) && presupuestoValido(d.presupuesto??"") &&
-   d.acepta_privacidad===true;
+   dominioWebValido(d) && d.acepta_privacidad===true;
 }
 
 // Servicio físico: formulario único con campos específicos, registro en quiz_propuestas.
@@ -265,7 +273,9 @@ async function api(request,env,ctx) {
       tipo_documento:"solicitud_web",version_esquema:"1.0",id_solicitud:id,
       origen:"cotiza_pagina_web",fecha_generacion:fecha,
       tipo_pagina:d.tipo_pagina,funciones:d.funciones,complementos:d.complementos,
-      giro:d.giro,detalles:d.detalles,presupuesto:d.presupuesto||"",estado:"orientativa"
+      giro:d.giro,detalles:d.detalles,presupuesto:d.presupuesto||"",estado:"orientativa",
+      dominio:{situacion:d.situacion_dominio||"no_indicado",actual:d.dominio_actual||"",precio_anual_referencia_mxn:700,precio_final_pendiente:true},
+      renovacion_anual:{dominio:"segun_propuesta",operacion_y_soporte:"segun_propuesta"}
     };
     const result=await env.QUIZ_DB.prepare("INSERT INTO quiz_propuestas (id,folio,fecha,nombre,proyecto,telefono,comentario,servicio_id,ficha_json,estado,privacidad_aceptada) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,'nueva',1)")
       .bind(id,folio,fecha,d.nombre.trim(),d.negocio.trim(),d.telefono,d.detalles.trim(),"WEB",JSON.stringify(ficha)).run();

@@ -4,6 +4,14 @@ const opcionesWeb = funcionesWeb.querySelectorAll('[data-paginas]');
 const ayudaPedidos = document.querySelector('#ayuda-pedidos');
 const revisionWeb = document.querySelector('#revision-web');
 const mensajeWeb = document.querySelector('#mensaje-web');
+const dominioActualWeb = document.querySelector('#campo-dominio-actual');
+function actualizarDominio() {
+  const tengoDominio = formularioWeb.querySelector('[name="situacion_dominio"]:checked')?.value === 'tengo_dominio';
+  dominioActualWeb.hidden = !tengoDominio;
+  if (!tengoDominio) formularioWeb.elements.dominio_actual.value = '';
+}
+formularioWeb.addEventListener('change', actualizarDominio);
+
 
 function actualizarFunciones() {
   const tipo = formularioWeb.querySelector('[name="tipo"]:checked')?.dataset.tipo;
@@ -60,6 +68,8 @@ formularioWeb.addEventListener('submit', (evento) => {
     complementos: f.getAll('complementos').map(String),
     detalles: String(f.get('detalles') || '').trim(),
     presupuesto: String(f.get('presupuesto') || ''),
+    situacion_dominio: String(f.get('situacion_dominio') || 'subdominio'),
+    dominio_actual: String(f.get('dominio_actual') || '').trim(),
     acepta_privacidad: f.get('privacidad') === 'on'
   };
   const lineas = [
@@ -71,6 +81,8 @@ formularioWeb.addEventListener('submit', (evento) => {
     `Funciones: ${datosPendientes.funciones.join('; ') || 'Ninguna'}`,
     `Complementos: ${datosPendientes.complementos.join('; ') || 'Ninguno'}`,
     `Presupuesto: ${datosPendientes.presupuesto || "No indicado"}`,
+    `Modalidad de dirección: ${({subdominio:"Subdominio incluido",necesito_dominio:"Dominio .com nuevo",tengo_dominio:"Dominio existente",orientacion:"Necesita orientación"})[datosPendientes.situacion_dominio] || datosPendientes.situacion_dominio}`,
+    `Dirección actual: ${datosPendientes.dominio_actual || 'No indicada'}`,
     `Descripción: ${datosPendientes.detalles}`
   ];
   resumenWeb.textContent = lineas.join('\n');
@@ -116,4 +128,5 @@ botonEnviar.addEventListener('click', async () => {
 });
 
 actualizarFunciones();
+actualizarDominio();
 formularioWeb.hidden = false;
