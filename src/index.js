@@ -180,7 +180,8 @@ const CAMPOS_FISICOS = Object.freeze({
  soporte_qr:["cantidad","tamano","uso","logo","destino_qr","contenido_existente","nfc"]
 });
 const TIPOS_TRABAJO_ACADEMICO=new Set(["proyecto_escolar","prototipo","maqueta","investigacion","otro"]);
-const PRESUPUESTOS = new Set(["menos_500","500_1500","1500_3000","3000_6000","mas_6000","sin_definir",""]);
+// Mantener rangos anteriores para solicitudes/formularios ya abiertos en el navegador.
+const PRESUPUESTOS = new Set(["menos_500","500_1500","1500_3500","3500_8000","8000_15000","mas_15000","prefiero_no_indicar","sin_definir","1500_3000","3000_6000","mas_6000",""]);
 function presupuestoValido(v) {return typeof v==="string"&&PRESUPUESTOS.has(v);}
 function solicitudFisicaValida(d){
  if(!d||typeof d!=="object"||Array.isArray(d)||!Object.hasOwn(TIPOS_FISICOS,d.servicio)||!textoWeb(d.nombre,2,100)||!/^\d{10}$/.test(d.telefono||"")||!textoWeb(d.detalles,5,1200)||d.acepta_privacidad!==true||!presupuestoValido(d.presupuesto))return false;
