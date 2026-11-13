@@ -49,13 +49,15 @@
       ["medidas_modelo", "Tengo medidas, planos, una pieza de muestra o un archivo 3D."],
       ["referencia_figura", "Tengo una imagen, escultura o referencia de la figura que quiero."]
     ] },
-    { campo: "presupuesto", texto: "¿Qué presupuesto tienes pensado destinar a tu proyecto?", opciones: [
-      ["menos_500", "Menos de $500 MXN"],
-      ["500_1500", "$500 a $1,500 MXN"],
-      ["1500_3000", "$1,500 a $3,000 MXN"],
-      ["3000_6000", "$3,000 a $6,000 MXN"],
-      ["mas_6000", "Más de $6,000 MXN"],
-      ["sin_definir", "Aún no lo sé; necesito orientación"]
+    { campo: "presupuesto", texto: "¿Qué presupuesto aproximado tienes pensado destinar a tu proyecto?", opciones: [
+      ["menos_500", "Menos de $500 MXN (muestras, llaveros o piezas para proyectos académicos)"],
+      ["500_1500", "De $500 a $1,500 MXN (llaveros personalizados, soportes QR o figuras pequeñas)"],
+      ["1500_3500", "De $1,500 a $3,500 MXN (lotes de impresión 3D o soluciones digitales básicas)"],
+      ["3500_8000", "De $3,500 a $8,000 MXN (páginas web, catálogos o paquetes físicos y digitales)"],
+      ["8000_15000", "De $8,000 a $15,000 MXN (sistemas de pedidos, catálogos administrables o automatizaciones iniciales)"],
+      ["mas_15000", "Más de $15,000 MXN (desarrollos a medida, procesos especiales o proyectos de mayor alcance)"],
+      ["prefiero_no_indicar", "Prefiero no indicarlo (puedes continuar sin compartir tu presupuesto)"],
+      ["sin_definir", "Aún no lo sé; necesito orientación (te ayudamos a explorar alternativas y costos)"]
     ] }
   ];
 
