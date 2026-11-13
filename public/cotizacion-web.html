@@ -127,6 +127,54 @@
         </label>
       </fieldset>
 
+      <fieldset class="dominio-web">
+        <legend>Dominio y publicación de tu página</legend>
+        <p class="ayuda-cotizacion">El dominio es la dirección de tu página, por ejemplo <strong>tunegocio.com</strong>. No necesitas tener uno para solicitar una cotización.</p>
+        <label class="opcion"><input type="radio" name="situacion_dominio" value="necesito_dominio" checked><span>Necesito un dominio nuevo<small>Te ayudamos a elegir una dirección disponible y a configurarla.</small></span></label>
+        <label class="opcion"><input type="radio" name="situacion_dominio" value="tengo_dominio"><span>Ya tengo un dominio<small>Revisaremos cómo vincularlo con tu nueva página sin perder su propiedad.</small></span></label>
+        <label class="opcion"><input type="radio" name="situacion_dominio" value="orientacion"><span>No estoy seguro; necesito orientación<small>Te explicaremos las opciones antes de contratar.</small></span></label>
+        <label class="dominio-actual" id="campo-dominio-actual" hidden>Nombre de tu dominio actual (opcional)
+          <input name="dominio_actual" type="text" inputmode="url" maxlength="120" placeholder="Ej. tunegocio.com" autocomplete="off">
+        </label>
+        <div class="informacion-dominio">
+          <p><strong>Dominio .com:</strong> referencia de <strong>$700 MXN al año</strong> por registro o renovación y gestión básica, sujeto a disponibilidad y precio del proveedor. Otros tipos de dominio se cotizan por separado.</p>
+          <p><strong>Primer año:</strong> cuando tu propuesta incluya un dominio nuevo, indicaremos expresamente si su primer año está incluido en el precio de desarrollo.</p>
+          <p><strong>Renovaciones:</strong> a partir del segundo año se cobra la renovación del dominio. La operación de la página, su infraestructura, mantenimiento y soporte tienen condiciones y costo anual que se especificarán por separado en tu propuesta, según las funciones contratadas.</p>
+          <p class="nota">No se realiza ningún cobro al enviar esta solicitud. El dominio se registrará solamente después de aprobar la propuesta.</p>
+        </div>
+      </fieldset>
+
+      <section class="condiciones-comerciales" aria-labelledby="titulo-condiciones-web">
+        <h2 id="titulo-condiciones-web">¿Qué sucede después de entregar tu página?</h2>
+        <p>Antes de contratar, conocerás por separado el costo de desarrollo, el dominio y la cuota de operación y mantenimiento. <strong>Enviar este formulario no genera ningún cargo.</strong></p>
+
+        <h3>Renovación anual a partir del segundo año</h3>
+        <p>El primer año del dominio y del servicio técnico podrá estar incluido en el desarrollo <strong>solo cuando así se indique en tu propuesta</strong>. Al renovar, estos conceptos se desglosan:</p>
+        <div class="tabla-cuotas-scroll" role="region" aria-label="Cuotas anuales de dominio y mantenimiento" tabindex="0">
+          <table class="tabla-cuotas">
+            <thead><tr><th scope="col">Servicio</th><th scope="col">Dominio .com</th><th scope="col">Operación y mantenimiento</th><th scope="col">Total anual estimado</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Página informativa o menú básico</th><td>$700</td><td>$1,200</td><td><strong>$1,900</strong></td></tr>
+              <tr><th scope="row">Catálogo o menú administrable</th><td>$700</td><td>$2,400</td><td><strong>$3,100</strong></td></tr>
+              <tr><th scope="row">Sistema con pedidos y administración</th><td>$700</td><td>$4,800</td><td><strong>$5,500</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="nota">Montos de referencia en MXN, antes de IVA cuando corresponda. Suponen dominio .com gestionado por Lapazimpresion3d; otras extensiones, dominios propios y servicios externos se revisan por separado. Los importes definitivos se confirman por escrito en la propuesta.</p>
+
+        <h3>¿Qué cubre el mantenimiento?</h3>
+        <p>Supervisión técnica básica del funcionamiento, revisión de errores, seguridad y respaldos cuando corresponda al tipo de página. En sistemas de pedidos, el plan básico contempla <strong>hasta dos horas al mes de atención de incidencias técnicas ordinarias</strong>, no acumulables, en horario de atención acordado. No incluye atención inmediata 24/7.</p>
+        <p>Cuando tu sitio tenga un panel de administración, podrás gestionar los productos, precios y contenidos habilitados sin solicitar cambios técnicos.</p>
+
+        <h3>Garantía y cambios posteriores</h3>
+        <ul class="condiciones-lista">
+          <li><strong>Garantía de 60 días:</strong> corregimos sin costo errores atribuibles al desarrollo originalmente contratado, conforme al alcance aprobado.</li>
+          <li><strong>Modificaciones adicionales:</strong> cambios de diseño, textos, fotografías, secciones, formularios o funciones nuevas se cotizan por separado, salvo que la propuesta indique expresamente que están incluidos.</li>
+          <li><strong>Sin cambios sorpresa:</strong> te informamos el alcance y costo de cada modificación y solo la realizamos después de tu autorización.</li>
+        </ul>
+        <p class="nota">El mantenimiento no incluye nuevas funcionalidades, rediseños, actualizaciones masivas de contenido ni servicios de terceros. La renovación y sus condiciones se comunican antes del vencimiento; la continuidad se acuerda con el cliente.</p>
+      </section>
+
       <fieldset class="datos">
         <legend>Datos de tu negocio</legend>
         <label>Tu nombre <input name="nombre" autocomplete="name" maxlength="100" required></label>
