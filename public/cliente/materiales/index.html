@@ -20,10 +20,20 @@
   <div class="ficha">
     <p><strong>Folio:</strong> <span id="folio"></span></p>
     <p><strong>Proyecto:</strong> <span id="nombre-proyecto"></span></p>
+    <p><strong>Servicio:</strong> <span id="tipo-proyecto"></span></p>
     <p><strong>Estado:</strong> <span id="estado-proyecto"></span></p>
   </div>
-  <p class="ayuda">Por ahora puedes entregar información escrita. La carga de fotografías, logotipos y documentos se habilitará próximamente.</p>
+  <p class="ayuda">Completa los apartados que correspondan a tu proyecto. Puedes guardar cada uno y volver después. Para referencias visuales, también puedes adjuntar imágenes.</p>
   <div id="secciones"></div>
+  <section class="bloque" aria-labelledby="titulo-imagenes">
+    <h2 id="titulo-imagenes">Fotografías, logotipos y referencias</h2>
+    <p class="mensaje">Adjunta fotografías del logotipo, ejemplos, bocetos o imágenes de referencia. Máximo 30 imágenes JPG, PNG o WebP por proyecto, de hasta 4 MB cada una. Puedes subirlas en varias ocasiones.</p>
+    <label for="imagenes-proyecto">Seleccionar imágenes</label>
+    <input id="imagenes-proyecto" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple>
+    <div class="controles"><button id="subir-imagenes" type="button">Subir imágenes</button><span id="estado-archivos" class="mensaje" role="status"></span></div>
+    <h3>Imágenes recibidas</h3>
+    <ul id="lista-archivos" class="lista-archivos"></ul>
+  </section>
   <button type="button" id="salir" class="secundario">Cerrar acceso en este dispositivo</button>
 </section>
 </main>
