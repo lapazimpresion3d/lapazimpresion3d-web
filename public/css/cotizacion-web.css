@@ -59,8 +59,8 @@
 .condiciones-comerciales h3 { font-size: 1.03rem; line-height: 1.35; margin: 21px 0 9px; color: var(--texto); }
 .condiciones-comerciales p { margin: 0 0 12px; line-height: 1.6; }
 .condiciones-comerciales .nota { font-size: .87rem; color: var(--suave); }
-.tabla-cuotas-scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--borde); border-radius: 9px; background: white; margin: 12px 0; }
-.tabla-cuotas { width: 100%; min-width: 560px; border-collapse: collapse; font-size: .9rem; line-height: 1.4; }
+.tabla-cuotas-contenedor { max-width: 100%; border: 1px solid var(--borde); border-radius: 9px; background: white; margin: 12px 0; overflow: hidden; }
+.tabla-cuotas { width: 100%; border-collapse: collapse; font-size: .9rem; line-height: 1.4; }
 .tabla-cuotas th, .tabla-cuotas td { text-align: left; padding: 10px 12px; vertical-align: top; border-bottom: 1px solid #e5e9f0; }
 .tabla-cuotas thead th { background: #edf2fc; color: #162e5c; font-weight: 750; }
 .tabla-cuotas tbody tr:last-child > * { border-bottom: 0; }
@@ -68,4 +68,20 @@
 .tabla-cuotas td { white-space: nowrap; }
 .condiciones-lista { padding-left: 20px; margin: 8px 0 14px; }
 .condiciones-lista li { margin: 0 0 10px; line-height: 1.55; }
-@media (max-width: 600px) { .condiciones-comerciales { font-size: .95rem; } .tabla-cuotas { font-size: .86rem; } }
+/* Las filas se convierten en tarjetas legibles en teléfonos, sin desplazamiento lateral. */
+.dominio-web .informacion-dominio .dominio-resumen { margin-bottom: 9px; }
+.dominio-puntos { margin: 0 0 12px; padding-left: 20px; }
+.dominio-puntos li { margin: 0 0 8px; line-height: 1.5; }
+.dominio-puntos li::marker { color: var(--titulo); }
+@media (max-width: 680px) {
+  .condiciones-comerciales { font-size: .95rem; }
+  .tabla-cuotas-contenedor { background: transparent; border: 0; overflow: visible; }
+  .tabla-cuotas, .tabla-cuotas tbody, .tabla-cuotas tr, .tabla-cuotas th, .tabla-cuotas td { display: block; width: 100%; box-sizing: border-box; }
+  .tabla-cuotas thead { display: none; }
+  .tabla-cuotas tr { padding: 12px 14px; margin-bottom: 12px; border: 1px solid var(--borde); border-radius: 10px; background: #fff; }
+  .tabla-cuotas tbody th { padding: 0 0 9px; margin-bottom: 6px; border-bottom: 1px solid #e5e9f0; color: var(--titulo); font-size: 1rem; }
+  .tabla-cuotas tbody td { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 5px 12px; padding: 7px 0; white-space: normal; border-bottom: 1px solid #eef0f4; }
+  .tabla-cuotas tbody td::before { content: attr(data-etiqueta); color: var(--suave); font-size: .85rem; flex: 1 1 140px; }
+  .tabla-cuotas tbody td:last-child { border-bottom: 0; color: var(--titulo); font-weight: 800; }
+  .tabla-cuotas tbody tr:last-child { margin-bottom: 0; }
+}
