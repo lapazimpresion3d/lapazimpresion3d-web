@@ -4,126 +4,116 @@
   // Cinco preguntas sobre objetivos y circunstancias, no sobre productos.
   // Los IDs son estables: la futura ficha Quiz JSON debe usar estos campos.
   const preguntas = [
-    { campo: "objetivo", texto: "¿Qué te gustaría conseguir?", opciones: [
+    { campo: "objetivo", texto: "¿Qué te gustaría conseguir principalmente con este proyecto?", opciones: [
       ["dar_a_conocer", "Que más personas conozcan mi negocio o proyecto."],
-      ["mejorar_experiencia", "Ofrecer una mejor experiencia a mis clientes."],
-      ["celebracion", "Preparar algo especial para una celebración."],
-      ["ahorrar_tiempo", "Ahorrar tiempo en tareas que hago manualmente."],
-      ["desarrollar_idea", "Tengo una idea, pero no sé cómo llevarla a cabo."]
+      ["mejorar_experiencia", "Ofrecer una experiencia más fluida y profesional a mis clientes."],
+      ["celebracion", "Preparar algo único y memorable para una celebración o evento."],
+      ["automatizar", "Automatizar tareas repetitivas o gestión de pedidos y citas."],
+      ["destacar", "Destacar frente a la competencia con algo original y diferente."]
     ] },
-    { campo: "situacion", texto: "¿En qué situación te encuentras?", opciones: [
-      ["comenzando", "Estoy comenzando algo nuevo."],
-      ["negocio_existente", "Ya tengo un negocio y quiero mejorarlo."],
-      ["organizando_evento", "Estoy organizando un evento."],
-      ["regalo_detalle", "Quiero preparar un regalo o detalle."],
-      ["explorando", "Estoy explorando posibilidades."]
+    { campo: "situacion", texto: "¿En qué situación te encuentras ahora mismo?", opciones: [
+      ["comenzando", "Estoy comenzando algo nuevo desde cero."],
+      ["negocio_existente", "Ya tengo un negocio en marcha y quiero mejorarlo."],
+      ["organizando_evento", "Estoy organizando un evento especial."],
+      ["regalo_detalle", "Quiero preparar un regalo o detalle personalizado."],
+      ["explorando", "Estoy explorando posibilidades para el futuro."]
     ] },
-    { campo: "contacto_actual", texto: "¿Cómo te relacionas con las personas a las que quieres llegar?", opciones: [
-      ["en_persona", "Principalmente en persona."],
-      ["redes_mensajes", "A través de redes sociales y mensajes."],
-      ["pedidos_citas", "Recibo pedidos, solicitudes o citas."],
-      ["entregar_a_varios", "Estoy preparando algo para entregar a varias personas."],
-      ["sin_forma_definida", "Todavía no tengo una forma definida."]
+    { campo: "contacto_actual", texto: "¿Cómo es el contacto principal con las personas a las que quieres llegar?", opciones: [
+      ["en_persona", "Principalmente en persona: en un local, oficina, stand o cara a cara."],
+      ["internet", "A través de internet: redes sociales, WhatsApp o mensajería digital."],
+      ["reservas_pedidos", "Recibo reservas, pedidos o citas recurrentes."],
+      ["fecha_fija", "Voy a reunir a varias personas o entregar detalles en una fecha fija."],
+      ["sin_canal", "Todavía no tengo un canal definido."]
     ] },
-    { campo: "mejora_deseada", texto: "¿Qué te gustaría mejorar de esa experiencia?", opciones: [
-      ["recordar_marca_evento", "Que recuerden mi marca o mi evento."],
-      ["encontrar_informacion", "Que encuentren información fácilmente."],
-      ["menos_mensajes", "Que puedan solicitar algo sin tantos mensajes."],
-      ["original_personalizado", "Ofrecer algo original y personalizado."],
-      ["organizar_atencion", "Organizar mejor la atención o el trabajo."]
+    { campo: "mejora_deseada", texto: "¿Qué te gustaría mejorar o añadir en esa experiencia?", opciones: [
+      ["recuerdo_fisico", "Que recuerden mi marca o mi evento por un buen detalle físico."],
+      ["acceso_inmediato", "Que accedan a mi menú, catálogo o información al instante."],
+      ["menos_mensajes", "Que puedan solicitar o comprar algo sin depender de tantos mensajes manuales."],
+      ["producto_personalizado", "Ofrecer un producto físico original y 100% personalizado."],
+      ["organizar_trabajo", "Organizar mejor mi tiempo, atención o flujo de trabajo."]
     ] },
-    { campo: "preparacion", texto: "¿Qué tan avanzado tienes tu proyecto?", opciones: [
-      ["diseno_idea", "Ya tengo un diseño o una idea definida."],
-      ["fotos_referencias", "Tengo fotografías o referencias."],
-      ["mejorar_existente", "Tengo algo funcionando, pero quiero mejorarlo."],
-      ["necesita_orientacion", "Necesito ayuda para definir la solución."],
-      ["solo_explorando", "Por ahora solo quiero conocer posibilidades."]
+    { campo: "preparacion", texto: "¿Qué tan avanzado tienes tu proyecto o material de apoyo?", opciones: [
+      ["logo_diseno", "Ya tengo mi logo, diseño o idea bien clara."],
+      ["fotos_referencias", "Tengo fotografías, referencias o un manual básico."],
+      ["presencia_existente", "Ya tengo presencia (redes/web), pero quiero dar el siguiente salto."],
+      ["ayuda_desde_cero", "Necesito que me ayuden a aterrizar la solución desde cero."],
+      ["cotizando", "Por ahora solo estoy cotizando y viendo posibilidades."]
     ] }
   ];
 
   const servicios = {
-    R1: { titulo: "Llaveros y artículos personalizados en 3D", descripcion: "Una forma de crear recuerdos, regalos o detalles distintivos a partir de tu idea, fotografía o diseño.", beneficios: ["Personalización para negocios, eventos o regalos", "Posibilidad de trabajar desde un diseño o referencia", "Opciones según la cantidad y el tipo de pieza"] },
-    R2: { titulo: "Soportes QR personalizados y acceso digital", descripcion: "Una pieza física personalizada que ayuda a las personas a encontrar información desde su teléfono. El contenido puede actualizarse sin cambiar el soporte QR.", beneficios: ["Un acceso visible en mesas o mostradores", "Enlace a información y medios de contacto", "Posibilidad de integrar NFC opcional"] },
-    R3: { titulo: "Página web, menú o catálogo digital", descripcion: "Una manera de reunir y organizar información para que tus clientes la encuentren fácilmente desde su celular.", beneficios: ["Información y servicios en un mismo lugar", "Presentación de productos, fotografías o enlaces", "Fácil de compartir desde redes sociales"] },
-    R4: { titulo: "Solución web para pedidos y organización", descripcion: "Podemos estudiar una página con funciones para gestionar solicitudes, pedidos o citas de acuerdo con la operación real de tu negocio.", beneficios: ["Reduce la repetición de información por mensajes", "Permite definir un flujo de solicitudes", "Puede incorporar herramientas de administración por etapas"] },
-    R5: { titulo: "Proyecto combinado y personalizado", descripcion: "Podemos explorar una combinación de impresión 3D y recursos digitales para dar forma a tu proyecto sin asumir funciones que todavía no has elegido.", beneficios: ["Artículos físicos personalizados", "Información accesible desde un teléfono", "Alcance adaptable a tu idea y presupuesto"] }
+    R1: { titulo: "Llaveros y artículos personalizados en 3D", descripcion: "Convierte tu idea en recuerdos, regalos o piezas promocionales que las personas puedan conservar.", beneficios: ["Diseños personalizados para eventos, negocios y regalos", "Opciones de acabado y cantidad según tu proyecto", "Podemos trabajar a partir de un logotipo, referencia o idea"] },
+    R2: { titulo: "Soportes QR/NFC personalizados", descripcion: "Conecta la atención presencial con la información digital a través de un soporte diseñado para tu negocio.", beneficios: ["Acceso a información desde el teléfono", "Soportes de mesa o mostrador con diseño personalizado", "NFC opcional para teléfonos compatibles"] },
+    R3: { titulo: "Página web, menú o catálogo digital", descripcion: "Presenta tus servicios o productos de manera clara y accesible desde el celular, incluso cuando no puedes contestar mensajes.", beneficios: ["Información organizada para tus visitantes", "Fotografías, descripciones y medios de contacto", "Una dirección web que puedes compartir fácilmente"] },
+    R4: { titulo: "Sistema web personalizado", descripcion: "Estudiamos contigo las tareas que más tiempo consumen para proponer funciones de pedidos, citas o administración adecuadas a tu negocio.", beneficios: ["Flujos de solicitud más ordenados", "Posibilidad de panel de administración", "Funciones implementadas según necesidades y alcance acordados"] },
+    R5: { titulo: "Proyecto combinado: impresión 3D y soluciones digitales", descripcion: "Podemos conectar una pieza física personalizada con una experiencia digital diseñada para el mismo objetivo.", beneficios: ["Un artículo o soporte físico distintivo", "Acceso a información o experiencias desde el teléfono", "Componentes físicos y digitales cotizados según el proyecto"] }
   };
 
+  // Reglas deterministas: las preguntas 3 y 4 pesan x2. La prioridad
+  // funcional evita que R5 se active solo por una suma de señales vagas.
   function obtenerRecomendacion(r) {
-    // Señales ponderadas; ninguna pregunta pide elegir un producto de catálogo.
-    // Una necesidad concreta tiene más peso que un contexto amplio.
     const puntos = { R1: 0, R2: 0, R3: 0, R4: 0, R5: 0 };
-    const sumar = (id, cantidad) => { puntos[id] += cantidad; };
-    const reglas = {
+    const tabla = {
       objetivo: {
-        dar_a_conocer: { R1: 2, R2: 1, R3: 2 },
-        mejorar_experiencia: { R2: 1, R3: 2, R4: 1 },
-        celebracion: { R1: 5 },
-        ahorrar_tiempo: { R4: 5 },
-        desarrollar_idea: { R1: 1, R5: 2 }
+        dar_a_conocer: {R1:2,R3:2,R2:1}, mejorar_experiencia:{R2:1,R3:2,R4:1},
+        celebracion:{R1:5}, automatizar:{R4:6}, destacar:{R1:2,R2:1,R5:1}
       },
       situacion: {
-        comenzando: { R1: 1, R3: 1 },
-        negocio_existente: { R2: 1, R3: 1, R4: 1 },
-        organizando_evento: { R1: 5 },
-        regalo_detalle: { R1: 5 },
-        explorando: { R5: 1 }
+        comenzando:{R1:1,R3:1}, negocio_existente:{R2:1,R3:1,R4:1},
+        organizando_evento:{R1:5}, regalo_detalle:{R1:5}, explorando:{R3:1}
       },
       contacto_actual: {
-        en_persona: { R1: 1, R2: 2 },
-        redes_mensajes: { R3: 2 },
-        pedidos_citas: { R4: 3 },
-        entregar_a_varios: { R1: 3 },
-        sin_forma_definida: { R5: 1 }
+        en_persona:{R1:1,R2:3}, internet:{R3:3}, reservas_pedidos:{R4:4},
+        fecha_fija:{R1:4}, sin_canal:{R3:1}
       },
       mejora_deseada: {
-        recordar_marca_evento: { R1: 5 },
-        encontrar_informacion: { R2: 3, R3: 4 },
-        menos_mensajes: { R4: 5 },
-        original_personalizado: { R1: 4, R5: 1 },
-        organizar_atencion: { R4: 5 }
+        recuerdo_fisico:{R1:5}, acceso_inmediato:{R2:3,R3:4},
+        menos_mensajes:{R4:6}, producto_personalizado:{R1:5}, organizar_trabajo:{R4:6}
       },
       preparacion: {
-        diseno_idea: { R1: 1, R5: 1 },
-        fotos_referencias: { R1: 1, R3: 1 },
-        mejorar_existente: { R3: 1, R4: 1 },
-        necesita_orientacion: { R5: 1 },
-        solo_explorando: { R5: 1 }
+        logo_diseno:{R1:1,R2:1}, fotos_referencias:{R1:1,R3:1},
+        presencia_existente:{R3:1,R4:1}, ayuda_desde_cero:{R3:1}, cotizando:{}
       }
     };
-    for (const [campo, mapa] of Object.entries(reglas)) {
-      const aportes = mapa[r[campo]] || {};
-      for (const [id, cantidad] of Object.entries(aportes)) sumar(id, cantidad);
+    for (const campo of Object.keys(tabla)) {
+      const peso = ["contacto_actual", "mejora_deseada"].includes(campo) ? 2 : 1;
+      for (const [id, valor] of Object.entries(tabla[campo][r[campo]] || {})) puntos[id] += valor*peso;
     }
-
-    // Los eventos, regalos y recuerdos no deben perder frente a señales digitales generales.
-    const ocasion = r.objetivo === "celebracion" || ["organizando_evento", "regalo_detalle"].includes(r.situacion);
-    const operacion = r.objetivo === "ahorrar_tiempo" || ["menos_mensajes", "organizar_atencion"].includes(r.mejora_deseada);
-    const memorabilidad = r.mejora_deseada === "recordar_marca_evento" || r.mejora_deseada === "original_personalizado";
+    const evento = r.objetivo === "celebracion" || ["organizando_evento", "regalo_detalle"].includes(r.situacion);
+    const fisicoExplicito = ["recuerdo_fisico", "producto_personalizado"].includes(r.mejora_deseada);
+    const operativo = r.objetivo === "automatizar" || ["menos_mensajes", "organizar_trabajo"].includes(r.mejora_deseada);
+    const info = r.mejora_deseada === "acceso_inmediato";
+    const presencial = r.contacto_actual === "en_persona";
+    const pedir = r.contacto_actual === "reservas_pedidos";
     let id;
-    if (ocasion && !operacion) id = "R1";
-    else if (operacion) id = "R4";
-    else if (memorabilidad) id = "R1";
+    if (operativo) id = "R4";
+    else if (evento && (fisicoExplicito || r.contacto_actual === "fecha_fija" || !info)) id = "R1";
+    else if (fisicoExplicito) id = "R1";
+    else if (info && presencial) id = "R2";
+    else if (info || r.contacto_actual === "internet") id = "R3";
+    else if (pedir) id = "R4";
     else {
-      // Selección estable en empates: servicio específico antes que uno combinado.
-      const orden = ["R3", "R2", "R1", "R4", "R5"];
-      id = orden.reduce((mejor, candidato) => puntos[candidato] > puntos[mejor] ? candidato : mejor);
-      // Dos necesidades respaldadas y equilibradas justifican valorar una combinación.
-      const fisico = puntos.R1 + puntos.R2;
-      const digital = puntos.R3 + puntos.R4;
-      if (fisico >= 5 && digital >= 5 && Math.abs(fisico - digital) <= 2 && !["pedidos_citas"].includes(r.contacto_actual)) id = "R5";
+      const preferencia = ["R1", "R3", "R2", "R4"];
+      id = preferencia.reduce((mejor, candidato) => puntos[candidato] > puntos[mejor] ? candidato : mejor);
     }
+    // R5 solo se recomienda cuando hay evidencia independiente y explícita
+    // de necesidad física Y digital; no por organizar una celebración.
+    const fisico = fisicoExplicito || (evento && r.contacto_actual === "fecha_fija");
+    const digital = info || operativo || (r.objetivo === "mejorar_experiencia" && r.contacto_actual === "internet");
+    if (fisico && digital && !operativo && !evento) id = "R5";
     const base = servicios[id];
     let complemento = null;
-    if (id === "R1" && r.objetivo === "dar_a_conocer") complemento = "Si quieres compartir además tu información, podemos valorar una página digital o un QR como complemento.";
-    else if (id === "R3" && r.contacto_actual === "en_persona") complemento = "Si atiendes en un local, un soporte QR personalizado puede facilitar el acceso a esa información.";
-    else if (id === "R4" && r.contacto_actual === "en_persona") complemento = "Podemos estudiar un acceso por QR desde el mostrador o las mesas, si resulta útil.";
-    else if (id === "R5") complemento = "Antes de elegir componentes, revisaremos contigo qué parte debe ser física y cuál digital.";
-    return { id, titulo: base.titulo, descripcion: base.descripcion, beneficios: [...base.beneficios], complemento, demo: null };
+    if (id === "R1" && evento) complemento = "También podemos integrar NFC en los recuerdos para enlazar una galería de fotos y videos, redes sociales o una página del evento con mensajes de invitados. La página y sus funciones se cotizan aparte; cualquier publicación de mensajes requiere moderación y privacidad.";
+    else if (id === "R1" && r.objetivo === "dar_a_conocer") complemento = "Podemos añadir NFC o un QR que lleve a tus redes o a una página de contacto.";
+    else if (id === "R2") complemento = "Si todavía no tienes un destino digital, podemos crear una página, menú o catálogo para enlazarlo al soporte.";
+    else if (id === "R3" && presencial) complemento = "Un soporte QR para mostrador o mesa puede facilitar el acceso a la página.";
+    else if (id === "R4" && presencial) complemento = "Podemos explorar códigos QR de mesa o mostrador cuando encajen con tu operación.";
+    else if (id === "R5") complemento = "Definiremos por separado el diseño físico y la función digital, para que elijas qué incluir.";
+    return {id, titulo:base.titulo, descripcion:base.descripcion, beneficios:[...base.beneficios], complemento, demo:null};
   }
 
-  // Estructura de intercambio compartida con Arquitecto / Jan AI (esquema 2.0).
-  const VERSION_FICHA_QUIZ = "2.0";
+  // Estructura del diagnóstico privado (esquema 3.0).
+  const VERSION_FICHA_QUIZ = "3.0";
   const TIPO_FICHA_QUIZ = "ficha_quiz";
   const WHATSAPP_COMERCIAL = "526121999963"; // Mismo número que los CTA existentes del sitio.
   // URL ya utilizada en el botón de demostración de la página principal.
@@ -152,26 +142,11 @@
     };
   }
 
-  function descargarFichaQuiz(r) {
-    const ficha = crearFichaDiagnostico(r);
-    const contenido = JSON.stringify(ficha, null, 2) + "\n";
-    const archivo = new Blob([contenido], { type: "application/json;charset=utf-8" });
-    const url = URL.createObjectURL(archivo);
-    const enlace = document.createElement("a");
-    enlace.href = url;
-    enlace.download = `lapazimpresion3d-ficha-quiz-${ficha.fecha_generacion.slice(0, 10)}.json`;
-    enlace.hidden = true;
-    document.body.append(enlace);
-    enlace.click();
-    enlace.remove();
-    // El navegador necesita completar el inicio de la descarga antes de liberar el recurso.
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-
-  function construirMensajeWhatsApp(r) {
+  function construirMensajeWhatsApp(r, referencia) {
     const ficha = crearFichaDiagnostico(r);
     const lineas = [
       "Hola, visité Lapazimpresion3d y respondí el cuestionario.",
+      ...(referencia ? [`Referencia de mi diagnóstico: ${referencia}`] : []),
       "",
       "Mis respuestas:"
     ];
@@ -202,9 +177,15 @@
   const cerrar = document.getElementById("quiz-cerrar");
   const respuestas = Object.create(null);
   let paso = 0;
+  let idSolicitud = null;
+  function obtenerIdSolicitud() {
+    if (!idSolicitud && typeof crypto !== "undefined" && crypto.randomUUID) idSolicitud = crypto.randomUUID();
+    return idSolicitud;
+  }
 
   function limpiarRespuestas() {
     Object.keys(respuestas).forEach((clave) => delete respuestas[clave]);
+    idSolicitud = null;
   }
   function etiquetaDe(pregunta, valor) {
     return pregunta.opciones.find(([id]) => id === valor)?.[1] || "Sin responder";
@@ -283,7 +264,8 @@
     const enlaceWhatsApp = document.createElement("a");
     enlaceWhatsApp.className = "quiz-accion-whatsapp";
     enlaceWhatsApp.textContent = "Solicitar propuesta por WhatsApp";
-    enlaceWhatsApp.href = `https://wa.me/${WHATSAPP_COMERCIAL}?text=${encodeURIComponent(construirMensajeWhatsApp(respuestas))}`;
+    const referencia = obtenerIdSolicitud();
+    enlaceWhatsApp.href = `https://wa.me/${WHATSAPP_COMERCIAL}?text=${encodeURIComponent(construirMensajeWhatsApp(respuestas, referencia))}`;
     enlaceWhatsApp.target = "_blank";
     enlaceWhatsApp.rel = "noopener noreferrer";
     const avisoWhatsApp = document.createElement("p");
@@ -299,16 +281,24 @@
       enlaceDemo.rel = "noopener noreferrer";
       acciones.append(enlaceDemo);
     }
-    const botonDescarga = document.createElement("button");
-    botonDescarga.type = "button";
-    botonDescarga.className = "quiz-accion-secundaria";
-    botonDescarga.textContent = "Descargar mi diagnóstico (JSON)";
-    botonDescarga.addEventListener("click", () => descargarFichaQuiz(respuestas));
-    const notaDescarga = document.createElement("p");
-    notaDescarga.className = "quiz-aviso-whatsapp";
-    notaDescarga.textContent = "Archivo para conservar tus respuestas o compartirlo con nosotros. No incluye datos personales ni se envía automáticamente.";
-    acciones.append(enlaceWhatsApp, avisoWhatsApp);
-    acciones.append(botonDescarga, notaDescarga);
+    const avisoRegistro = document.createElement("p");
+    avisoRegistro.className = "quiz-aviso-whatsapp";
+    avisoRegistro.textContent = "Al solicitar una propuesta, intentaremos registrar tus cinco respuestas sin nombre ni teléfono para revisar tu diagnóstico. El mensaje de WhatsApp solo se envía si tú lo confirmas.";
+    acciones.append(enlaceWhatsApp, avisoWhatsApp, avisoRegistro);
+    // Guardar una vez al pulsar el CTA, sin bloquear la apertura de WhatsApp.
+    // Sin Worker/D1 configurados no se registra nada: WhatsApp sigue funcionando.
+    let registroIniciado = false;
+    enlaceWhatsApp.addEventListener("click", () => {
+      if (registroIniciado) return;
+      registroIniciado = true;
+      const ficha = crearFichaDiagnostico(respuestas);
+      ficha.id_diagnostico = referencia;
+      const cuerpo = JSON.stringify(ficha);
+      fetch("/api/quiz/solicitudes", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: cuerpo, keepalive: true, credentials: "omit"
+      }).catch(() => { /* No bloquear WhatsApp si el servidor no está listo. */ });
+    });
     contenido.append(acciones);
     anterior.disabled = false;
     enfocar();
@@ -334,6 +324,7 @@
       boton.textContent = etiqueta;
       boton.setAttribute("aria-pressed", String(respuestas[pregunta.campo] === id));
       boton.addEventListener("click", () => {
+        if (respuestas[pregunta.campo] !== id) idSolicitud = null;
         respuestas[pregunta.campo] = id;
         paso += 1;
         mostrarPaso();
@@ -364,5 +355,5 @@
     botonInicio.setAttribute("aria-expanded", "false");
     botonInicio.focus();
   });
-  // La exportación se genera en el navegador; no hay almacenamiento ni envío automático.
+  // El JSON queda como formato interno. La captura requiere Worker + D1 configurados.
 })();
