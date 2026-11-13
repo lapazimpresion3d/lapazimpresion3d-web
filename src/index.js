@@ -469,6 +469,24 @@ async function api(request,env,ctx) {
     if(request.method==="POST" && !sameOrigin(request)) return error("Origen no autorizado",403);
     if(path==="/api/admin/sesion" && request.method==="GET") return json({ok:true});
     if(path==="/api/admin/salir" && request.method==="POST") return json({ok:true},200,{"set-cookie":"lp3d_session=; Path=/api/admin; Max-Age=0; HttpOnly; Secure; SameSite=Strict"});
+    // Consulta administrativa de materiales recibidos sin exponer R2 públicamente.
+    const materialesAdmin=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/materiales$/i);
+    if(materialesAdmin && request.method==="GET"){
+      const p=await env.QUIZ_DB.prepare("SELECT p.id,q.folio FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.id=?1").bind(materialesAdmin[1]).first();
+      if(!p)return error("Proyecto no encontrado",404);
+      const sec=await env.QUIZ_DB.prepare("SELECT clave,contenido,estado,fecha_actualizacion FROM proyecto_secciones WHERE proyecto_id=?1").bind(p.id).all();
+      const archivos=await env.QUIZ_DB.prepare("SELECT id,nombre_original,tipo_mime,tamano_bytes,fecha_subida FROM proyecto_archivos WHERE proyecto_id=?1 ORDER BY fecha_subida DESC").bind(p.id).all();
+      return json({folio:p.folio,secciones:sec.results,archivos:archivos.results});
+    }
+    const imagenAdmin=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/archivos\/([0-9a-f-]{36})$/i);
+    if(imagenAdmin && request.method==="GET"){
+      if(!env.COTIZACIONES_R2)return error("Almacenamiento no configurado",503);
+      const a=await env.QUIZ_DB.prepare("SELECT clave_r2,tipo_mime FROM proyecto_archivos WHERE proyecto_id=?1 AND id=?2").bind(imagenAdmin[1],imagenAdmin[2]).first();
+      if(!a)return error("Imagen no encontrada",404);
+      const objeto=await env.COTIZACIONES_R2.get(a.clave_r2);
+      if(!objeto)return error("Imagen no encontrada",404);
+      return new Response(objeto.body,{headers:{"Content-Type":a.tipo_mime,"Content-Disposition":`inline; filename="referencia.${IMG_MIME[a.tipo_mime]||"jpg"}"`,"Cache-Control":"private,no-store","X-Content-Type-Options":"nosniff","Content-Security-Policy":"default-src 'none'; sandbox"}});
+    }
     // Emitir o revocar un acceso individual; un token existente no puede recuperarse de D1.
     const accesoProyecto=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/acceso$/i);
     if(accesoProyecto && request.method==="POST") {
