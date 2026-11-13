@@ -30,7 +30,7 @@
     <a class="regreso" href="index.html#paginas-web">← Servicios digitales</a>
   <section id="cotizacion-web" aria-labelledby="titulo-cotizacion">
     <p class="introduccion">Elige el tipo de sitio que necesita tu negocio y las funciones que te gustaría incluir. Con esos datos podremos preparar una propuesta a la medida.</p>
-    <p class="caja aviso-cotizacion">Completa el formulario, revisa tu mensaje y envíalo desde tu cuenta de WhatsApp.</p>
+    <p class="caja aviso-cotizacion">Completa el formulario y registra tu solicitud directamente. Recibirás un folio de seguimiento; no es necesario enviarla por WhatsApp.</p>
     <form id="form-web" class="caja web" hidden>
       <fieldset>
         <legend>Tipo de página</legend>
@@ -129,27 +129,35 @@
 
       <fieldset class="datos">
         <legend>Datos de tu negocio</legend>
+        <label>Tu nombre <input name="nombre" autocomplete="name" maxlength="100" required></label>
         <label>Nombre del negocio <input name="negocio" autocomplete="organization" maxlength="100" required></label>
         <label>Giro <input name="giro" maxlength="80" placeholder="Ej. cafetería" required></label>
         <label>WhatsApp de contacto <input type="tel" name="telefono" autocomplete="tel" maxlength="25" pattern="\+?[0-9](?:[0-9\s.\(\)\-]*[0-9])?" aria-describedby="ayuda-telefono" required></label>
-        <small id="ayuda-telefono">Escribe tu número con 10 a 15 dígitos. Puedes incluir el código de país.</small>
+        <small id="ayuda-telefono">Escribe tu número de México a 10 dígitos; puedes anteponer +52.</small>
         <label>Cuéntanos qué necesitas <textarea name="detalles" rows="4" maxlength="500" placeholder="Ej. Quiero mostrar mi menú con fotos y recibir pedidos para recoger." required></textarea></label>
       </fieldset>
 
+      <label class="privacidad-web"><input type="checkbox" name="privacidad" required> Leí y acepto el <a href="aviso-privacidad.html" target="_blank" rel="noopener noreferrer">aviso de privacidad</a> para el tratamiento de mis datos y atención de esta solicitud.</label>
       <button type="submit" class="accion">Revisar solicitud <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#flecha"/></svg></button>
     </form>
     <noscript><p>Para preparar tu solicitud, activa JavaScript o <a href="https://wa.me/526121999963">escríbenos por WhatsApp</a>.</p></noscript>
 
     <div id="revision-web" class="caja web" hidden>
       <h2 id="titulo-revision" tabindex="-1">Revisa tu solicitud</h2>
-      <label class="mensaje-web">Mensaje para WhatsApp
-        <textarea id="mensaje-web" rows="12" maxlength="2600" required></textarea>
-      </label>
-      <p class="nota">Puedes editar este mensaje antes de abrir WhatsApp. Una vez allí, pulsa Enviar para completar la solicitud.</p>
+      <pre id="resumen-web" class="resumen-web"></pre>
+      <p class="nota">Tu información se guardará en nuestro panel privado para preparar una propuesta. No se generará una cotización automática.</p>
+      <p id="error-web" role="alert" hidden></p>
       <div class="acciones">
-        <a class="accion" id="abrir-whatsapp" href="https://wa.me/526121999963" target="_blank" rel="noopener noreferrer">Continuar a WhatsApp <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#mensaje"/></svg></a>
+        <button type="button" class="accion" id="enviar-solicitud-web">Enviar solicitud <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#flecha"/></svg></button>
         <button type="button" class="accion secundaria" id="editar-cotizacion">Volver al formulario</button>
       </div>
+    </div>
+    <div id="confirmacion-web" class="caja web confirmacion-web" hidden role="status" tabindex="-1">
+      <h2>Solicitud registrada correctamente</h2>
+      <p>Recibimos tu solicitud de página web. Conserva este folio para darle seguimiento:</p>
+      <p class="folio-web" id="folio-web"></p>
+      <p>Revisaremos los detalles y nos comunicaremos contigo por el WhatsApp que proporcionaste.</p>
+      <a class="accion secundaria" href="index.html">Volver al inicio</a>
     </div>
   </section>
 

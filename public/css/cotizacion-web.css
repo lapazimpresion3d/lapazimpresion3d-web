@@ -41,3 +41,5 @@
   font-weight: var(--peso-negrita);
 }
 .envoltura-cotizacion > section { margin-top: 18px; }
+
+.privacidad-web{display:flex;align-items:flex-start;gap:10px;line-height:1.45;margin:16px 0}.privacidad-web input{width:19px;height:19px;flex:none;margin-top:3px}.privacidad-web a{color:#174ab8;text-decoration:underline}.resumen-web{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;background:#f7f8fb;border:1px solid #d9dde6;border-radius:10px;padding:16px;line-height:1.6}.folio-web{font-size:clamp(1.5rem,4vw,2rem);font-weight:800;letter-spacing:.04em;color:#174ab8;overflow-wrap:anywhere}.confirmacion-web{padding:clamp(20px,4vw,36px)!important}.confirmacion-web h2{color:#174ab8}#error-web{color:#a11228;font-weight:700}#enviar-solicitud-web:disabled{opacity:.6;cursor:wait}

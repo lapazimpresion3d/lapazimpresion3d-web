@@ -36,19 +36,13 @@ function recomendacionEsperada(r) {
   const operativo = r.objetivo === "automatizar" || ["menos_mensajes","organizar_trabajo"].includes(r.mejora_deseada);
   const info = r.mejora_deseada === "acceso_inmediato";
   const presencial = r.contacto_actual === "en_persona";
-  // Un único detalle técnico no puede desplazar objetivos de evento o negocio.
-  const contextoMecanico = r.situacion === "pieza_reproducir"
-    || (r.situacion === "modelo_fabricar" && [r.preparacion === "medidas_modelo", r.contacto_actual === "uso_funcional", r.mejora_deseada === "ajuste_resistencia"].some(Boolean))
-    || (r.contacto_actual === "uso_funcional" && (r.mejora_deseada === "ajuste_resistencia" || r.preparacion === "medidas_modelo"))
-    || (r.mejora_deseada === "ajuste_resistencia" && r.preparacion === "medidas_modelo");
-  const contextoFigura = (r.situacion === "modelo_fabricar" && (r.preparacion === "referencia_figura" || r.contacto_actual === "pieza_visual" || r.mejora_deseada === "detalle_acabado"))
-    || (r.contacto_actual === "pieza_visual" && (r.mejora_deseada === "detalle_acabado" || r.preparacion === "referencia_figura"))
-    || (r.mejora_deseada === "detalle_acabado" && r.preparacion === "referencia_figura");
-  const funcional = r.objetivo === "pieza_funcional" || (!evento && !operativo && contextoMecanico);
-  const figura = r.objetivo === "figura_detallada" || (!evento && !operativo && contextoFigura);
+  const funcional = r.objetivo === "pieza_funcional" || r.situacion === "pieza_reproducir" || r.contacto_actual === "uso_funcional" || r.mejora_deseada === "ajuste_resistencia";
+  const figura = r.objetivo === "figura_detallada" || r.contacto_actual === "pieza_visual" || r.mejora_deseada === "detalle_acabado";
   let id;
   if(funcional) id="R6";
   else if(figura) id="R7";
+  else if(r.situacion === "modelo_fabricar" && r.preparacion === "medidas_modelo") id="R6";
+  else if(r.situacion === "modelo_fabricar" && r.preparacion === "referencia_figura") id="R7";
   else if(operativo) id="R4";
   else if(evento && (fisicoExplicito || r.contacto_actual === "fecha_fija" || !info)) id="R1";
   else if(fisicoExplicito) id="R1";
@@ -154,15 +148,51 @@ function normalizarFicha(data,id) {
 function contactoValido(c) {
  return c && typeof c==="object" && !Array.isArray(c) && typeof c.nombre==="string" && c.nombre.trim().length>=2 && c.nombre.trim().length<=100 && typeof c.proyecto==="string" && c.proyecto.length<=120 && typeof c.telefono==="string" && /^\d{10}$/.test(c.telefono) && typeof c.comentario==="string" && c.comentario.length<=800;
 }
+
+// Solicitudes directas de la sección «Cotiza tu página web».
+// Reutiliza quiz_propuestas sin cambiar el esquema D1 ni alterar la ruta del cuestionario.
+const WEB_TIPOS = new Set(["Página de contacto digital", "Página web para mi negocio", "Menú digital para restaurantes", "Catálogo de productos para comercios"]);
+const WEB_FUNCIONES = new Set(["Carrito y pedidos desde la página", "Pedidos por WhatsApp", "Efectivo y transferencias con registro manual", "Cotizar integración de pagos en línea con tarjeta", "Pedidos para recoger o a domicilio", "Pedidos desde las mesas", "Reservaciones y agenda", "Panel privado", "Pantalla de cocina y comandas", "Seguimiento de pedidos", "Reportes de pedidos y cobros"]);
+const WEB_COMPLEMENTOS = new Set(["Código QR para la página", "Soportes QR o llaveros con NFC opcional", "Carga inicial de productos, precios y fotografías", "Configuración inicial para buscadores y aviso de privacidad", "Capacitación para administrar la página"]);
+function textoWeb(v,min,max) {return typeof v==='string' && v.trim().length>=min && v.trim().length<=max;}
+function listaWeb(v,permitidos) {return Array.isArray(v) && v.length<=permitidos.size && v.every(x=>typeof x==='string' && permitidos.has(x)) && new Set(v).size===v.length;}
+function solicitudWebValida(d) {
+ return d && typeof d==='object' && !Array.isArray(d) &&
+   textoWeb(d.nombre,2,100) && textoWeb(d.negocio,2,100) && textoWeb(d.giro,2,80) &&
+   typeof d.telefono==='string' && /^\d{10}$/.test(d.telefono) &&
+   WEB_TIPOS.has(d.tipo_pagina) && listaWeb(d.funciones,WEB_FUNCIONES) &&
+   listaWeb(d.complementos,WEB_COMPLEMENTOS) && textoWeb(d.detalles,5,500) &&
+   d.acepta_privacidad===true;
+}
+
 async function notificarPropuesta(env,folio) {
  if(!env.RESEND_API_KEY || !env.NOTIFY_EMAIL || !env.EMAIL_FROM) return;
- const link=`https://lapazimpresion3d-web.lapazimpresion3d.workers.dev/admin/`;
+ const link=`https://lapazimpresion3d.com/admin/`;
  const res=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":`Bearer ${env.RESEND_API_KEY}`,"Content-Type":"application/json","Idempotency-Key":`quiz-${folio}`},body:JSON.stringify({from:env.EMAIL_FROM,to:[env.NOTIFY_EMAIL],subject:`Nueva solicitud Lapazimpresion3d · ${folio}`,text:`Se registró una solicitud de propuesta: ${folio}.\nConsúltala en el panel privado: ${link}\nEl correo no contiene datos personales.`})});
  if(!res.ok) console.error("No se envió el aviso de propuesta",res.status);
 }
 async function api(request,env,ctx) {
   const url=new URL(request.url), path=url.pathname;
   if(!env.QUIZ_DB) return error("Base de datos no configurada",503);
+  if(path==="/api/web/propuestas" && request.method==="POST") {
+    if(!sameOrigin(request)) return error("Origen no autorizado",403);
+    if(!await verificarLimite(request,env,"propuesta_web",6,3600)) return error("Demasiadas solicitudes. Intenta más tarde.",429);
+    const d=await leerJson(request,6000);
+    if(!solicitudWebValida(d)) return error("Revisa los datos del formulario y acepta el aviso de privacidad.",400);
+    const id=crypto.randomUUID(), fecha=new Date().toISOString();
+    const folio=`WEB-${id.replace(/-/g,"").slice(0,10).toUpperCase()}`;
+    const ficha={
+      tipo_documento:"solicitud_web",version_esquema:"1.0",id_solicitud:id,
+      origen:"cotiza_pagina_web",fecha_generacion:fecha,
+      tipo_pagina:d.tipo_pagina,funciones:d.funciones,complementos:d.complementos,
+      giro:d.giro,detalles:d.detalles,estado:"orientativa"
+    };
+    const result=await env.QUIZ_DB.prepare("INSERT INTO quiz_propuestas (id,folio,fecha,nombre,proyecto,telefono,comentario,servicio_id,ficha_json,estado,privacidad_aceptada) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,'nueva',1)")
+      .bind(id,folio,fecha,d.nombre.trim(),d.negocio.trim(),d.telefono,d.detalles.trim(),"WEB",JSON.stringify(ficha)).run();
+    if(result.meta.changes!==1) return error("No se pudo registrar la solicitud",500);
+    if(ctx?.waitUntil) ctx.waitUntil(notificarPropuesta(env,folio).catch(e=>console.error("Aviso por correo",e)));
+    return json({ok:true,folio},201);
+  }
   if(path==="/api/quiz/propuestas" && request.method==="POST") {
     if(!sameOrigin(request)) return error("Origen no autorizado",403);
     if(!await verificarLimite(request,env,"propuesta",6,3600)) return error("Demasiadas solicitudes. Intenta más tarde.",429);

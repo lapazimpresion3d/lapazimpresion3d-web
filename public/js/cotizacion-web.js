@@ -31,68 +31,87 @@ formularioWeb.addEventListener('change', actualizarFunciones);
 window.addEventListener('pageshow', actualizarFunciones);
 
 const telefonoWeb = formularioWeb.elements.telefono;
-telefonoWeb.addEventListener('input', () => telefonoWeb.setCustomValidity(''));
+const confirmacionWeb = document.querySelector('#confirmacion-web');
+const errorWeb = document.querySelector('#error-web');
+const botonEnviar = document.querySelector('#enviar-solicitud-web');
+const resumenWeb = document.querySelector('#resumen-web');
+let datosPendientes = null;
 
-for (const nombre of ['negocio', 'giro', 'detalles']) {
-  const campo = formularioWeb.elements[nombre];
-  campo.addEventListener('input', () => campo.setCustomValidity(''));
+function telefonoMexicano(valor) {
+  let d = valor.replace(/\D/g, '');
+  if (d.length === 12 && d.startsWith('52')) d = d.slice(2);
+  else if (d.length === 13 && d.startsWith('521')) d = d.slice(3);
+  return /^\d{10}$/.test(d) ? d : null;
 }
 
 formularioWeb.addEventListener('submit', (evento) => {
   evento.preventDefault();
-  for (const nombre of ['negocio', 'giro', 'detalles']) {
-    const campo = formularioWeb.elements[nombre];
-    campo.setCustomValidity(campo.value.trim() ? '' : 'Completa este campo.');
-  }
-  const digitos = telefonoWeb.value.replace(/\D/g, '').length;
-  telefonoWeb.setCustomValidity(digitos >= 10 && digitos <= 15 ? '' : 'Escribe un número de 10 a 15 dígitos.');
+  const telefono = telefonoMexicano(telefonoWeb.value);
+  telefonoWeb.setCustomValidity(telefono ? '' : 'Escribe un número mexicano válido de 10 dígitos.');
   if (!formularioWeb.reportValidity()) return;
-
-  const datos = new FormData(formularioWeb);
-  const lista = (nombre) => datos.getAll(nombre).join('\n- ');
+  const f = new FormData(formularioWeb);
+  datosPendientes = {
+    nombre: String(f.get('nombre') || '').trim(),
+    negocio: String(f.get('negocio') || '').trim(),
+    giro: String(f.get('giro') || '').trim(),
+    telefono,
+    tipo_pagina: String(f.get('tipo') || ''),
+    funciones: f.getAll('funciones').map(String),
+    complementos: f.getAll('complementos').map(String),
+    detalles: String(f.get('detalles') || '').trim(),
+    acepta_privacidad: f.get('privacidad') === 'on'
+  };
   const lineas = [
-    'Hola, quiero solicitar una cotización para una página web.',
-    '',
-    `Negocio: ${datos.get('negocio').trim()}`,
-    `Giro: ${datos.get('giro').trim()}`,
-    `WhatsApp de contacto: ${datos.get('telefono').trim()}`,
-    `Tipo de página: ${datos.get('tipo')}`
+    `Nombre: ${datosPendientes.nombre}`,
+    `Negocio: ${datosPendientes.negocio}`,
+    `Giro: ${datosPendientes.giro}`,
+    `WhatsApp: ${datosPendientes.telefono}`,
+    `Tipo de página: ${datosPendientes.tipo_pagina}`,
+    `Funciones: ${datosPendientes.funciones.join('; ') || 'Ninguna'}`,
+    `Complementos: ${datosPendientes.complementos.join('; ') || 'Ninguno'}`,
+    `Descripción: ${datosPendientes.detalles}`
   ];
-  if (lista('funciones')) lineas.push('', `Funciones:\n- ${lista('funciones')}`);
-  if (lista('complementos')) lineas.push('', `Complementos:\n- ${lista('complementos')}`);
-  lineas.push('', `Lo que necesito: ${datos.get('detalles').trim()}`);
-
-  mensajeWeb.setCustomValidity('');
-  mensajeWeb.value = lineas.join('\n');
+  resumenWeb.textContent = lineas.join('\n');
+  errorWeb.hidden = true;
   formularioWeb.hidden = true;
   revisionWeb.hidden = false;
   document.querySelector('#titulo-revision').focus();
 });
 
-mensajeWeb.addEventListener('input', () => mensajeWeb.setCustomValidity(''));
+telefonoWeb.addEventListener('input', () => telefonoWeb.setCustomValidity(''));
 
-document.querySelector('#abrir-whatsapp').addEventListener('click', (evento) => {
-  const mensaje = mensajeWeb.value.trim();
-  mensajeWeb.setCustomValidity(mensaje ? '' : 'Escribe el mensaje que quieres enviar.');
-  if (!mensajeWeb.reportValidity()) {
-    evento.preventDefault();
-    return;
-  }
-
-  const enlace = evento.currentTarget;
-  const destino = new URL(enlace.href);
-  destino.searchParams.set('text', mensaje);
-  enlace.href = destino.href;
-});
-
-function mostrarFormulario() {
+document.querySelector('#editar-cotizacion').addEventListener('click', () => {
+  if (botonEnviar.disabled) return;
   revisionWeb.hidden = true;
   formularioWeb.hidden = false;
-  (formularioWeb.querySelector('[name="tipo"]:checked') ||
-    formularioWeb.querySelector('[name="tipo"]')).focus();
-}
+  formularioWeb.querySelector('[name="tipo"]:checked')?.focus();
+});
 
-document.querySelector('#editar-cotizacion').addEventListener('click', mostrarFormulario);
+botonEnviar.addEventListener('click', async () => {
+  if (!datosPendientes || botonEnviar.disabled) return;
+  botonEnviar.disabled = true;
+  botonEnviar.textContent = 'Registrando solicitud…';
+  errorWeb.hidden = true;
+  try {
+    const res = await fetch('/api/web/propuestas', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(datosPendientes)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok || !data.folio) throw new Error(data.error || 'No pudimos registrar tu solicitud. Intenta nuevamente.');
+    document.querySelector('#folio-web').textContent = data.folio;
+    revisionWeb.hidden = true;
+    confirmacionWeb.hidden = false;
+    confirmacionWeb.focus();
+  } catch (error) {
+    errorWeb.textContent = error.message || 'No se pudo registrar la solicitud.';
+    errorWeb.hidden = false;
+  } finally {
+    botonEnviar.disabled = false;
+    botonEnviar.textContent = 'Enviar solicitud';
+  }
+});
 
 actualizarFunciones();
 formularioWeb.hidden = false;

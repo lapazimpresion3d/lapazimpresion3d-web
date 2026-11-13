@@ -119,8 +119,8 @@ function celdaCSV(valor) {
 }
 function exportarPropuestasCSV(){
  if(!propuestasVisibles.length){estadoPropuestas.textContent="No hay resultados visibles para exportar.";return;}
- const cabeceras=["Folio","Fecha","Estado","Nombre","Proyecto","WhatsApp","Comentario","Recomendación","Complemento"];
- const filas=propuestasVisibles.map(x=>[x.folio,x.fecha,x.estado,x.nombre,x.proyecto,x.telefono,x.comentario,x.ficha?.recomendacion?.titulo,x.ficha?.recomendacion?.complemento_sugerido]);
+ const cabeceras=["Folio","Fecha","Estado","Nombre","Proyecto","WhatsApp","Comentario","Recomendación","Complemento","Origen","Tipo de página","Giro","Funciones","Complementos"];
+ const filas=propuestasVisibles.map(x=>[x.folio,x.fecha,x.estado,x.nombre,x.proyecto,x.telefono,x.comentario,x.ficha?.recomendacion?.titulo,x.ficha?.recomendacion?.complemento_sugerido,x.ficha?.origen||"cuestionario",x.ficha?.tipo_pagina||"",x.ficha?.giro||"",(x.ficha?.funciones||[]).join("; "),(x.ficha?.complementos||[]).join("; ")]);
  const csv="\uFEFF"+[cabeceras,...filas].map(f=>f.map(celdaCSV).join(",")).join("\r\n")+"\r\n";
  const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
  const a=document.createElement("a");a.href=url;a.download="solicitudes-lapazimpresion3d.csv";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -142,11 +142,21 @@ async function cargarPropuestas(){
    const datos=elem("dl");
    for(const [t,v] of [["Proyecto",x.proyecto||"Sin indicar"],["WhatsApp",x.telefono],["Comentario",x.comentario||"Sin comentarios"]]){datos.append(elem("dt",null,t),elem("dd",null,v));}
    art.append(datos);
-   const rec=x.ficha?.recomendacion||{};
-   const box=elem("section","resultado-diagnostico");box.append(elem("p","resultado-etiqueta","RECOMENDACIÓN"),elem("h3",null,rec.titulo||"Sin recomendación"));
-   if(rec.complemento_sugerido)box.append(elem("p",null,rec.complemento_sugerido));art.append(box);
-   const det=elem("details");det.append(elem("summary",null,"Ver cinco respuestas"));const dl=elem("dl");
-   for(const [c,t] of Object.entries(nombres)){dl.append(elem("dt",null,t),elem("dd",null,etiquetas[x.ficha?.respuestas?.[c]]||x.ficha?.respuestas?.[c]||"Sin respuesta"));}det.append(dl);art.append(det);
+   const esWeb=x.ficha?.tipo_documento==="solicitud_web";
+   const box=elem("section","resultado-diagnostico");
+   if(esWeb){
+     box.append(elem("p","resultado-etiqueta","COTIZACIÓN WEB · SOLICITUD DIRECTA"),elem("h3",null,x.ficha.tipo_pagina));
+     const detWeb=elem("dl");
+     for(const [t,v] of [["Giro",x.ficha.giro],["Funciones solicitadas",(x.ficha.funciones||[]).join(" · ")||"Ninguna"],["Complementos",(x.ficha.complementos||[]).join(" · ")||"Ninguno"]]) detWeb.append(elem("dt",null,t),elem("dd",null,v));
+     box.append(detWeb);
+   } else {
+     const rec=x.ficha?.recomendacion||{};
+     box.append(elem("p","resultado-etiqueta","RECOMENDACIÓN DEL CUESTIONARIO"),elem("h3",null,rec.titulo||"Sin recomendación"));
+     if(rec.complemento_sugerido)box.append(elem("p",null,rec.complemento_sugerido));
+     const det=elem("details");det.append(elem("summary",null,"Ver cinco respuestas"));const dl=elem("dl");
+     for(const [c,t] of Object.entries(nombres)){dl.append(elem("dt",null,t),elem("dd",null,etiquetas[x.ficha?.respuestas?.[c]]||x.ficha?.respuestas?.[c]||"Sin respuesta"));}det.append(dl);box.append(det);
+   }
+   art.append(box);
    const actions=elem("div","acciones");
    const wa=elem("a","boton-enlace","Contactar por WhatsApp");wa.href=`https://wa.me/52${x.telefono}?text=${encodeURIComponent(`Hola ${x.nombre}, te contactamos de Lapazimpresion3d sobre tu solicitud ${x.folio}.`)}`;wa.target="_blank";wa.rel="noopener noreferrer";actions.append(wa);
    const select=elem("select");select.setAttribute("aria-label",`Estado de ${x.folio}`);
