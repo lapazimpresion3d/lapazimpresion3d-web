@@ -120,6 +120,25 @@ async function autorizado(request,env) {
   if(Number(exp) < Date.now() || Number(exp)>Date.now()+86400000) return false;
   return constante(sig, await firma(env.SESSION_SECRET,exp));
 }
+// Tokens de proyecto de 256 bits: solo se guarda SHA-256 en D1.
+function tokenCliente() {
+  const bytes=crypto.getRandomValues(new Uint8Array(32));
+  return btoa(String.fromCharCode(...bytes)).replace(/\\+/g,"-").replace(/\\//g,"_").replace(/=+$/,"");
+}
+async function hashTokenCliente(token) {
+  const buffer=await crypto.subtle.digest("SHA-256",enc.encode(token));
+  return Array.from(new Uint8Array(buffer),b=>b.toString(16).padStart(2,"0")).join("");
+}
+const SECCIONES_CLIENTE=["datos_negocio","servicios_productos","horarios_contacto","indicaciones"];
+async function proyectoDeCliente(request,env,tokenExplicito) {
+  const cookie=(request.headers.get("Cookie")||"").split(";").map(x=>x.trim()).find(x=>x.startsWith("lp3d_cliente="));
+  const token=tokenExplicito||cookie?.slice("lp3d_cliente=".length);
+  if(!token || !/^[A-Za-z0-9_-]{43}$/.test(token))return null;
+  const hash=await hashTokenCliente(token);
+  return await env.QUIZ_DB.prepare(
+    "SELECT p.id,p.estado,p.propuesta_id,q.folio,q.nombre,q.proyecto FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.acceso_token_hash=?1 AND p.acceso_revocado=0 AND p.acceso_expira>?2 AND p.estado<>'cancelado'"
+  ).bind(hash,new Date().toISOString()).first();
+}
 async function leerJson(request, max=6000) {
   if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) return null;
   const length=Number(request.headers.get("content-length")||0);
@@ -359,11 +378,67 @@ async function api(request,env,ctx) {
     const exp=String(Date.now()+8*60*60*1000),signature=await firma(env.SESSION_SECRET,exp);
     return json({ok:true},200,{"set-cookie":`lp3d_session=${exp}.${signature}; Path=/api/admin; Max-Age=28800; HttpOnly; Secure; SameSite=Strict`});
   }
+  // Portal de cliente: la URL lleva la clave en fragmento, nunca en el servidor.
+  if(path==="/api/cliente/iniciar" && request.method==="POST") {
+    if(!sameOrigin(request))return error("Origen no autorizado",403);
+    if(!await verificarLimite(request,env,"cliente_acceso",20,900))return error("Demasiados intentos; intenta más tarde",429);
+    const data=await leerJson(request,300);
+    const p=await proyectoDeCliente(request,env,data?.token);
+    if(!p)return error("Enlace inválido, revocado o vencido",401);
+    const token=data.token;
+    return json({ok:true},200,{"set-cookie":`lp3d_cliente=${token}; Path=/api/cliente; Max-Age=604800; HttpOnly; Secure; SameSite=Strict`});
+  }
+  if(path==="/api/cliente/salir" && request.method==="POST") {
+    if(!sameOrigin(request))return error("Origen no autorizado",403);
+    return json({ok:true},200,{"set-cookie":"lp3d_cliente=; Path=/api/cliente; Max-Age=0; HttpOnly; Secure; SameSite=Strict"});
+  }
+  if(path.startsWith("/api/cliente/")) {
+    const p=await proyectoDeCliente(request,env);
+    if(!p)return error("Acceso del proyecto no autorizado o vencido",401);
+    if(path==="/api/cliente/materiales" && request.method==="GET") {
+      const secciones=await env.QUIZ_DB.prepare("SELECT clave,contenido,estado,fecha_actualizacion FROM proyecto_secciones WHERE proyecto_id=?1")
+        .bind(p.id).all();
+      return json({proyecto:{folio:p.folio,nombre:p.nombre,proyecto:p.proyecto,estado:p.estado},secciones:secciones.results});
+    }
+    const seccion=path.match(/^\\/api\\/cliente\\/secciones\\/(datos_negocio|servicios_productos|horarios_contacto|indicaciones)$/);
+    if(seccion && request.method==="PUT") {
+      if(!sameOrigin(request))return error("Origen no autorizado",403);
+      if(["finalizado","cancelado"].includes(p.estado))return error("Este proyecto ya no admite cambios",409);
+      const data=await leerJson(request,14000);
+      const contenido=data?.contenido;
+      if(typeof contenido!=="string"||contenido.length>10000)return error("El texto debe tener máximo 10,000 caracteres",400);
+      const ahora=new Date().toISOString();
+      await env.QUIZ_DB.prepare(
+        "INSERT INTO proyecto_secciones (proyecto_id,clave,contenido,estado,fecha_actualizacion) VALUES (?1,?2,?3,'recibido',?4) ON CONFLICT(proyecto_id,clave) DO UPDATE SET contenido=excluded.contenido,estado='recibido',fecha_actualizacion=excluded.fecha_actualizacion"
+      ).bind(p.id,seccion[1],contenido,ahora).run();
+      await env.QUIZ_DB.prepare("UPDATE proyectos_cliente SET fecha_actualizacion=?1 WHERE id=?2").bind(ahora,p.id).run();
+      return json({ok:true,fecha_actualizacion:ahora});
+    }
+  }
   if(path.startsWith("/api/admin/")) {
     if(!await autorizado(request,env)) return error("Acceso restringido",401);
     if(request.method==="POST" && !sameOrigin(request)) return error("Origen no autorizado",403);
     if(path==="/api/admin/sesion" && request.method==="GET") return json({ok:true});
     if(path==="/api/admin/salir" && request.method==="POST") return json({ok:true},200,{"set-cookie":"lp3d_session=; Path=/api/admin; Max-Age=0; HttpOnly; Secure; SameSite=Strict"});
+    // Emitir o revocar un acceso individual; un token existente no puede recuperarse de D1.
+    const accesoProyecto=path.match(/^\\/api\\/admin\\/proyectos\\/([0-9a-f-]{36})\\/acceso$/i);
+    if(accesoProyecto && request.method==="POST") {
+      if(!sameOrigin(request))return error("Origen no autorizado",403);
+      const p=await env.QUIZ_DB.prepare("SELECT id,estado FROM proyectos_cliente WHERE id=?1").bind(accesoProyecto[1]).first();
+      if(!p)return error("Proyecto no encontrado",404);
+      if(["cancelado","finalizado"].includes(p.estado))return error("El proyecto no admite nuevos accesos",409);
+      const token=tokenCliente(),hash=await hashTokenCliente(token),expira=new Date(Date.now()+14*86400000).toISOString();
+      await env.QUIZ_DB.prepare("UPDATE proyectos_cliente SET acceso_token_hash=?1,acceso_expira=?2,acceso_revocado=0,fecha_actualizacion=?3 WHERE id=?4")
+        .bind(hash,expira,new Date().toISOString(),p.id).run();
+      // El token en el fragmento # no se envía al servidor durante la navegación.
+      return json({ok:true,url:`${url.origin}/cliente/materiales/#acceso=${token}`,expira});
+    }
+    if(accesoProyecto && request.method==="DELETE") {
+      if(!sameOrigin(request))return error("Origen no autorizado",403);
+      const r=await env.QUIZ_DB.prepare("UPDATE proyectos_cliente SET acceso_revocado=1,acceso_token_hash=NULL,fecha_actualizacion=?1 WHERE id=?2")
+        .bind(new Date().toISOString(),accesoProyecto[1]).run();
+      return r.meta.changes?json({ok:true}):error("Proyecto no encontrado",404);
+    }
     // Proyectos aceptados: endpoints exclusivos del panel con sesión administrativa.
     // No se generan enlaces para clientes hasta habilitar el portal privado.
     if(path==="/api/admin/proyectos" && request.method==="GET") {
@@ -463,7 +538,7 @@ export default { async fetch(request,env,ctx) {
   try {
     if(path.startsWith("/api/")) return await api(request,env,ctx);
     const resp=await env.ASSETS.fetch(request);
-    if(path==="/admin" || path.startsWith("/admin/")) {
+    if(path==="/cliente" || path.startsWith("/cliente/") || path==="/admin" || path.startsWith("/admin/")) {
       const headers=new Headers(resp.headers);
       headers.set("Cache-Control","no-store");
       headers.set("X-Robots-Tag","noindex, nofollow");
