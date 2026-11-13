@@ -134,6 +134,17 @@
         <label>Giro <input name="giro" maxlength="80" placeholder="Ej. cafetería" required></label>
         <label>WhatsApp de contacto <input type="tel" name="telefono" autocomplete="tel" maxlength="25" pattern="\+?[0-9](?:[0-9\s.\(\)\-]*[0-9])?" aria-describedby="ayuda-telefono" required></label>
         <small id="ayuda-telefono">Escribe tu número de México a 10 dígitos; puedes anteponer +52.</small>
+        <label>Presupuesto estimado (opcional)
+          <select name="presupuesto">
+            <option value="">Prefiero no indicarlo</option>
+            <option value="menos_500">Menos de $500 MXN</option>
+            <option value="500_1500">$500 a $1,500 MXN</option>
+            <option value="1500_3000">$1,500 a $3,000 MXN</option>
+            <option value="3000_6000">$3,000 a $6,000 MXN</option>
+            <option value="mas_6000">Más de $6,000 MXN</option>
+            <option value="sin_definir">Aún no lo sé; necesito orientación</option>
+          </select>
+        </label>
         <label>Cuéntanos qué necesitas <textarea name="detalles" rows="4" maxlength="500" placeholder="Ej. Quiero mostrar mi menú con fotos y recibir pedidos para recoger." required></textarea></label>
       </fieldset>
 

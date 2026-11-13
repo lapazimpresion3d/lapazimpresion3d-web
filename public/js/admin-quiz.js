@@ -7,7 +7,8 @@ const nombres={
   situacion:"¿En qué situación te encuentras ahora mismo?",
   contacto_actual:"¿Cómo se utilizará o compartirá el resultado de tu proyecto?",
   mejora_deseada:"¿Qué es lo más importante para tu proyecto?",
-  preparacion:"¿Qué tan avanzado tienes tu proyecto o material de apoyo?"
+  preparacion:"¿Qué tan avanzado tienes tu proyecto o material de apoyo?",
+  presupuesto:"¿Qué presupuesto tienes pensado destinar a tu proyecto?"
 };
 const etiquetas={
   dar_a_conocer:"Que más personas conozcan mi negocio o proyecto.",
@@ -73,12 +74,12 @@ function pintar(items){
       resultado.append(elem("p","resultado-etiqueta","COMPLEMENTO SUGERIDO"));
       resultado.append(elem("p",null,rec.complemento_sugerido));
     }
-    const details=elem("details"),summary=elem("summary",null,"Ver cinco respuestas"),dl=elem("dl");
+    const details=elem("details"),summary=elem("summary",null,"Ver respuestas"),dl=elem("dl");
     if(f.version_esquema === "4.0") {
       dl.append(elem("dt",null,"Nota"),elem("dd",null,"Las preguntas 3 y 4 se actualizaron para incluir fabricación y piezas físicas."));
     }
     for(const [campo,label] of Object.entries(nombres)){
-      dl.append(elem("dt",null,label),elem("dd",null,etiquetas[f.respuestas?.[campo]]||f.respuestas?.[campo]||"Sin respuesta"));
+      dl.append(elem("dt",null,label),elem("dd",null,etiquetasPresupuesto[f.respuestas?.[campo]]||etiquetas[f.respuestas?.[campo]]||f.respuestas?.[campo]||"Sin respuesta"));
     }
     details.append(summary,dl);
     const acciones=elem("div","acciones"),boton=elem("button",null,"Descargar ficha JSON"),marcar=elem("button","secundario",item.estado==="nuevo"?"Marcar revisado":"Marcar nuevo");
@@ -108,6 +109,8 @@ busqueda.addEventListener("input",()=>{
 req("/api/admin/sesion").then(()=>{acceso.hidden=true;panel.hidden=false;return Promise.all([cargar(),cargarPropuestas()]);}).catch(()=>{});
 
 const listaPropuestas=document.querySelector("#lista-propuestas"),estadoPropuestas=document.querySelector("#estado-propuestas"),filtroPropuestas=document.querySelector("#filtro-propuestas"),buscarPropuestas=document.querySelector("#buscar-propuestas");
+const etiquetasPresupuesto={menos_500:"Menos de $500",500_1500:"$500 a $1,500",1500_3000:"$1,500 a $3,000",3000_6000:"$3,000 a $6,000",mas_6000:"Más de $6,000",sin_definir:"Necesita orientación"};
+const nombresServicio={llaveros:"Llaveros",fdm_medida:"Impresión FDM",resina:"Resina",soporte_qr:"Soportes QR"};
 const estadosPropuestas={nueva:"Nueva",en_revision:"En revisión",contactado:"Contactado",cotizado:"Cotizado",cerrado:"Cerrado"};
 let solicitudBusquedaTimer;
 let propuestasVisibles=[];
@@ -119,8 +122,8 @@ function celdaCSV(valor) {
 }
 function exportarPropuestasCSV(){
  if(!propuestasVisibles.length){estadoPropuestas.textContent="No hay resultados visibles para exportar.";return;}
- const cabeceras=["Folio","Fecha","Estado","Nombre","Proyecto","WhatsApp","Comentario","Recomendación","Complemento","Origen","Tipo de página","Giro","Funciones","Complementos"];
- const filas=propuestasVisibles.map(x=>[x.folio,x.fecha,x.estado,x.nombre,x.proyecto,x.telefono,x.comentario,x.ficha?.recomendacion?.titulo,x.ficha?.recomendacion?.complemento_sugerido,x.ficha?.origen||"cuestionario",x.ficha?.tipo_pagina||"",x.ficha?.giro||"",(x.ficha?.funciones||[]).join("; "),(x.ficha?.complementos||[]).join("; ")]);
+ const cabeceras=["Folio","Fecha","Estado","Nombre","Proyecto","WhatsApp","Comentario","Recomendación","Complemento","Origen","Tipo de página","Giro","Funciones","Complementos","Servicio","Presupuesto","Detalles específicos"];
+ const filas=propuestasVisibles.map(x=>[x.folio,x.fecha,x.estado,x.nombre,x.proyecto,x.telefono,x.comentario,x.ficha?.recomendacion?.titulo,x.ficha?.recomendacion?.complemento_sugerido,x.ficha?.origen||"cuestionario",x.ficha?.tipo_pagina||"",x.ficha?.giro||"",(x.ficha?.funciones||[]).join("; "),(x.ficha?.complementos||[]).join("; "),x.ficha?.titulo_servicio||x.ficha?.tipo_pagina||x.ficha?.recomendacion?.titulo||"",etiquetasPresupuesto[x.ficha?.presupuesto||x.ficha?.respuestas?.presupuesto]||"",JSON.stringify(x.ficha?.campos||{})]);
  const csv="\uFEFF"+[cabeceras,...filas].map(f=>f.map(celdaCSV).join(",")).join("\r\n")+"\r\n";
  const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
  const a=document.createElement("a");a.href=url;a.download="solicitudes-lapazimpresion3d.csv";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -143,18 +146,25 @@ async function cargarPropuestas(){
    for(const [t,v] of [["Proyecto",x.proyecto||"Sin indicar"],["WhatsApp",x.telefono],["Comentario",x.comentario||"Sin comentarios"]]){datos.append(elem("dt",null,t),elem("dd",null,v));}
    art.append(datos);
    const esWeb=x.ficha?.tipo_documento==="solicitud_web";
+   const esFisica=x.ficha?.tipo_documento==="solicitud_servicio";
    const box=elem("section","resultado-diagnostico");
-   if(esWeb){
+   if(esFisica){
+     box.append(elem("p","resultado-etiqueta","COTIZACIÓN DE IMPRESIÓN 3D · SOLICITUD DIRECTA"),elem("h3",null,x.ficha.titulo_servicio||nombresServicio[x.ficha.servicio]||"Servicio"));
+     const dl=elem("dl");
+     for(const [k,v] of Object.entries(x.ficha.campos||{})) if(v)dl.append(elem("dt",null,k.replace(/_/g," ")),elem("dd",null,v));
+     for(const [k,v] of [["Presupuesto",etiquetasPresupuesto[x.ficha.presupuesto]||"Sin indicar"],["Fecha deseada",x.ficha.fecha_deseada||"Sin indicar"],["Contexto",x.ficha.contexto||"Sin indicar"]])dl.append(elem("dt",null,k),elem("dd",null,v));
+     box.append(dl);
+   } else if(esWeb){
      box.append(elem("p","resultado-etiqueta","COTIZACIÓN WEB · SOLICITUD DIRECTA"),elem("h3",null,x.ficha.tipo_pagina));
      const detWeb=elem("dl");
-     for(const [t,v] of [["Giro",x.ficha.giro],["Funciones solicitadas",(x.ficha.funciones||[]).join(" · ")||"Ninguna"],["Complementos",(x.ficha.complementos||[]).join(" · ")||"Ninguno"]]) detWeb.append(elem("dt",null,t),elem("dd",null,v));
+     for(const [t,v] of [["Giro",x.ficha.giro],["Presupuesto",etiquetasPresupuesto[x.ficha.presupuesto]||"Sin indicar"],["Funciones solicitadas",(x.ficha.funciones||[]).join(" · ")||"Ninguna"],["Complementos",(x.ficha.complementos||[]).join(" · ")||"Ninguno"]]) detWeb.append(elem("dt",null,t),elem("dd",null,v));
      box.append(detWeb);
    } else {
      const rec=x.ficha?.recomendacion||{};
      box.append(elem("p","resultado-etiqueta","RECOMENDACIÓN DEL CUESTIONARIO"),elem("h3",null,rec.titulo||"Sin recomendación"));
      if(rec.complemento_sugerido)box.append(elem("p",null,rec.complemento_sugerido));
-     const det=elem("details");det.append(elem("summary",null,"Ver cinco respuestas"));const dl=elem("dl");
-     for(const [c,t] of Object.entries(nombres)){dl.append(elem("dt",null,t),elem("dd",null,etiquetas[x.ficha?.respuestas?.[c]]||x.ficha?.respuestas?.[c]||"Sin respuesta"));}det.append(dl);box.append(det);
+     const det=elem("details");det.append(elem("summary",null,"Ver respuestas"));const dl=elem("dl");
+     for(const [c,t] of Object.entries(nombres)){dl.append(elem("dt",null,t),elem("dd",null,etiquetasPresupuesto[x.ficha?.respuestas?.[c]]||etiquetas[x.ficha?.respuestas?.[c]]||x.ficha?.respuestas?.[c]||"Sin respuesta"));}det.append(dl);box.append(det);
    }
    art.append(box);
    const actions=elem("div","acciones");

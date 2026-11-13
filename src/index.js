@@ -36,13 +36,18 @@ function recomendacionEsperada(r) {
   const operativo = r.objetivo === "automatizar" || ["menos_mensajes","organizar_trabajo"].includes(r.mejora_deseada);
   const info = r.mejora_deseada === "acceso_inmediato";
   const presencial = r.contacto_actual === "en_persona";
-  const funcional = r.objetivo === "pieza_funcional" || r.situacion === "pieza_reproducir" || r.contacto_actual === "uso_funcional" || r.mejora_deseada === "ajuste_resistencia";
-  const figura = r.objetivo === "figura_detallada" || r.contacto_actual === "pieza_visual" || r.mejora_deseada === "detalle_acabado";
+  const contextoMecanico = r.situacion === "pieza_reproducir"
+    || (r.situacion === "modelo_fabricar" && [r.preparacion === "medidas_modelo", r.contacto_actual === "uso_funcional", r.mejora_deseada === "ajuste_resistencia"].some(Boolean))
+    || (r.contacto_actual === "uso_funcional" && (r.mejora_deseada === "ajuste_resistencia" || r.preparacion === "medidas_modelo"))
+    || (r.mejora_deseada === "ajuste_resistencia" && r.preparacion === "medidas_modelo");
+  const contextoFigura = (r.situacion === "modelo_fabricar" && (r.preparacion === "referencia_figura" || r.contacto_actual === "pieza_visual" || r.mejora_deseada === "detalle_acabado"))
+    || (r.contacto_actual === "pieza_visual" && (r.mejora_deseada === "detalle_acabado" || r.preparacion === "referencia_figura"))
+    || (r.mejora_deseada === "detalle_acabado" && r.preparacion === "referencia_figura");
+  const funcional = r.objetivo === "pieza_funcional" || (!evento && !operativo && contextoMecanico);
+  const figura = r.objetivo === "figura_detallada" || (!evento && !operativo && contextoFigura);
   let id;
   if(funcional) id="R6";
   else if(figura) id="R7";
-  else if(r.situacion === "modelo_fabricar" && r.preparacion === "medidas_modelo") id="R6";
-  else if(r.situacion === "modelo_fabricar" && r.preparacion === "referencia_figura") id="R7";
   else if(operativo) id="R4";
   else if(evento && (fisicoExplicito || r.contacto_actual === "fecha_fija" || !info)) id="R1";
   else if(fisicoExplicito) id="R1";
@@ -136,14 +141,15 @@ async function verificarLimite(request,env,accion,maximo,ventanaSegundos) {
   return (fila?.contador || 0) <= maximo;
 }
 function fichaValida(data) {
-  if(!data || data.tipo_documento!=="ficha_quiz" || !["3.0","4.0"].includes(data.version_esquema)) return false;
+  if(!data || data.tipo_documento!=="ficha_quiz" || !["3.0","4.0","5.0"].includes(data.version_esquema)) return false;
   const permitidos=data.version_esquema==="3.0"?CAMPOS_V3:CAMPOS;
   if(!data.respuestas || typeof data.respuestas!=="object" || Array.isArray(data.respuestas) || Object.keys(CAMPOS).some(k=>!permitidos[k].includes(data.respuestas[k]))) return false;
+  if(data.version_esquema==="5.0" && (!presupuestoValido(data.respuestas.presupuesto) || !data.respuestas.presupuesto)) return false;
   if(!IDS.has(data.recomendacion?.id) || data.recomendacion.titulo!==TITULOS[data.recomendacion.id]) return false;
-  return data.recomendacion.id===(data.version_esquema==="4.0"?recomendacionEsperada(data.respuestas):recomendacionEsperadaV3(data.respuestas));
+  return data.recomendacion.id===(data.version_esquema!=="3.0"?recomendacionEsperada(data.respuestas):recomendacionEsperadaV3(data.respuestas));
 }
 function normalizarFicha(data,id) {
-  return {tipo_documento:"ficha_quiz",version_esquema:data.version_esquema,id_diagnostico:id,id_proyecto:null,origen:"lapazimpresion3d_web",fecha_generacion:new Date().toISOString(),respuestas:Object.fromEntries(Object.keys(CAMPOS).map(k=>[k,data.respuestas[k]])),recomendacion:{id:data.recomendacion.id,titulo:data.recomendacion.titulo,estado:"orientativa",complemento_sugerido:typeof data.recomendacion.complemento_sugerido==="string"?data.recomendacion.complemento_sugerido.slice(0,350):null}};
+  return {tipo_documento:"ficha_quiz",version_esquema:data.version_esquema,id_diagnostico:id,id_proyecto:null,origen:"lapazimpresion3d_web",fecha_generacion:new Date().toISOString(),respuestas:{...Object.fromEntries(Object.keys(CAMPOS).map(k=>[k,data.respuestas[k]])),...(data.version_esquema==="5.0"?{presupuesto:data.respuestas.presupuesto}:{})},recomendacion:{id:data.recomendacion.id,titulo:data.recomendacion.titulo,estado:"orientativa",complemento_sugerido:typeof data.recomendacion.complemento_sugerido==="string"?data.recomendacion.complemento_sugerido.slice(0,350):null}};
 }
 function contactoValido(c) {
  return c && typeof c==="object" && !Array.isArray(c) && typeof c.nombre==="string" && c.nombre.trim().length>=2 && c.nombre.trim().length<=100 && typeof c.proyecto==="string" && c.proyecto.length<=120 && typeof c.telefono==="string" && /^\d{10}$/.test(c.telefono) && typeof c.comentario==="string" && c.comentario.length<=800;
@@ -161,10 +167,29 @@ function solicitudWebValida(d) {
    textoWeb(d.nombre,2,100) && textoWeb(d.negocio,2,100) && textoWeb(d.giro,2,80) &&
    typeof d.telefono==='string' && /^\d{10}$/.test(d.telefono) &&
    WEB_TIPOS.has(d.tipo_pagina) && listaWeb(d.funciones,WEB_FUNCIONES) &&
-   listaWeb(d.complementos,WEB_COMPLEMENTOS) && textoWeb(d.detalles,5,500) &&
+   listaWeb(d.complementos,WEB_COMPLEMENTOS) && textoWeb(d.detalles,5,500) && presupuestoValido(d.presupuesto??"") &&
    d.acepta_privacidad===true;
 }
 
+// Servicio físico: formulario único con campos específicos, registro en quiz_propuestas.
+const TIPOS_FISICOS = Object.freeze({llaveros:"Llaveros personalizados",fdm_medida:"Impresión 3D a medida",resina:"Figuras y miniaturas en resina",soporte_qr:"Soportes QR/NFC"});
+const CAMPOS_FISICOS = Object.freeze({
+ llaveros:["cantidad","tamano","diseno","colores","nfc","acabado","uso"],
+ fdm_medida:["cantidad","tamano","uso","material","resistencia","referencia"],
+ resina:["cantidad","tamano","uso","detalle","acabado","referencia"],
+ soporte_qr:["cantidad","tamano","uso","logo","destino_qr","contenido_existente","nfc"]
+});
+const PRESUPUESTOS = new Set(["menos_500","500_1500","1500_3000","3000_6000","mas_6000","sin_definir",""]);
+function presupuestoValido(v) {return typeof v==="string"&&PRESUPUESTOS.has(v);}
+function solicitudFisicaValida(d){
+ if(!d||typeof d!=="object"||Array.isArray(d)||!Object.hasOwn(TIPOS_FISICOS,d.servicio)||!textoWeb(d.nombre,2,100)||!/^\d{10}$/.test(d.telefono||"")||!textoWeb(d.detalles,5,1200)||d.acepta_privacidad!==true||!presupuestoValido(d.presupuesto))return false;
+ if(!["","negocio","evento","personal"].includes(d.contexto||""))return false;
+ if(!["","si","no","no_se"].includes(d.fecha_prioritaria||""))return false;
+ if(typeof d.proyecto!=="string"||d.proyecto.length>120 ||typeof d.fecha_deseada!=="string"||d.fecha_deseada.length>30)return false;
+ const claves=CAMPOS_FISICOS[d.servicio];
+ if(!d.campos||typeof d.campos!=="object"||Array.isArray(d.campos)||Object.keys(d.campos).some(k=>!claves.includes(k)))return false;
+ return claves.every(k=>typeof d.campos[k]==="string"&&d.campos[k].length<=280);
+}
 async function notificarPropuesta(env,folio) {
  if(!env.RESEND_API_KEY || !env.NOTIFY_EMAIL || !env.EMAIL_FROM) return;
  const link=`https://lapazimpresion3d.com/admin/`;
@@ -174,6 +199,23 @@ async function notificarPropuesta(env,folio) {
 async function api(request,env,ctx) {
   const url=new URL(request.url), path=url.pathname;
   if(!env.QUIZ_DB) return error("Base de datos no configurada",503);
+  if(path==="/api/servicios/propuestas" && request.method==="POST") {
+    if(!sameOrigin(request)) return error("Origen no autorizado",403);
+    if(!await verificarLimite(request,env,"propuesta_servicio",6,3600)) return error("Demasiadas solicitudes. Intenta más tarde.",429);
+    const d=await leerJson(request,6500);
+    if(!solicitudFisicaValida(d)) return error("Revisa los campos y acepta el aviso de privacidad.",400);
+    const id=crypto.randomUUID(), fecha=new Date().toISOString();
+    const prefijo={llaveros:"LLA",fdm_medida:"FDM",resina:"RES",soporte_qr:"QR"}[d.servicio];
+    const folio=`${prefijo}-${id.replace(/-/g,"").slice(0,10).toUpperCase()}`;
+    const ficha={tipo_documento:"solicitud_servicio",version_esquema:"1.0",id_solicitud:id,origen:"formulario_directo",fecha_generacion:fecha,
+      servicio:d.servicio,titulo_servicio:TIPOS_FISICOS[d.servicio],presupuesto:d.presupuesto,fecha_deseada:d.fecha_deseada,
+      contexto:d.contexto||"",fecha_prioritaria:d.fecha_prioritaria||"",campos:d.campos,detalles:d.detalles};
+    const result=await env.QUIZ_DB.prepare("INSERT INTO quiz_propuestas (id,folio,fecha,nombre,proyecto,telefono,comentario,servicio_id,ficha_json,estado,privacidad_aceptada) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,'nueva',1)")
+      .bind(id,folio,fecha,d.nombre.trim(),(d.proyecto||TIPOS_FISICOS[d.servicio]).trim(),d.telefono,d.detalles.trim(),prefijo,JSON.stringify(ficha)).run();
+    if(result.meta.changes!==1) return error("No se pudo registrar la solicitud",500);
+    if(ctx?.waitUntil)ctx.waitUntil(notificarPropuesta(env,folio).catch(e=>console.error("Aviso",e)));
+    return json({ok:true,folio},201);
+  }
   if(path==="/api/web/propuestas" && request.method==="POST") {
     if(!sameOrigin(request)) return error("Origen no autorizado",403);
     if(!await verificarLimite(request,env,"propuesta_web",6,3600)) return error("Demasiadas solicitudes. Intenta más tarde.",429);
@@ -185,7 +227,7 @@ async function api(request,env,ctx) {
       tipo_documento:"solicitud_web",version_esquema:"1.0",id_solicitud:id,
       origen:"cotiza_pagina_web",fecha_generacion:fecha,
       tipo_pagina:d.tipo_pagina,funciones:d.funciones,complementos:d.complementos,
-      giro:d.giro,detalles:d.detalles,estado:"orientativa"
+      giro:d.giro,detalles:d.detalles,presupuesto:d.presupuesto||"",estado:"orientativa"
     };
     const result=await env.QUIZ_DB.prepare("INSERT INTO quiz_propuestas (id,folio,fecha,nombre,proyecto,telefono,comentario,servicio_id,ficha_json,estado,privacidad_aceptada) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,'nueva',1)")
       .bind(id,folio,fecha,d.nombre.trim(),d.negocio.trim(),d.telefono,d.detalles.trim(),"WEB",JSON.stringify(ficha)).run();

@@ -100,6 +100,8 @@ h2, #titulo-llaveros { font-size: clamp(1.55rem, 2.9vw, 2.25rem); font-weight: v
 h3 { color: var(--subtitulo); font-size: clamp(1.125rem, 1.75vw, 1.5rem); font-weight: var(--peso-negrita); letter-spacing: -.015em; }
 .introduccion { max-width: 66ch; color: var(--suave); font-size: 1.08rem; margin: 0 0 22px; }
 .presentacion { margin: clamp(24px, 4vw, 48px) 0 0; }
+.presentacion .introduccion { margin-bottom: 12px; }
+.presentacion .introduccion:last-child { margin-bottom: 0; }
 .presentacion + section { margin-top: clamp(24px, 4vw, 44px); }
 
 .caja {

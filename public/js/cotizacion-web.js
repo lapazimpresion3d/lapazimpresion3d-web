@@ -59,6 +59,7 @@ formularioWeb.addEventListener('submit', (evento) => {
     funciones: f.getAll('funciones').map(String),
     complementos: f.getAll('complementos').map(String),
     detalles: String(f.get('detalles') || '').trim(),
+    presupuesto: String(f.get('presupuesto') || ''),
     acepta_privacidad: f.get('privacidad') === 'on'
   };
   const lineas = [
@@ -69,6 +70,7 @@ formularioWeb.addEventListener('submit', (evento) => {
     `Tipo de página: ${datosPendientes.tipo_pagina}`,
     `Funciones: ${datosPendientes.funciones.join('; ') || 'Ninguna'}`,
     `Complementos: ${datosPendientes.complementos.join('; ') || 'Ninguno'}`,
+    `Presupuesto: ${datosPendientes.presupuesto || "No indicado"}`,
     `Descripción: ${datosPendientes.detalles}`
   ];
   resumenWeb.textContent = lineas.join('\n');

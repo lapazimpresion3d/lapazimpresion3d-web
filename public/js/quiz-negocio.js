@@ -1,7 +1,7 @@
 /* Quiz comercial Lapazimpresion3d — diagnóstico y solicitud voluntaria por WhatsApp. */
 (() => {
   "use strict";
-  // Cinco preguntas: también cubren fabricación funcional, prototipos y resina.
+  // Seis preguntas: también cubren fabricación funcional, prototipos y resina.
   // Los IDs son estables: la futura ficha Quiz JSON debe usar estos campos.
   const preguntas = [
     { campo: "objetivo", texto: "¿Qué te gustaría conseguir principalmente con este proyecto?", opciones: [
@@ -48,6 +48,14 @@
       ["cotizando", "Por ahora solo estoy cotizando y viendo posibilidades."],
       ["medidas_modelo", "Tengo medidas, planos, una pieza de muestra o un archivo 3D."],
       ["referencia_figura", "Tengo una imagen, escultura o referencia de la figura que quiero."]
+    ] },
+    { campo: "presupuesto", texto: "¿Qué presupuesto tienes pensado destinar a tu proyecto?", opciones: [
+      ["menos_500", "Menos de $500 MXN"],
+      ["500_1500", "$500 a $1,500 MXN"],
+      ["1500_3000", "$1,500 a $3,000 MXN"],
+      ["3000_6000", "$3,000 a $6,000 MXN"],
+      ["mas_6000", "Más de $6,000 MXN"],
+      ["sin_definir", "Aún no lo sé; necesito orientación"]
     ] }
   ];
 
@@ -140,7 +148,7 @@
   }
 
   // Esquema 4.0: admite siete recomendaciones; diagnósticos anteriores se conservan.
-  const VERSION_FICHA_QUIZ = "4.0";
+  const VERSION_FICHA_QUIZ = "5.0";
   const TIPO_FICHA_QUIZ = "ficha_quiz";
   const WHATSAPP_COMERCIAL = "526121999963"; // Mismo número que los CTA existentes del sitio.
   // URL ya utilizada en el botón de demostración de la página principal.
@@ -227,12 +235,12 @@
     }
   }
   function progreso(actual) {
-    progresoTexto.textContent = actual === 5 ? "Cuestionario completado · 5 de 5" : `Pregunta ${actual + 1} de 5`;
+    progresoTexto.textContent = actual === preguntas.length ? `Cuestionario completado · ${preguntas.length} de ${preguntas.length}` : `Pregunta ${actual + 1} de ${preguntas.length}`;
     progresoBarra.setAttribute("aria-valuenow", String(actual));
-    progresoRelleno.style.width = `${actual * 20}%`;
+    progresoRelleno.style.width = `${actual * 100 / preguntas.length}%`;
   }
   function mostrarResumen() {
-    progreso(5);
+    progreso(preguntas.length);
     contenido.replaceChildren();
     const resultado = obtenerRecomendacion(respuestas);
     const etiqueta = document.createElement("p");
@@ -270,7 +278,7 @@
     const detalles = document.createElement("details");
     detalles.className = "quiz-detalles";
     const resumenTitulo = document.createElement("summary");
-    resumenTitulo.textContent = "Revisar mis cinco respuestas";
+    resumenTitulo.textContent = "Revisar mis seis respuestas";
     detalles.append(resumenTitulo);
     const lista = document.createElement("dl");
     lista.className = "quiz-resumen";
@@ -351,42 +359,23 @@
       if (!formulario.reportValidity()) return;
       const numero=telefono.value.replace(/\D/g,"");
       if (!/^\d{10}$/.test(numero)) {estadoSolicitud.textContent="Introduce un WhatsApp de 10 dígitos.";telefono.focus();return;}
-      enviar.disabled=true; enviar.textContent="Enviando solicitud…"; estadoSolicitud.textContent="Registrando solicitud…";
+      enviar.disabled=true; estadoSolicitud.textContent="Registrando solicitud…";
       const ficha=crearFichaDiagnostico(respuestas);
       ficha.id_diagnostico=obtenerIdSolicitud();
       try {
         const r=await fetch("/api/quiz/propuestas",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify({ficha,contacto:{nombre:nombre.value.trim(),proyecto:proyecto.value.trim(),telefono:numero,comentario:comentario.value.trim()},acepta_privacidad:check.checked})});
         const data=await r.json().catch(()=>({}));
         if(!r.ok || !data.ok) throw new Error(data.error||"No se pudo registrar. Intenta de nuevo.");
-        const confirmacion=document.createElement("div");
-        confirmacion.className="quiz-confirmacion";
-        confirmacion.setAttribute("role","status");
-        confirmacion.setAttribute("aria-live","polite");
-        const h=document.createElement("h4");
-        h.tabIndex=-1;
-        h.textContent="✓ ¡Solicitud enviada correctamente!";
-        const mensaje=document.createElement("p");
-        mensaje.textContent="Recibimos tu solicitud y quedó registrada. Nos pondremos en contacto contigo por WhatsApp.";
-        const folio=document.createElement("p");
-        folio.className="quiz-confirmacion-folio";
-        folio.textContent=`Folio de seguimiento: ${data.folio}`;
-        const detalle=document.createElement("p");
-        detalle.textContent="Guarda tu folio para cualquier consulta. La solicitud no confirma una compra ni un precio.";
+        const confirmacion=document.createElement("div");confirmacion.className="quiz-confirmacion";
+        const h=document.createElement("h4");h.textContent="Solicitud recibida";
+        const folio=document.createElement("p");folio.textContent=`Tu folio es ${data.folio}. Guárdalo para cualquier consulta.`;
+        const detalle=document.createElement("p");detalle.textContent="Revisaremos tu proyecto y te contactaremos. El envío de esta solicitud no constituye una compra ni confirma un precio.";
         const seguir=document.createElement("a");seguir.className="quiz-accion-secundaria";seguir.textContent="Continuar por WhatsApp (opcional)";
         seguir.href=`https://wa.me/${WHATSAPP_COMERCIAL}?text=${encodeURIComponent(`Hola, registré una solicitud en Lapazimpresion3d. Mi folio es ${data.folio}.`)}`;
         seguir.target="_blank";seguir.rel="noopener noreferrer";
-        confirmacion.append(h,mensaje,folio,detalle,seguir);
-        formulario.replaceWith(confirmacion);
-        h.focus({preventScroll:true});
-        if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-          confirmacion.scrollIntoView({behavior:"smooth",block:"nearest"});
-        }
+        confirmacion.append(h,folio,detalle);formulario.replaceWith(confirmacion);
         preguntaWA.hidden=true;
-      } catch(err) {
-        estadoSolicitud.textContent=`No se pudo confirmar el envío: ${err.message}. Tus datos siguen en el formulario; puedes intentarlo de nuevo.`;
-        enviar.disabled=false;
-        enviar.textContent="Reintentar envío";
-      }
+      } catch(err) {estadoSolicitud.textContent=err.message;enviar.disabled=false;}
     });
     acciones.append(formulario);
     contenido.append(acciones);
