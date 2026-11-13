@@ -98,16 +98,37 @@ async function cargar(){estado.textContent="Cargando diagnósticos...";try{const
     const sep=params?"&":"?";
     const d=await req(`/api/admin/diagnosticos${params}${ref?sep+"referencia="+encodeURIComponent(ref):""}`);
     ultimosItems=d.items;filtrarBusqueda();}catch(e){estado.textContent=e.message;if(e.message==="Acceso restringido"){panel.hidden=true;acceso.hidden=false;}}}
-acceso.addEventListener("submit",async(e)=>{e.preventDefault();error.textContent="";try{await req("/api/admin/login",{method:"POST",body:JSON.stringify({password:document.querySelector("#password").value})});document.querySelector("#password").value="";acceso.hidden=true;panel.hidden=false;await Promise.all([cargar(),cargarPropuestas()]);}catch(e){error.textContent=e.message;}});
+acceso.addEventListener("submit",async(e)=>{e.preventDefault();error.textContent="";try{await req("/api/admin/login",{method:"POST",body:JSON.stringify({password:document.querySelector("#password").value})});document.querySelector("#password").value="";acceso.hidden=true;panel.hidden=false;await Promise.all([cargar(),cargarPropuestas(),cargarProyectos()]);}catch(e){error.textContent=e.message;}});
 document.querySelector("#actualizar").addEventListener("click",cargar);filtro.addEventListener("change",cargar);let ultimaConsulta="";
 busqueda.addEventListener("input",()=>{
   const texto=busqueda.value.trim();
   const esReferencia=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(texto);
   if(esReferencia || (ultimaConsulta && !esReferencia)) { ultimaConsulta=esReferencia?texto:""; cargar(); }
   else filtrarBusqueda();
-});document.querySelector("#salir").addEventListener("click",async()=>{await req("/api/admin/salir",{method:"POST",body:"{}"}).catch(()=>{});panel.hidden=true;acceso.hidden=false;lista.replaceChildren();listaPropuestas.replaceChildren();propuestasVisibles=[];});
-req("/api/admin/sesion").then(()=>{acceso.hidden=true;panel.hidden=false;return Promise.all([cargar(),cargarPropuestas()]);}).catch(()=>{});
+});document.querySelector("#salir").addEventListener("click",async()=>{await req("/api/admin/salir",{method:"POST",body:"{}"}).catch(()=>{});panel.hidden=true;acceso.hidden=false;lista.replaceChildren();listaPropuestas.replaceChildren();listaProyectos.replaceChildren();propuestasVisibles=[];});
+req("/api/admin/sesion").then(()=>{acceso.hidden=true;panel.hidden=false;return Promise.all([cargar(),cargarPropuestas(),cargarProyectos()]);}).catch(()=>{});
 
+const listaProyectos=document.querySelector("#lista-proyectos"),estadoProyectos=document.querySelector("#estado-proyectos");
+const estadosProyecto={preparacion:"Preparación",recabando_materiales:"Recabando materiales",en_desarrollo:"En desarrollo",en_revision:"En revisión",finalizado:"Finalizado",cancelado:"Cancelado"};
+async function cargarProyectos(){
+ estadoProyectos.textContent="Cargando proyectos…";
+ try {
+  const d=await req("/api/admin/proyectos");
+  listaProyectos.replaceChildren();
+  estadoProyectos.textContent=`${d.items.length} proyecto(s) registrado(s). Los enlaces de cliente todavía no están habilitados.`;
+  if(!d.items.length){listaProyectos.append(elem("p",null,"Todavía no hay proyectos aceptados."));return;}
+  for(const p of d.items){
+   const art=elem("article","registro");
+   art.append(elem("h3",null,`${p.folio} · ${p.nombre}`),elem("p","metadatos",`Proyecto: ${p.proyecto||"Sin nombre"} · Actualizado: ${new Date(p.fecha_actualizacion).toLocaleString("es-MX")}`));
+   const label=elem("label",null,"Estado del proyecto "),select=elem("select");
+   select.setAttribute("aria-label",`Estado del proyecto ${p.folio}`);
+   for(const [id,nombre] of Object.entries(estadosProyecto)){const option=elem("option",null,nombre);option.value=id;select.append(option);}
+   select.value=p.estado;select.addEventListener("change",async()=>{select.disabled=true;try{await req(`/api/admin/proyectos/${encodeURIComponent(p.id)}`,{method:"PATCH",body:JSON.stringify({estado:select.value})});await cargarProyectos();}catch(e){estadoProyectos.textContent=e.message;select.value=p.estado;}finally{select.disabled=false;}});
+   label.append(select);art.append(label,elem("p","metadatos","Acceso del cliente: aún no habilitado"));listaProyectos.append(art);
+  }
+ }catch(e){estadoProyectos.textContent="Proyectos no disponibles: "+e.message+". Comprueba que la migración 0004 esté aplicada a D1.";}
+}
+document.querySelector("#actualizar-proyectos").addEventListener("click",cargarProyectos);
 const listaPropuestas=document.querySelector("#lista-propuestas"),estadoPropuestas=document.querySelector("#estado-propuestas"),filtroPropuestas=document.querySelector("#filtro-propuestas"),buscarPropuestas=document.querySelector("#buscar-propuestas");
 const etiquetasPresupuesto={menos_500:"Menos de $500",500_1500:"$500 a $1,500",1500_3000:"$1,500 a $3,000",3000_6000:"$3,000 a $6,000",mas_6000:"Más de $6,000",sin_definir:"Necesita orientación"};
 const tiposAcademicos={proyecto_escolar:"Proyecto escolar o universitario",prototipo:"Prototipo o pieza funcional",maqueta:"Maqueta o modelo a escala",investigacion:"Investigación o tesis",otro:"Otro proyecto académico"};
@@ -182,6 +203,21 @@ async function cargarPropuestas(){
    const select=elem("select");select.setAttribute("aria-label",`Estado de ${x.folio}`);
    for(const [valor,titulo] of Object.entries(estadosPropuestas)){const op=document.createElement("option");op.value=valor;op.textContent=titulo;select.append(op);}select.value=x.estado;
    select.addEventListener("change",async()=>{select.disabled=true;try{await req(`/api/admin/propuestas/${encodeURIComponent(x.id)}`,{method:"PATCH",body:JSON.stringify({estado:select.value})});await cargarPropuestas();}catch(e){estadoPropuestas.textContent=e.message;select.value=x.estado;}finally{select.disabled=false;}});actions.append(select);
+   if(["cotizado","cerrado"].includes(x.estado)){
+     const crearProyecto=elem("button","secundario","Crear proyecto (cotización aceptada)");
+     crearProyecto.type="button";
+     crearProyecto.addEventListener("click",async()=>{
+       if(!confirm(`¿Confirmas que el cliente aceptó la cotización ${x.folio} y deseas crear su proyecto privado? Aún no se generará enlace para el cliente.`))return;
+       crearProyecto.disabled=true;
+       try{
+         const d=await req(`/api/admin/propuestas/${encodeURIComponent(x.id)}/proyecto`,{method:"POST",body:JSON.stringify({aceptado:true})});
+         estadoPropuestas.textContent=d.creado?`Proyecto creado para ${x.folio}.`:`Ya existía un proyecto para ${x.folio}.`;
+         await cargarProyectos();
+       }catch(e){estadoPropuestas.textContent=e.message+" (comprueba que la migración 0004 esté aplicada)";}
+       finally{crearProyecto.disabled=false;}
+     });
+     actions.append(crearProyecto);
+   }
    const jsonBoton=elem("button","secundario","Descargar JSON");jsonBoton.addEventListener("click",()=>descargar({...x.ficha,contacto:{nombre:x.nombre,proyecto:x.proyecto,telefono:x.telefono,comentario:x.comentario},folio:x.folio,estado_solicitud:x.estado}));actions.append(jsonBoton);
    const borrar=elem("button","secundario","Eliminar");borrar.addEventListener("click",async()=>{if(!confirm(`¿Eliminar definitivamente ${x.folio}?`))return;try{await req(`/api/admin/propuestas/${encodeURIComponent(x.id)}`,{method:"DELETE"});await cargarPropuestas();}catch(e){estadoPropuestas.textContent=e.message;}});actions.append(borrar);
    art.append(actions);listaPropuestas.append(art);
