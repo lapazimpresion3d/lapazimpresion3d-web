@@ -8,3 +8,12 @@
 .lista-archivos .archivo a{color:var(--azul);font-weight:700}
 .lista-archivos .archivo button{min-height:36px;padding:7px 12px}
 #estado-archivos{overflow-wrap:anywhere}
+
+/* Resumen de datos recuperados de la cotización original */
+.resumen-cotizacion{display:grid;grid-template-columns:minmax(140px,.7fr) minmax(0,1.3fr);gap:9px 18px;margin:16px 0}
+.resumen-cotizacion dt{font-weight:700;color:#283a58}
+.resumen-cotizacion dd{margin:0;overflow-wrap:anywhere}
+.datos-cotizacion{border-left:4px solid var(--amarillo)}
+#secciones details>summary{padding:12px 16px;color:var(--azul);font-weight:700;cursor:pointer}
+#secciones details>.bloque{margin-top:0}
+@media(max-width:550px){.resumen-cotizacion{grid-template-columns:1fr;gap:3px}.resumen-cotizacion dd{margin-bottom:10px}}
