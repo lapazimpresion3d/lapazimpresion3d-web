@@ -107,7 +107,11 @@ h3 { color: var(--subtitulo); font-size: clamp(1.125rem, 1.75vw, 1.5rem); font-w
 .presentacion .introduccion strong a {
   color: inherit;
   font-weight: inherit;
-  text-decoration-thickness: 1.5px;
+  text-decoration: none;
+}
+.presentacion .introduccion strong a:hover,
+.presentacion .introduccion strong a:focus-visible {
+  text-decoration: underline;
   text-underline-offset: 3px;
 }
 .presentacion { margin: clamp(24px, 4vw, 48px) 0 0; }
