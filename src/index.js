@@ -364,6 +364,40 @@ async function api(request,env,ctx) {
     if(request.method==="POST" && !sameOrigin(request)) return error("Origen no autorizado",403);
     if(path==="/api/admin/sesion" && request.method==="GET") return json({ok:true});
     if(path==="/api/admin/salir" && request.method==="POST") return json({ok:true},200,{"set-cookie":"lp3d_session=; Path=/api/admin; Max-Age=0; HttpOnly; Secure; SameSite=Strict"});
+    // Proyectos aceptados: endpoints exclusivos del panel con sesión administrativa.
+    // No se generan enlaces para clientes hasta habilitar el portal privado.
+    if(path==="/api/admin/proyectos" && request.method==="GET") {
+      const rows=await env.QUIZ_DB.prepare(
+        "SELECT p.id,p.propuesta_id,p.fecha_creacion,p.fecha_actualizacion,p.estado,q.folio,q.nombre,q.proyecto,q.telefono FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id ORDER BY p.fecha_actualizacion DESC LIMIT 100"
+      ).all();
+      return json({items:rows.results});
+    }
+    const proyectoNuevo=path.match(/^\\/api\\/admin\\/propuestas\\/([0-9a-f-]{36})\\/proyecto$/i);
+    if(proyectoNuevo && request.method==="POST") {
+      if(!sameOrigin(request)) return error("Origen no autorizado",403);
+      const data=await leerJson(request,128);
+      if(data?.aceptado!==true) return error("Confirma que el cliente aceptó la cotización",400);
+      const propuesta=await env.QUIZ_DB.prepare("SELECT id,estado FROM quiz_propuestas WHERE id=?1").bind(proyectoNuevo[1]).first();
+      if(!propuesta) return error("Solicitud no encontrada",404);
+      if(!["cotizado","cerrado"].includes(propuesta.estado)) return error("Primero marca la solicitud como cotizada o cerrada",409);
+      const id=crypto.randomUUID(),ahora=new Date().toISOString();
+      const insert=await env.QUIZ_DB.prepare(
+        "INSERT INTO proyectos_cliente (id,propuesta_id,fecha_creacion,fecha_actualizacion,estado) VALUES (?1,?2,?3,?3,'preparacion') ON CONFLICT(propuesta_id) DO NOTHING"
+      ).bind(id,propuesta.id,ahora).run();
+      const existente=await env.QUIZ_DB.prepare("SELECT id,propuesta_id,estado,fecha_creacion FROM proyectos_cliente WHERE propuesta_id=?1").bind(propuesta.id).first();
+      if(!existente) return error("No se pudo registrar el proyecto",500);
+      return json({ok:true,creado:insert.meta.changes===1,proyecto:existente},insert.meta.changes===1?201:200);
+    }
+    const proyectoEstado=path.match(/^\\/api\\/admin\\/proyectos\\/([0-9a-f-]{36})$/i);
+    if(proyectoEstado && request.method==="PATCH") {
+      if(!sameOrigin(request)) return error("Origen no autorizado",403);
+      const data=await leerJson(request,160);
+      const estados=["preparacion","recabando_materiales","en_desarrollo","en_revision","finalizado","cancelado"];
+      if(!estados.includes(data?.estado)) return error("Estado inválido",400);
+      const result=await env.QUIZ_DB.prepare("UPDATE proyectos_cliente SET estado=?1,fecha_actualizacion=?2 WHERE id=?3")
+        .bind(data.estado,new Date().toISOString(),proyectoEstado[1]).run();
+      return result.meta.changes?json({ok:true}):error("Proyecto no encontrado",404);
+    }
     if(path==="/api/admin/propuestas" && request.method==="GET") {
       const st=url.searchParams.get("estado");
       const estado=["nueva","en_revision","contactado","cotizado","cerrado"].includes(st)?st:null;
