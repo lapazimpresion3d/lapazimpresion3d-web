@@ -1,4 +1,4 @@
-/* Quiz comercial Lapazimpresion3d — preguntas de diagnóstico y recomendaciones, sin envío de datos. */
+/* Quiz comercial Lapazimpresion3d — diagnóstico y solicitud voluntaria por WhatsApp. */
 (() => {
   "use strict";
   // Cinco preguntas sobre objetivos y circunstancias, no sobre productos.
@@ -122,6 +122,72 @@
     return { id, titulo: base.titulo, descripcion: base.descripcion, beneficios: [...base.beneficios], complemento, demo: null };
   }
 
+  // Estructura de intercambio compartida con Arquitecto / Jan AI (esquema 2.0).
+  const VERSION_FICHA_QUIZ = "2.0";
+  const TIPO_FICHA_QUIZ = "ficha_quiz";
+  const WHATSAPP_COMERCIAL = "526121999963"; // Mismo número que los CTA existentes del sitio.
+  // URL ya utilizada en el botón de demostración de la página principal.
+  const DEMO_RESTAURANTE = "https://desarrollo-taqueria-el-comal.lapazimpresion3d.workers.dev/";
+  const RECOMENDACIONES_CON_DEMO = new Set(["R3", "R4"]);
+
+  function crearFichaDiagnostico(r) {
+    const recomendacion = obtenerRecomendacion(r);
+    const respuestasNormalizadas = Object.fromEntries(
+      preguntas.map((pregunta) => [pregunta.campo, r[pregunta.campo] ?? null])
+    );
+    return {
+      tipo_documento: TIPO_FICHA_QUIZ,
+      version_esquema: VERSION_FICHA_QUIZ,
+      id_diagnostico: null, // Sin backend no se asigna un identificador persistente.
+      id_proyecto: null,
+      origen: "lapazimpresion3d_web",
+      fecha_generacion: new Date().toISOString(),
+      respuestas: respuestasNormalizadas,
+      recomendacion: {
+        id: recomendacion.id,
+        titulo: recomendacion.titulo,
+        estado: "orientativa",
+        complemento_sugerido: recomendacion.complemento
+      }
+    };
+  }
+
+  function descargarFichaQuiz(r) {
+    const ficha = crearFichaDiagnostico(r);
+    const contenido = JSON.stringify(ficha, null, 2) + "\n";
+    const archivo = new Blob([contenido], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(archivo);
+    const enlace = document.createElement("a");
+    enlace.href = url;
+    enlace.download = `lapazimpresion3d-ficha-quiz-${ficha.fecha_generacion.slice(0, 10)}.json`;
+    enlace.hidden = true;
+    document.body.append(enlace);
+    enlace.click();
+    enlace.remove();
+    // El navegador necesita completar el inicio de la descarga antes de liberar el recurso.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function construirMensajeWhatsApp(r) {
+    const ficha = crearFichaDiagnostico(r);
+    const lineas = [
+      "Hola, visité Lapazimpresion3d y respondí el cuestionario.",
+      "",
+      "Mis respuestas:"
+    ];
+    preguntas.forEach((pregunta, indice) => {
+      const elegida = pregunta.opciones.find(([id]) => id === ficha.respuestas[pregunta.campo]);
+      lineas.push(`${indice + 1}. ${pregunta.texto}`);
+      lineas.push(elegida ? elegida[1] : "Sin responder");
+    });
+    lineas.push("", `Recomendación recibida: ${ficha.recomendacion.titulo}.`);
+    if (ficha.recomendacion.complemento_sugerido) {
+      lineas.push(`Complemento sugerido: ${ficha.recomendacion.complemento_sugerido}`);
+    }
+    lineas.push("", "Me gustaría recibir información para valorar una propuesta.");
+    return lineas.join("\n");
+  }
+
   const seccion = document.getElementById("quiz-negocio");
   if (!seccion) return;
   const botonInicio = document.getElementById("quiz-iniciar");
@@ -211,6 +277,39 @@
     });
     detalles.append(lista);
     contenido.append(detalles);
+
+    const acciones = document.createElement("div");
+    acciones.className = "quiz-acciones-resultado";
+    const enlaceWhatsApp = document.createElement("a");
+    enlaceWhatsApp.className = "quiz-accion-whatsapp";
+    enlaceWhatsApp.textContent = "Solicitar propuesta por WhatsApp";
+    enlaceWhatsApp.href = `https://wa.me/${WHATSAPP_COMERCIAL}?text=${encodeURIComponent(construirMensajeWhatsApp(respuestas))}`;
+    enlaceWhatsApp.target = "_blank";
+    enlaceWhatsApp.rel = "noopener noreferrer";
+    const avisoWhatsApp = document.createElement("p");
+    avisoWhatsApp.className = "quiz-aviso-whatsapp";
+    avisoWhatsApp.textContent = "Se abrirá WhatsApp con un mensaje preparado. Puedes revisarlo y editarlo antes de enviarlo.";
+    // La demo solo se muestra para recomendaciones relacionadas con menús o pedidos.
+    if (RECOMENDACIONES_CON_DEMO.has(resultado.id)) {
+      const enlaceDemo = document.createElement("a");
+      enlaceDemo.className = "quiz-accion-secundaria";
+      enlaceDemo.textContent = "Ver demo de Taquería El Comal";
+      enlaceDemo.href = DEMO_RESTAURANTE;
+      enlaceDemo.target = "_blank";
+      enlaceDemo.rel = "noopener noreferrer";
+      acciones.append(enlaceDemo);
+    }
+    const botonDescarga = document.createElement("button");
+    botonDescarga.type = "button";
+    botonDescarga.className = "quiz-accion-secundaria";
+    botonDescarga.textContent = "Descargar mi diagnóstico (JSON)";
+    botonDescarga.addEventListener("click", () => descargarFichaQuiz(respuestas));
+    const notaDescarga = document.createElement("p");
+    notaDescarga.className = "quiz-aviso-whatsapp";
+    notaDescarga.textContent = "Archivo para conservar tus respuestas o compartirlo con nosotros. No incluye datos personales ni se envía automáticamente.";
+    acciones.append(enlaceWhatsApp, avisoWhatsApp);
+    acciones.append(botonDescarga, notaDescarga);
+    contenido.append(acciones);
     anterior.disabled = false;
     enfocar();
   }
@@ -265,5 +364,5 @@
     botonInicio.setAttribute("aria-expanded", "false");
     botonInicio.focus();
   });
-  // Esquema revisado: actualizar la ficha_quiz a v2 antes de exportar JSON. WhatsApp queda pendiente.
+  // La exportación se genera en el navegador; no hay almacenamiento ni envío automático.
 })();

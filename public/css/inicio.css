@@ -408,3 +408,17 @@ footer { text-align: center; margin: 42px 16px 24px; color: var(--suave); font-s
 .quiz-detalles summary { cursor: pointer; color: #fff; font-weight: var(--peso-negrita); min-height: 44px; display: list-item; padding: 10px 4px; }
 .quiz-detalles summary:focus-visible { outline: 3px solid var(--amarillo); outline-offset: 3px; }
 .quiz-detalles .quiz-resumen { margin-top: 10px; }
+
+/* Quiz: continuación voluntaria por WhatsApp (etapa 4A). */
+.quiz-acciones-resultado { display: grid; justify-items: start; gap: 10px; margin-top: 24px; }
+.quiz-accion-whatsapp { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 12px 20px; border-radius: var(--radio-accion); background: var(--amarillo); color: #15233b; font-weight: var(--peso-negrita); text-decoration: none; text-align: center; }
+.quiz-accion-whatsapp:hover { background: var(--amarillo-hover); }
+.quiz-accion-whatsapp:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.quiz-aviso-whatsapp { margin: 0; color: var(--suave-inverso); font-size: .86rem; max-width: 65ch; }
+@media (max-width: 600px) { .quiz-acciones-resultado, .quiz-accion-whatsapp { width: 100%; } }
+
+/* Quiz — Etapa 4B: demostración y descarga de diagnóstico. */
+.quiz-accion-secundaria { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 12px 20px; border: 1px solid rgb(255 255 255 / 65%); border-radius: var(--radio-accion); background: transparent; color: #fff; font: inherit; font-weight: var(--peso-negrita); text-align: center; text-decoration: none; cursor: pointer; }
+.quiz-accion-secundaria:hover { background: rgb(255 255 255 / 14%); }
+.quiz-accion-secundaria:focus-visible { outline: 3px solid var(--amarillo); outline-offset: 3px; }
+@media (max-width: 600px) { .quiz-accion-secundaria { width: 100%; } }
