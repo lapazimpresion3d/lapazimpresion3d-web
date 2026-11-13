@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="css/cabecera-fotografica.css">
   <link rel="stylesheet" href="css/inicio.css">
   <script src="js/navegacion.js" defer></script>
+  <script src="js/quiz-negocio.js" defer></script>
 </head>
 <body>
   <header class="cabecera cabecera-fotografica cabecera-inicio">
@@ -42,16 +43,28 @@
   <main class="envoltura">
     <p class="introduccion presentacion">En La Paz, BCS, fabricamos <a href="#piezas-a-medida">todo tipo de piezas y accesorios mediante impresión 3D</a>, desde llaveros personalizados y soportes QR hasta figuras y mobiliario a escala impresos en resina de alta precisión. Podemos conectar tus piezas impresas con páginas web, catálogos y menús digitales que creamos a la medida de tu negocio. Con un código QR o un chip NFC integrado en la pieza, tus clientes pueden acceder directamente desde su teléfono.</p>
 
-    <!-- Quiz comercial: etapa 1, presentación visual. Preguntas y lógica en la etapa 2. -->
+    <!-- Quiz comercial: etapa 3, cuestionario con recomendaciones orientativas, sin envío de datos. -->
     <section id="quiz-negocio" class="quiz-negocio" aria-labelledby="titulo-quiz-negocio">
       <div class="quiz-negocio-tarjeta">
-        <div class="quiz-negocio-contenido">
+        <div class="quiz-negocio-contenido" id="quiz-presentacion">
           <p class="quiz-negocio-etiqueta">SOLUCIONES PARA TU NEGOCIO</p>
           <h2 id="titulo-quiz-negocio">¿Qué necesita tu negocio para dar el siguiente paso?</h2>
           <p class="quiz-negocio-descripcion">Descubre qué podemos crear para ti. Solo 5 preguntas, sin compromiso.</p>
-          <button class="quiz-negocio-boton" type="button" disabled aria-describedby="quiz-negocio-aviso">Descubrir mi solución <span aria-hidden="true">→</span></button>
+          <button class="quiz-negocio-boton" id="quiz-iniciar" type="button" aria-controls="quiz-panel" aria-expanded="false">Descubrir mi solución <span aria-hidden="true">→</span></button>
           <p class="quiz-negocio-nota">Aproximadamente 1 minuto · Sin registro</p>
-          <p id="quiz-negocio-aviso" class="quiz-negocio-aviso">Vista previa del módulo. El cuestionario se activará en la siguiente etapa.</p>
+        </div>
+        <div id="quiz-panel" class="quiz-panel" hidden aria-label="Cuestionario para tu negocio">
+          <div class="quiz-panel-cabecera">
+            <p class="quiz-negocio-etiqueta">SOLUCIONES PARA TU NEGOCIO</p>
+            <button id="quiz-cerrar" class="quiz-boton-texto" type="button">Cerrar cuestionario</button>
+          </div>
+          <p id="quiz-progreso-texto" class="quiz-progreso-texto" role="status" aria-live="polite"></p>
+          <div class="quiz-progreso-pista" role="progressbar" aria-label="Progreso del cuestionario" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" id="quiz-progreso-barra"><div id="quiz-progreso-relleno"></div></div>
+          <div id="quiz-pregunta-contenedor"></div>
+          <div id="quiz-controles" class="quiz-controles">
+            <button id="quiz-anterior" class="quiz-boton-texto" type="button">← Anterior</button>
+            <button id="quiz-reiniciar" class="quiz-boton-texto" type="button">Empezar de nuevo</button>
+          </div>
         </div>
       </div>
     </section>
