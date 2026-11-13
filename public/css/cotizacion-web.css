@@ -44,44 +44,28 @@
 
 .privacidad-web{display:flex;align-items:flex-start;gap:10px;line-height:1.45;margin:16px 0}.privacidad-web input{width:19px;height:19px;flex:none;margin-top:3px}.privacidad-web a{color:#174ab8;text-decoration:underline}.resumen-web{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;background:#f7f8fb;border:1px solid #d9dde6;border-radius:10px;padding:16px;line-height:1.6}.folio-web{font-size:clamp(1.5rem,4vw,2rem);font-weight:800;letter-spacing:.04em;color:#174ab8;overflow-wrap:anywhere}.confirmacion-web{padding:clamp(20px,4vw,36px)!important}.confirmacion-web h2{color:#174ab8}#error-web{color:#a11228;font-weight:700}#enviar-solicitud-web:disabled{opacity:.6;cursor:wait}
 
+/* Información clara sobre dominio y renovación; legible en teléfonos */
+.dominio-web .informacion-dominio { margin-top: 16px; padding: clamp(12px, 3vw, 18px); border: 1px solid var(--borde); border-radius: 12px; background: #f7f9fd; color: var(--texto); line-height: 1.55; overflow-wrap: anywhere; }
+.dominio-web .informacion-dominio p { margin: 0 0 12px; }
+.dominio-web .informacion-dominio p:last-child { margin-bottom: 0; }
+.dominio-web .dominio-actual { display: block; margin-top: 12px; }
+.dominio-web .dominio-actual[hidden] { display: none; }
+.dominio-web .dominio-actual input { max-width: 100%; width: 100%; box-sizing: border-box; }
+@media (max-width: 600px) { .dominio-web .informacion-dominio { font-size: .94rem; } }
 
-/* Formularios de cotización: todos los controles deben caber en móvil. */
-.pagina-cotizacion .envoltura-cotizacion,
-.pagina-cotizacion .envoltura-cotizacion > section,
-.pagina-cotizacion .web,
-.pagina-cotizacion .web fieldset,
-.pagina-cotizacion .web [data-servicio],
-.pagina-cotizacion .web .datos,
-.pagina-cotizacion .web label {min-width:0;max-width:100%;}
-.pagina-cotizacion .web label:not(.opcion):not(.privacidad-web) {display:block;line-height:1.5;overflow-wrap:break-word;font-weight:650;margin:0 0 17px;}
-.pagina-cotizacion .web fieldset {padding:0;margin:0 0 22px;border:0;}
-.pagina-cotizacion .web legend {margin-bottom:16px;line-height:1.4;}
-.pagina-cotizacion .web input:not([type="checkbox"]):not([type="radio"]),
-.pagina-cotizacion .web select,
-.pagina-cotizacion .web textarea {
- display:block;box-sizing:border-box;width:100%;max-width:100%;min-width:0;min-height:46px;
- margin:7px 0 0;padding:11px 12px;border:1px solid #aeb8c9;border-radius:10px;
- background:#fff;color:#16203a;font:inherit;font-size:16px;font-weight:400;line-height:1.4;
-}
-.pagina-cotizacion .web textarea{min-height:110px;resize:vertical;}
-.pagina-cotizacion .web select{appearance:auto;white-space:normal;}
-.pagina-cotizacion .web input[type="file"]{padding:12px 10px;overflow:hidden;}
-.pagina-cotizacion .web input[type="file"]::file-selector-button {padding:9px;margin-right:10px;border:1px solid #174ab8;border-radius:8px;background:#edf3ff;color:#174ab8;font:inherit;font-size:14px;font-weight:700;}
-.pagina-cotizacion .campo-adjuntos {min-width:0;max-width:100%;}
-.pagina-cotizacion .campo-adjuntos .nota{margin:6px 0 0;overflow-wrap:anywhere;}
-.pagina-cotizacion .lista-imagenes{margin:8px 0 0;padding-left:20px;overflow-wrap:anywhere;}
-.pagina-cotizacion #form-servicio>.accion{max-width:100%;white-space:normal;}
-.pagina-cotizacion .acciones{display:flex;flex-wrap:wrap;gap:12px;}
-@media(max-width:600px){
- .pagina-cotizacion .envoltura-cotizacion{width:calc(100% - 24px);}
- .pagina-cotizacion .web.caja{padding:18px 14px;}
- .pagina-cotizacion .web fieldset{margin-bottom:20px;}
- .pagina-cotizacion .web label:not(.opcion):not(.privacidad-web){margin-bottom:19px;}
- .pagina-cotizacion .acciones>*{width:100%;}
-}
-
-/* Contexto académico en formulario de impresión 3D */
-.pagina-cotizacion .web .datos-academicos{min-width:0;max-width:100%;margin:0 0 20px;padding:16px;border:1px solid #c8d6eb;border-radius:12px;background:#f5f8fe;}
-.pagina-cotizacion .web .datos-academicos[hidden]{display:none;}
-.pagina-cotizacion .web .datos-academicos .nota-academica{margin:4px 0 0;line-height:1.55;color:#405476;font-size:.92rem;}
-@media(max-width:600px){.pagina-cotizacion .web .datos-academicos{padding:14px 12px;}}
+/* Condiciones comerciales y mantenimiento: sección independiente, optimizada para móvil */
+.condiciones-comerciales { margin: 22px 0 28px; padding: clamp(15px, 3vw, 22px); background: #f7f9fd; border: 1px solid var(--borde); border-radius: 12px; color: var(--texto); min-width: 0; overflow-wrap: anywhere; }
+.condiciones-comerciales h2 { font-size: clamp(1.14rem, 3vw, 1.35rem); line-height: 1.3; color: var(--titulo); margin: 0 0 12px; }
+.condiciones-comerciales h3 { font-size: 1.03rem; line-height: 1.35; margin: 21px 0 9px; color: var(--texto); }
+.condiciones-comerciales p { margin: 0 0 12px; line-height: 1.6; }
+.condiciones-comerciales .nota { font-size: .87rem; color: var(--suave); }
+.tabla-cuotas-scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--borde); border-radius: 9px; background: white; margin: 12px 0; }
+.tabla-cuotas { width: 100%; min-width: 560px; border-collapse: collapse; font-size: .9rem; line-height: 1.4; }
+.tabla-cuotas th, .tabla-cuotas td { text-align: left; padding: 10px 12px; vertical-align: top; border-bottom: 1px solid #e5e9f0; }
+.tabla-cuotas thead th { background: #edf2fc; color: #162e5c; font-weight: 750; }
+.tabla-cuotas tbody tr:last-child > * { border-bottom: 0; }
+.tabla-cuotas tbody th { font-weight: 600; }
+.tabla-cuotas td { white-space: nowrap; }
+.condiciones-lista { padding-left: 20px; margin: 8px 0 14px; }
+.condiciones-lista li { margin: 0 0 10px; line-height: 1.55; }
+@media (max-width: 600px) { .condiciones-comerciales { font-size: .95rem; } .tabla-cuotas { font-size: .86rem; } }
