@@ -56,7 +56,7 @@
     R2: { titulo: "Soportes QR/NFC personalizados", descripcion: "Conecta la atención presencial con la información digital a través de un soporte diseñado para tu negocio.", beneficios: ["Acceso a información desde el teléfono", "Soportes de mesa o mostrador con diseño personalizado", "NFC opcional para teléfonos compatibles"] },
     R3: { titulo: "Página web, menú o catálogo digital", descripcion: "Presenta tus servicios o productos de manera clara y accesible desde el celular, incluso cuando no puedes contestar mensajes.", beneficios: ["Información organizada para tus visitantes", "Fotografías, descripciones y medios de contacto", "Una dirección web que puedes compartir fácilmente"] },
     R4: { titulo: "Sistema web personalizado", descripcion: "Estudiamos contigo las tareas que más tiempo consumen para proponer funciones de pedidos, citas o administración adecuadas a tu negocio.", beneficios: ["Flujos de solicitud más ordenados", "Posibilidad de panel de administración", "Funciones implementadas según necesidades y alcance acordados"] },
-    R5: { titulo: "Proyecto combinado: impresión 3D y soluciones digitales", descripcion: "Podemos conectar una pieza física personalizada con una experiencia digital diseñada para el mismo objetivo.", beneficios: ["Un artículo o soporte físico distintivo", "Acceso a información o experiencias desde el teléfono", "Componentes físicos y digitales cotizados según el proyecto"] },
+    R5: { titulo: "Proyecto combinado: impresión 3D y soluciones digitales", descripcion: "Diseñamos y fabricamos un artículo o soporte personalizado en 3D que enlaza con una página o experiencia digital creada para tu proyecto.", beneficios: ["Una pieza o soporte fabricado en impresión 3D", "Acceso a información o experiencias desde el teléfono", "Componentes físicos y digitales cotizados según el proyecto"] },
     R6: { titulo: "Piezas funcionales y prototipos en impresión 3D", descripcion: "Podemos revisar la fabricación de repuestos, adaptadores, carcasas, soportes y prototipos a medida.", beneficios: ["Revisión de medidas, archivos o pieza de muestra", "Material y proceso según uso, tolerancias y exigencias", "Viabilidad y precio sujetos a evaluación técnica"] },
     R7: { titulo: "Figuras y piezas detalladas en resina 3D", descripcion: "Para miniaturas, figuras, modelos decorativos o piezas donde destacan los detalles finos. Evaluaremos si la resina es adecuada para su uso.", beneficios: ["Detalles finos y geometrías complejas según diseño", "Revisión de referencias y dimensiones", "Acabado, material y viabilidad sujetos a cotización"] }
   };
@@ -131,8 +131,8 @@
     if (id === "R1" && evento) complemento = "También podemos integrar NFC en los recuerdos para enlazar una galería de fotos y videos, redes sociales o una página del evento con mensajes de invitados. La página y sus funciones se cotizan aparte; cualquier publicación de mensajes requiere moderación y privacidad.";
     else if (id === "R1" && r.objetivo === "dar_a_conocer") complemento = "Podemos añadir NFC o un QR que lleve a tus redes o a una página de contacto.";
     else if (id === "R2") complemento = "Si todavía no tienes un destino digital, podemos crear una página, menú o catálogo para enlazarlo al soporte.";
-    else if (id === "R3" && presencial) complemento = "Un soporte QR para mostrador o mesa puede facilitar el acceso a la página.";
-    else if (id === "R4" && presencial) complemento = "Podemos explorar códigos QR de mesa o mostrador cuando encajen con tu operación.";
+    else if (id === "R3" && presencial) complemento = "Podemos fabricar un soporte QR personalizado en 3D para tu mostrador o mesas, conectado con la página o catálogo. Es opcional.";
+    else if (id === "R4" && presencial) complemento = "Si atiendes presencialmente, podemos fabricar soportes QR personalizados para mesas o mostradores que conecten con el sistema de pedidos o reservaciones. Este complemento es opcional.";
     else if (id === "R6") complemento = "Puedes compartir fotografías, medidas o un archivo 3D al solicitar la propuesta. Las piezas de uso crítico, estructural o de seguridad requieren evaluación especial y podrían no ser viables.";
     else if (id === "R7") complemento = "Comparte fotos, dimensiones o un modelo 3D para evaluar los detalles, el acabado y si conviene resina u otro proceso.";
     else if (id === "R5") complemento = "Definiremos por separado el diseño físico y la función digital, para que elijas qué incluir.";
@@ -351,23 +351,42 @@
       if (!formulario.reportValidity()) return;
       const numero=telefono.value.replace(/\D/g,"");
       if (!/^\d{10}$/.test(numero)) {estadoSolicitud.textContent="Introduce un WhatsApp de 10 dígitos.";telefono.focus();return;}
-      enviar.disabled=true; estadoSolicitud.textContent="Registrando solicitud…";
+      enviar.disabled=true; enviar.textContent="Enviando solicitud…"; estadoSolicitud.textContent="Registrando solicitud…";
       const ficha=crearFichaDiagnostico(respuestas);
       ficha.id_diagnostico=obtenerIdSolicitud();
       try {
         const r=await fetch("/api/quiz/propuestas",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify({ficha,contacto:{nombre:nombre.value.trim(),proyecto:proyecto.value.trim(),telefono:numero,comentario:comentario.value.trim()},acepta_privacidad:check.checked})});
         const data=await r.json().catch(()=>({}));
         if(!r.ok || !data.ok) throw new Error(data.error||"No se pudo registrar. Intenta de nuevo.");
-        const confirmacion=document.createElement("div");confirmacion.className="quiz-confirmacion";
-        const h=document.createElement("h4");h.textContent="Solicitud recibida";
-        const folio=document.createElement("p");folio.textContent=`Tu folio es ${data.folio}. Guárdalo para cualquier consulta.`;
-        const detalle=document.createElement("p");detalle.textContent="Revisaremos tu proyecto y te contactaremos. El envío de esta solicitud no constituye una compra ni confirma un precio.";
+        const confirmacion=document.createElement("div");
+        confirmacion.className="quiz-confirmacion";
+        confirmacion.setAttribute("role","status");
+        confirmacion.setAttribute("aria-live","polite");
+        const h=document.createElement("h4");
+        h.tabIndex=-1;
+        h.textContent="✓ ¡Solicitud enviada correctamente!";
+        const mensaje=document.createElement("p");
+        mensaje.textContent="Recibimos tu solicitud y quedó registrada. Nos pondremos en contacto contigo por WhatsApp.";
+        const folio=document.createElement("p");
+        folio.className="quiz-confirmacion-folio";
+        folio.textContent=`Folio de seguimiento: ${data.folio}`;
+        const detalle=document.createElement("p");
+        detalle.textContent="Guarda tu folio para cualquier consulta. La solicitud no confirma una compra ni un precio.";
         const seguir=document.createElement("a");seguir.className="quiz-accion-secundaria";seguir.textContent="Continuar por WhatsApp (opcional)";
         seguir.href=`https://wa.me/${WHATSAPP_COMERCIAL}?text=${encodeURIComponent(`Hola, registré una solicitud en Lapazimpresion3d. Mi folio es ${data.folio}.`)}`;
         seguir.target="_blank";seguir.rel="noopener noreferrer";
-        confirmacion.append(h,folio,detalle,seguir);formulario.replaceWith(confirmacion);
+        confirmacion.append(h,mensaje,folio,detalle,seguir);
+        formulario.replaceWith(confirmacion);
+        h.focus({preventScroll:true});
+        if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          confirmacion.scrollIntoView({behavior:"smooth",block:"nearest"});
+        }
         preguntaWA.hidden=true;
-      } catch(err) {estadoSolicitud.textContent=err.message;enviar.disabled=false;}
+      } catch(err) {
+        estadoSolicitud.textContent=`No se pudo confirmar el envío: ${err.message}. Tus datos siguen en el formulario; puedes intentarlo de nuevo.`;
+        enviar.disabled=false;
+        enviar.textContent="Reintentar envío";
+      }
     });
     acciones.append(formulario);
     contenido.append(acciones);
