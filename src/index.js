@@ -400,7 +400,7 @@ async function api(request,env,ctx) {
         .bind(p.id).all();
       return json({proyecto:{folio:p.folio,nombre:p.nombre,proyecto:p.proyecto,estado:p.estado},secciones:secciones.results});
     }
-    const seccion=path.match(/^\\/api\\/cliente\\/secciones\\/(datos_negocio|servicios_productos|horarios_contacto|indicaciones)$/);
+    const seccion=path.match(/^\/api\/cliente\/secciones\/(datos_negocio|servicios_productos|horarios_contacto|indicaciones)$/);
     if(seccion && request.method==="PUT") {
       if(!sameOrigin(request))return error("Origen no autorizado",403);
       if(["finalizado","cancelado"].includes(p.estado))return error("Este proyecto ya no admite cambios",409);
@@ -421,7 +421,7 @@ async function api(request,env,ctx) {
     if(path==="/api/admin/sesion" && request.method==="GET") return json({ok:true});
     if(path==="/api/admin/salir" && request.method==="POST") return json({ok:true},200,{"set-cookie":"lp3d_session=; Path=/api/admin; Max-Age=0; HttpOnly; Secure; SameSite=Strict"});
     // Emitir o revocar un acceso individual; un token existente no puede recuperarse de D1.
-    const accesoProyecto=path.match(/^\\/api\\/admin\\/proyectos\\/([0-9a-f-]{36})\\/acceso$/i);
+    const accesoProyecto=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/acceso$/i);
     if(accesoProyecto && request.method==="POST") {
       if(!sameOrigin(request))return error("Origen no autorizado",403);
       const p=await env.QUIZ_DB.prepare("SELECT id,estado FROM proyectos_cliente WHERE id=?1").bind(accesoProyecto[1]).first();
