@@ -314,3 +314,51 @@ footer { text-align: center; margin: 42px 16px 24px; color: var(--suave); font-s
   .acciones > .accion { width: 100%; }
   .redes { grid-template-columns: 1fr; }
 }
+
+/* Quiz comercial — Etapa 1: tarjeta de presentación */
+.quiz-negocio { margin-top: clamp(24px, 4vw, 44px); }
+.quiz-negocio-tarjeta {
+  background: var(--marino);
+  color: var(--texto-inverso);
+  border: 1px solid var(--marino);
+  border-radius: 18px;
+  padding: clamp(22px, 4vw, 44px);
+}
+.quiz-negocio-contenido { max-width: 680px; }
+.quiz-negocio-etiqueta {
+  color: var(--amarillo);
+  font-size: .78rem;
+  font-weight: var(--peso-titulo);
+  letter-spacing: .1em;
+  margin: 0 0 12px;
+}
+.quiz-negocio h2 {
+  color: var(--texto-inverso);
+  font-size: clamp(1.6rem, 3.2vw, 2.55rem);
+  margin-bottom: 14px;
+}
+.quiz-negocio-descripcion {
+  color: var(--suave-inverso);
+  font-size: clamp(1rem, 1.8vw, 1.125rem);
+  margin: 0 0 24px;
+}
+.quiz-negocio-boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 12px 22px;
+  background: var(--amarillo);
+  color: var(--texto-acento);
+  border: 0;
+  border-radius: var(--radio-accion);
+  font: inherit;
+  font-weight: var(--peso-negrita);
+}
+.quiz-negocio-boton:disabled { cursor: not-allowed; opacity: .88; }
+.quiz-negocio-nota { margin: 12px 0 0; color: var(--suave-inverso); font-size: .86rem; }
+.quiz-negocio-aviso { margin: 8px 0 0; color: var(--suave-inverso); font-size: .78rem; }
+@media (max-width: 520px) {
+  .quiz-negocio-boton { width: 100%; }
+}
