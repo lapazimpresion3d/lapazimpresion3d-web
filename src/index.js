@@ -136,7 +136,7 @@ async function proyectoDeCliente(request,env,tokenExplicito) {
   if(!token || !/^[A-Za-z0-9_-]{43}$/.test(token))return null;
   const hash=await hashTokenCliente(token);
   return await env.QUIZ_DB.prepare(
-    "SELECT p.id,p.estado,p.propuesta_id,q.folio,q.nombre,q.proyecto FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.acceso_token_hash=?1 AND p.acceso_revocado=0 AND p.acceso_expira>?2 AND p.estado<>'cancelado'"
+    "SELECT p.id,p.estado,p.propuesta_id,q.folio,q.nombre,q.proyecto,q.servicio_id,q.ficha_json FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.acceso_token_hash=?1 AND p.acceso_revocado=0 AND p.acceso_expira>?2 AND p.estado<>'cancelado'"
   ).bind(hash,new Date().toISOString()).first();
 }
 async function leerJson(request, max=6000) {
@@ -398,7 +398,56 @@ async function api(request,env,ctx) {
     if(path==="/api/cliente/materiales" && request.method==="GET") {
       const secciones=await env.QUIZ_DB.prepare("SELECT clave,contenido,estado,fecha_actualizacion FROM proyecto_secciones WHERE proyecto_id=?1")
         .bind(p.id).all();
-      return json({proyecto:{folio:p.folio,nombre:p.nombre,proyecto:p.proyecto,estado:p.estado},secciones:secciones.results});
+      const archivos=await env.QUIZ_DB.prepare("SELECT id,categoria,nombre_original,tipo_mime,tamano_bytes,fecha_subida FROM proyecto_archivos WHERE proyecto_id=?1 ORDER BY fecha_subida DESC").bind(p.id).all();
+      let ficha={};try{ficha=JSON.parse(p.ficha_json||"{}");}catch{}
+      let categoria=ficha.servicio||"web";
+      if(ficha.tipo_documento==="ficha_quiz"){
+        const rec=ficha.recomendacion?.id;
+        categoria=rec==="R1"?"llaveros":rec==="R2"?"soporte_qr":rec==="R6"?"fdm_medida":rec==="R7"?"resina":"web";
+      }
+      return json({proyecto:{folio:p.folio,nombre:p.nombre,proyecto:p.proyecto,estado:p.estado,categoria},secciones:secciones.results,archivos:archivos.results});
+    }
+    const archivoCliente=path.match(/^\/api\/cliente\/archivos\/([0-9a-f-]{36})$/i);
+    if(archivoCliente && request.method==="GET"){
+      if(!env.COTIZACIONES_R2)return error("Almacenamiento no configurado",503);
+      const adj=await env.QUIZ_DB.prepare("SELECT clave_r2,tipo_mime FROM proyecto_archivos WHERE id=?1 AND proyecto_id=?2").bind(archivoCliente[1],p.id).first();
+      if(!adj)return error("Archivo no encontrado",404);
+      const objeto=await env.COTIZACIONES_R2.get(adj.clave_r2);
+      if(!objeto)return error("Archivo no encontrado",404);
+      return new Response(objeto.body,{headers:{"Content-Type":adj.tipo_mime,"Content-Disposition":`inline; filename="imagen.${IMG_MIME[adj.tipo_mime]||"jpg"}"`,"Cache-Control":"private,no-store","X-Content-Type-Options":"nosniff","Content-Security-Policy":"default-src 'none'; sandbox","X-Frame-Options":"DENY"}});
+    }
+    if(path==="/api/cliente/archivos" && request.method==="POST"){
+      if(!sameOrigin(request))return error("Origen no autorizado",403);
+      if(["finalizado","cancelado"].includes(p.estado))return error("El proyecto ya no admite archivos",409);
+      if(!env.COTIZACIONES_R2)return error("Almacenamiento R2 no configurado",503);
+      if(!await verificarLimite(request,env,"material_archivo",60,3600))return error("Demasiadas cargas. Intenta más tarde.",429);
+      if(!request.headers.get("content-type")?.toLowerCase().startsWith("multipart/form-data"))return error("Formato de envío inválido",415);
+      const longitud=Number(request.headers.get("content-length")||0);
+      if(longitud>IMG_MAX+150000)return error("La imagen supera los 4 MB",413);
+      let f;
+      try{const form=await request.formData();f=form.get("imagen");}catch{return error("No se pudo leer la imagen",400);}
+      if(!(f instanceof File)||!Object.hasOwn(IMG_MIME,f.type)||f.size===0||f.size>IMG_MAX)return error("Solo se aceptan JPG, PNG o WebP de hasta 4 MB",400);
+      const cnt=await env.QUIZ_DB.prepare("SELECT COUNT(*) AS total FROM proyecto_archivos WHERE proyecto_id=?1").bind(p.id).first();
+      if(cnt.total>=30)return error("Límite de 30 imágenes por proyecto",409);
+      const bytes=new Uint8Array(await f.arrayBuffer());
+      if(!imagenReal(bytes,f.type))return error("El archivo no contiene una imagen válida",400);
+      const id=crypto.randomUUID(),clave=`proyectos/${p.id}/${id}.${IMG_MIME[f.type]}`,ahora=new Date().toISOString();
+      await env.COTIZACIONES_R2.put(clave,bytes,{httpMetadata:{contentType:f.type}});
+      try{
+        await env.QUIZ_DB.prepare("INSERT INTO proyecto_archivos (id,proyecto_id,categoria,nombre_original,clave_r2,tipo_mime,tamano_bytes,fecha_subida) VALUES (?1,?2,'fotografias',?3,?4,?5,?6,?7)")
+          .bind(id,p.id,f.name.slice(0,120),clave,f.type,f.size,ahora).run();
+      }catch(e){await env.COTIZACIONES_R2.delete(clave);throw e;}
+      await env.QUIZ_DB.prepare("UPDATE proyectos_cliente SET fecha_actualizacion=?1 WHERE id=?2").bind(ahora,p.id).run();
+      return json({ok:true,archivo:{id,nombre_original:f.name.slice(0,120),tipo_mime:f.type,tamano_bytes:f.size,fecha_subida:ahora}},201);
+    }
+    if(archivoCliente && request.method==="DELETE"){
+      if(!sameOrigin(request))return error("Origen no autorizado",403);
+      if(["finalizado","cancelado"].includes(p.estado))return error("Este proyecto ya no admite cambios",409);
+      const adj=await env.QUIZ_DB.prepare("SELECT clave_r2 FROM proyecto_archivos WHERE id=?1 AND proyecto_id=?2").bind(archivoCliente[1],p.id).first();
+      if(!adj)return error("Archivo no encontrado",404);
+      await env.COTIZACIONES_R2.delete(adj.clave_r2);
+      await env.QUIZ_DB.prepare("DELETE FROM proyecto_archivos WHERE id=?1 AND proyecto_id=?2").bind(archivoCliente[1],p.id).run();
+      return json({ok:true});
     }
     const seccion=path.match(/^\/api\/cliente\/secciones\/(datos_negocio|servicios_productos|horarios_contacto|indicaciones)$/);
     if(seccion && request.method==="PUT") {
