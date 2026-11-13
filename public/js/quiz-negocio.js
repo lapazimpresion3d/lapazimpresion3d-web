@@ -1,7 +1,7 @@
 /* Quiz comercial Lapazimpresion3d — diagnóstico y solicitud voluntaria por WhatsApp. */
 (() => {
   "use strict";
-  // Cinco preguntas sobre objetivos y circunstancias, no sobre productos.
+  // Cinco preguntas: también cubren fabricación funcional, prototipos y resina.
   // Los IDs son estables: la futura ficha Quiz JSON debe usar estos campos.
   const preguntas = [
     { campo: "objetivo", texto: "¿Qué te gustaría conseguir principalmente con este proyecto?", opciones: [
@@ -9,35 +9,45 @@
       ["mejorar_experiencia", "Ofrecer una experiencia más fluida y profesional a mis clientes."],
       ["celebracion", "Preparar algo único y memorable para una celebración o evento."],
       ["automatizar", "Automatizar tareas repetitivas o gestión de pedidos y citas."],
-      ["destacar", "Destacar frente a la competencia con algo original y diferente."]
+      ["destacar", "Destacar frente a la competencia con algo original y diferente."],
+      ["pieza_funcional", "Crear, reemplazar o mejorar una pieza física que cumpla una función."],
+      ["figura_detallada", "Crear una figura u objeto con muchos detalles visuales."]
     ] },
     { campo: "situacion", texto: "¿En qué situación te encuentras ahora mismo?", opciones: [
       ["comenzando", "Estoy comenzando algo nuevo desde cero."],
       ["negocio_existente", "Ya tengo un negocio en marcha y quiero mejorarlo."],
       ["organizando_evento", "Estoy organizando un evento especial."],
       ["regalo_detalle", "Quiero preparar un regalo o detalle personalizado."],
-      ["explorando", "Estoy explorando posibilidades para el futuro."]
+      ["explorando", "Estoy explorando posibilidades para el futuro."],
+      ["pieza_reproducir", "Tengo una pieza que necesito reproducir o adaptar."],
+      ["modelo_fabricar", "Tengo un modelo o diseño que quiero convertir en un objeto físico."]
     ] },
-    { campo: "contacto_actual", texto: "¿Cómo es el contacto principal con las personas a las que quieres llegar?", opciones: [
+    { campo: "contacto_actual", texto: "¿Cómo se utilizará o compartirá el resultado de tu proyecto?", opciones: [
       ["en_persona", "Principalmente en persona: en un local, oficina, stand o cara a cara."],
       ["internet", "A través de internet: redes sociales, WhatsApp o mensajería digital."],
       ["reservas_pedidos", "Recibo reservas, pedidos o citas recurrentes."],
       ["fecha_fija", "Voy a reunir a varias personas o entregar detalles en una fecha fija."],
-      ["sin_canal", "Todavía no tengo un canal definido."]
+      ["sin_canal", "Todavía no tengo un canal definido."],
+      ["uso_funcional", "Se instalará, ensamblará o utilizará como parte de otro objeto."],
+      ["pieza_visual", "Será una figura, maqueta o pieza para exhibir y apreciar de cerca."]
     ] },
-    { campo: "mejora_deseada", texto: "¿Qué te gustaría mejorar o añadir en esa experiencia?", opciones: [
+    { campo: "mejora_deseada", texto: "¿Qué es lo más importante para tu proyecto?", opciones: [
       ["recuerdo_fisico", "Que recuerden mi marca o mi evento por un buen detalle físico."],
       ["acceso_inmediato", "Que accedan a mi menú, catálogo o información al instante."],
       ["menos_mensajes", "Que puedan solicitar o comprar algo sin depender de tantos mensajes manuales."],
       ["producto_personalizado", "Ofrecer un producto físico original y 100% personalizado."],
-      ["organizar_trabajo", "Organizar mejor mi tiempo, atención o flujo de trabajo."]
+      ["organizar_trabajo", "Organizar mejor mi tiempo, atención o flujo de trabajo."],
+      ["ajuste_resistencia", "Que una pieza tenga las medidas, el ajuste o la resistencia adecuados."],
+      ["detalle_acabado", "Que una figura o pieza tenga detalles finos y buen acabado visual."]
     ] },
     { campo: "preparacion", texto: "¿Qué tan avanzado tienes tu proyecto o material de apoyo?", opciones: [
       ["logo_diseno", "Ya tengo mi logo, diseño o idea bien clara."],
       ["fotos_referencias", "Tengo fotografías, referencias o un manual básico."],
       ["presencia_existente", "Ya tengo presencia (redes/web), pero quiero dar el siguiente salto."],
       ["ayuda_desde_cero", "Necesito que me ayuden a aterrizar la solución desde cero."],
-      ["cotizando", "Por ahora solo estoy cotizando y viendo posibilidades."]
+      ["cotizando", "Por ahora solo estoy cotizando y viendo posibilidades."],
+      ["medidas_modelo", "Tengo medidas, planos, una pieza de muestra o un archivo 3D."],
+      ["referencia_figura", "Tengo una imagen, escultura o referencia de la figura que quiero."]
     ] }
   ];
 
@@ -46,7 +56,9 @@
     R2: { titulo: "Soportes QR/NFC personalizados", descripcion: "Conecta la atención presencial con la información digital a través de un soporte diseñado para tu negocio.", beneficios: ["Acceso a información desde el teléfono", "Soportes de mesa o mostrador con diseño personalizado", "NFC opcional para teléfonos compatibles"] },
     R3: { titulo: "Página web, menú o catálogo digital", descripcion: "Presenta tus servicios o productos de manera clara y accesible desde el celular, incluso cuando no puedes contestar mensajes.", beneficios: ["Información organizada para tus visitantes", "Fotografías, descripciones y medios de contacto", "Una dirección web que puedes compartir fácilmente"] },
     R4: { titulo: "Sistema web personalizado", descripcion: "Estudiamos contigo las tareas que más tiempo consumen para proponer funciones de pedidos, citas o administración adecuadas a tu negocio.", beneficios: ["Flujos de solicitud más ordenados", "Posibilidad de panel de administración", "Funciones implementadas según necesidades y alcance acordados"] },
-    R5: { titulo: "Proyecto combinado: impresión 3D y soluciones digitales", descripcion: "Podemos conectar una pieza física personalizada con una experiencia digital diseñada para el mismo objetivo.", beneficios: ["Un artículo o soporte físico distintivo", "Acceso a información o experiencias desde el teléfono", "Componentes físicos y digitales cotizados según el proyecto"] }
+    R5: { titulo: "Proyecto combinado: impresión 3D y soluciones digitales", descripcion: "Podemos conectar una pieza física personalizada con una experiencia digital diseñada para el mismo objetivo.", beneficios: ["Un artículo o soporte físico distintivo", "Acceso a información o experiencias desde el teléfono", "Componentes físicos y digitales cotizados según el proyecto"] },
+    R6: { titulo: "Piezas funcionales y prototipos en impresión 3D", descripcion: "Podemos revisar la fabricación de repuestos, adaptadores, carcasas, soportes y prototipos a medida.", beneficios: ["Revisión de medidas, archivos o pieza de muestra", "Material y proceso según uso, tolerancias y exigencias", "Viabilidad y precio sujetos a evaluación técnica"] },
+    R7: { titulo: "Figuras y piezas detalladas en resina 3D", descripcion: "Para miniaturas, figuras, modelos decorativos o piezas donde destacan los detalles finos. Evaluaremos si la resina es adecuada para su uso.", beneficios: ["Detalles finos y geometrías complejas según diseño", "Revisión de referencias y dimensiones", "Acabado, material y viabilidad sujetos a cotización"] }
   };
 
   // Reglas deterministas: las preguntas 3 y 4 pesan x2. La prioridad
@@ -85,8 +97,16 @@
     const info = r.mejora_deseada === "acceso_inmediato";
     const presencial = r.contacto_actual === "en_persona";
     const pedir = r.contacto_actual === "reservas_pedidos";
+    const funcional = r.objetivo === "pieza_funcional" || r.situacion === "pieza_reproducir" || r.contacto_actual === "uso_funcional" || r.mejora_deseada === "ajuste_resistencia";
+    const figura = r.objetivo === "figura_detallada" || r.contacto_actual === "pieza_visual" || r.mejora_deseada === "detalle_acabado";
     let id;
-    if (operativo) id = "R4";
+    // Las necesidades técnicas explícitas ganan a señales comerciales genéricas.
+    // Si se mezclan funcionalidad y detalle, priorizar evaluación de la función.
+    if (funcional) id = "R6";
+    else if (figura) id = "R7";
+    else if (r.situacion === "modelo_fabricar" && r.preparacion === "medidas_modelo") id = "R6";
+    else if (r.situacion === "modelo_fabricar" && r.preparacion === "referencia_figura") id = "R7";
+    else if (operativo) id = "R4";
     else if (evento && (fisicoExplicito || r.contacto_actual === "fecha_fija" || !info)) id = "R1";
     else if (fisicoExplicito) id = "R1";
     else if (info && presencial) id = "R2";
@@ -100,7 +120,7 @@
     // de necesidad física Y digital; no por organizar una celebración.
     const fisico = fisicoExplicito || (evento && r.contacto_actual === "fecha_fija");
     const digital = info || operativo || (r.objetivo === "mejorar_experiencia" && r.contacto_actual === "internet");
-    if (fisico && digital && !operativo && !evento) id = "R5";
+    if (fisico && digital && !operativo && !evento && !funcional && !figura) id = "R5";
     const base = servicios[id];
     let complemento = null;
     if (id === "R1" && evento) complemento = "También podemos integrar NFC en los recuerdos para enlazar una galería de fotos y videos, redes sociales o una página del evento con mensajes de invitados. La página y sus funciones se cotizan aparte; cualquier publicación de mensajes requiere moderación y privacidad.";
@@ -108,12 +128,14 @@
     else if (id === "R2") complemento = "Si todavía no tienes un destino digital, podemos crear una página, menú o catálogo para enlazarlo al soporte.";
     else if (id === "R3" && presencial) complemento = "Un soporte QR para mostrador o mesa puede facilitar el acceso a la página.";
     else if (id === "R4" && presencial) complemento = "Podemos explorar códigos QR de mesa o mostrador cuando encajen con tu operación.";
+    else if (id === "R6") complemento = "Puedes compartir fotografías, medidas o un archivo 3D al solicitar la propuesta. Las piezas de uso crítico, estructural o de seguridad requieren evaluación especial y podrían no ser viables.";
+    else if (id === "R7") complemento = "Comparte fotos, dimensiones o un modelo 3D para evaluar los detalles, el acabado y si conviene resina u otro proceso.";
     else if (id === "R5") complemento = "Definiremos por separado el diseño físico y la función digital, para que elijas qué incluir.";
     return {id, titulo:base.titulo, descripcion:base.descripcion, beneficios:[...base.beneficios], complemento, demo:null};
   }
 
-  // Estructura del diagnóstico privado (esquema 3.0).
-  const VERSION_FICHA_QUIZ = "3.0";
+  // Esquema 4.0: admite siete recomendaciones; diagnósticos anteriores se conservan.
+  const VERSION_FICHA_QUIZ = "4.0";
   const TIPO_FICHA_QUIZ = "ficha_quiz";
   const WHATSAPP_COMERCIAL = "526121999963"; // Mismo número que los CTA existentes del sitio.
   // URL ya utilizada en el botón de demostración de la página principal.
@@ -261,17 +283,18 @@
 
     const acciones = document.createElement("div");
     acciones.className = "quiz-acciones-resultado";
-    const enlaceWhatsApp = document.createElement("a");
-    enlaceWhatsApp.className = "quiz-accion-whatsapp";
-    enlaceWhatsApp.textContent = "Solicitar propuesta por WhatsApp";
-    const referencia = obtenerIdSolicitud();
-    enlaceWhatsApp.href = `https://wa.me/${WHATSAPP_COMERCIAL}?text=${encodeURIComponent(construirMensajeWhatsApp(respuestas, referencia))}`;
-    enlaceWhatsApp.target = "_blank";
-    enlaceWhatsApp.rel = "noopener noreferrer";
-    const avisoWhatsApp = document.createElement("p");
-    avisoWhatsApp.className = "quiz-aviso-whatsapp";
-    avisoWhatsApp.textContent = "Se abrirá WhatsApp con un mensaje preparado. Puedes revisarlo y editarlo antes de enviarlo.";
-    // La demo solo se muestra para recomendaciones relacionadas con menús o pedidos.
+    const botonPropuesta = document.createElement("button");
+    botonPropuesta.type = "button";
+    botonPropuesta.className = "quiz-accion-whatsapp";
+    botonPropuesta.textContent = "Solicitar una propuesta";
+    acciones.append(botonPropuesta);
+    const preguntaWA = document.createElement("a");
+    preguntaWA.className = "quiz-accion-secundaria";
+    preguntaWA.textContent = "Prefiero hacer una pregunta por WhatsApp";
+    preguntaWA.href = `https://wa.me/${WHATSAPP_COMERCIAL}?text=${encodeURIComponent("Hola, tengo una pregunta sobre sus servicios de Lapazimpresion3d.")}`;
+    preguntaWA.target = "_blank";
+    preguntaWA.rel = "noopener noreferrer";
+    acciones.append(preguntaWA);
     if (RECOMENDACIONES_CON_DEMO.has(resultado.id)) {
       const enlaceDemo = document.createElement("a");
       enlaceDemo.className = "quiz-accion-secundaria";
@@ -281,24 +304,67 @@
       enlaceDemo.rel = "noopener noreferrer";
       acciones.append(enlaceDemo);
     }
-    const avisoRegistro = document.createElement("p");
-    avisoRegistro.className = "quiz-aviso-whatsapp";
-    avisoRegistro.textContent = "Al solicitar una propuesta, intentaremos registrar tus cinco respuestas sin nombre ni teléfono para revisar tu diagnóstico. El mensaje de WhatsApp solo se envía si tú lo confirmas.";
-    acciones.append(enlaceWhatsApp, avisoWhatsApp, avisoRegistro);
-    // Guardar una vez al pulsar el CTA, sin bloquear la apertura de WhatsApp.
-    // Sin Worker/D1 configurados no se registra nada: WhatsApp sigue funcionando.
-    let registroIniciado = false;
-    enlaceWhatsApp.addEventListener("click", () => {
-      if (registroIniciado) return;
-      registroIniciado = true;
-      const ficha = crearFichaDiagnostico(respuestas);
-      ficha.id_diagnostico = referencia;
-      const cuerpo = JSON.stringify(ficha);
-      fetch("/api/quiz/solicitudes", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: cuerpo, keepalive: true, credentials: "omit"
-      }).catch(() => { /* No bloquear WhatsApp si el servidor no está listo. */ });
+    const formulario = document.createElement("form");
+    formulario.className = "quiz-formulario-contacto";
+    formulario.hidden = true;
+    formulario.noValidate = false;
+    const formTitulo = document.createElement("h4");
+    formTitulo.textContent = "Datos para preparar tu propuesta";
+    formulario.append(formTitulo);
+    const formNota = document.createElement("p");
+    formNota.textContent = "Registraremos tu solicitud aquí. No necesitas enviar un mensaje por WhatsApp.";
+    formulario.append(formNota);
+    function campo(nombre, etiqueta, opts={}) {
+      const label = document.createElement("label");
+      label.textContent = etiqueta;
+      const inp = opts.multiline ? document.createElement("textarea") : document.createElement("input");
+      inp.name = nombre;
+      if (!opts.multiline) inp.type = opts.type || "text";
+      if (opts.required) inp.required = true;
+      inp.maxLength = opts.max || 120;
+      inp.autocomplete = opts.autocomplete || "off";
+      if (opts.placeholder) inp.placeholder = opts.placeholder;
+      label.append(inp); formulario.append(label); return inp;
+    }
+    const nombre = campo("nombre", "Tu nombre *", {required:true,max:100,autocomplete:"name"});
+    const proyecto = campo("proyecto", "Negocio, evento o proyecto (opcional)", {max:120});
+    const telefono = campo("telefono", "WhatsApp de contacto (10 dígitos) *", {required:true,type:"tel",max:25,autocomplete:"tel",placeholder:"Ej. 6121234567"});
+    const comentario = campo("comentario", "Cuéntanos algo más (opcional)", {multiline:true,max:800});
+    const consentimiento = document.createElement("label");
+    consentimiento.className = "quiz-consentimiento";
+    const check = document.createElement("input"); check.type="checkbox"; check.required=true;
+    const txt = document.createElement("span");
+    txt.append("He leído el ");
+    const aviso = document.createElement("a"); aviso.href="/aviso-privacidad.html"; aviso.target="_blank"; aviso.rel="noopener noreferrer"; aviso.textContent="aviso de privacidad";
+    txt.append(aviso," y autorizo el uso de mis datos para responder esta solicitud.");
+    consentimiento.append(check,txt); formulario.append(consentimiento);
+    const enviar = document.createElement("button"); enviar.type="submit"; enviar.className="quiz-accion-whatsapp"; enviar.textContent="Enviar solicitud"; formulario.append(enviar);
+    const estadoSolicitud = document.createElement("p"); estadoSolicitud.className="quiz-estado-solicitud"; estadoSolicitud.setAttribute("role","status"); formulario.append(estadoSolicitud);
+    botonPropuesta.addEventListener("click",()=>{formulario.hidden=false;botonPropuesta.hidden=true;nombre.focus();});
+    formulario.addEventListener("submit",async e=>{
+      e.preventDefault();
+      if (!formulario.reportValidity()) return;
+      const numero=telefono.value.replace(/\D/g,"");
+      if (!/^\d{10}$/.test(numero)) {estadoSolicitud.textContent="Introduce un WhatsApp de 10 dígitos.";telefono.focus();return;}
+      enviar.disabled=true; estadoSolicitud.textContent="Registrando solicitud…";
+      const ficha=crearFichaDiagnostico(respuestas);
+      ficha.id_diagnostico=obtenerIdSolicitud();
+      try {
+        const r=await fetch("/api/quiz/propuestas",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify({ficha,contacto:{nombre:nombre.value.trim(),proyecto:proyecto.value.trim(),telefono:numero,comentario:comentario.value.trim()},acepta_privacidad:check.checked})});
+        const data=await r.json().catch(()=>({}));
+        if(!r.ok || !data.ok) throw new Error(data.error||"No se pudo registrar. Intenta de nuevo.");
+        const confirmacion=document.createElement("div");confirmacion.className="quiz-confirmacion";
+        const h=document.createElement("h4");h.textContent="Solicitud recibida";
+        const folio=document.createElement("p");folio.textContent=`Tu folio es ${data.folio}. Guárdalo para cualquier consulta.`;
+        const detalle=document.createElement("p");detalle.textContent="Revisaremos tu proyecto y te contactaremos. El envío de esta solicitud no constituye una compra ni confirma un precio.";
+        const seguir=document.createElement("a");seguir.className="quiz-accion-secundaria";seguir.textContent="Continuar por WhatsApp (opcional)";
+        seguir.href=`https://wa.me/${WHATSAPP_COMERCIAL}?text=${encodeURIComponent(`Hola, registré una solicitud en Lapazimpresion3d. Mi folio es ${data.folio}.`)}`;
+        seguir.target="_blank";seguir.rel="noopener noreferrer";
+        confirmacion.append(h,folio,detalle,seguir);formulario.replaceWith(confirmacion);
+        preguntaWA.hidden=true;
+      } catch(err) {estadoSolicitud.textContent=err.message;enviar.disabled=false;}
     });
+    acciones.append(formulario);
     contenido.append(acciones);
     anterior.disabled = false;
     enfocar();

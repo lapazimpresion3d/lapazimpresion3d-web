@@ -3,3 +3,5 @@
 #busqueda { min-width: 12rem; max-width: 100%; }
 
 .resultado-diagnostico{border-left:4px solid var(--amarillo);background:#f6f8fd;border-radius:8px;padding:14px 16px;margin-top:16px}.resultado-diagnostico h3{font-size:1.15rem;margin:4px 0 8px}.resultado-diagnostico p{margin:6px 0}.resultado-etiqueta{font-size:.77rem;font-weight:800;letter-spacing:.055em;color:#435578;margin-top:12px!important}
+
+.boton-enlace{display:inline-flex;align-items:center;background:var(--amarillo);color:#16203a;padding:10px 14px;border-radius:9px;font-weight:700;text-decoration:none;min-height:44px}.legado{margin-top:32px;border-top:1px solid var(--borde);padding-top:16px}.legado>summary{font-size:1.1rem}.registro a:focus-visible{outline:3px solid var(--amarillo);outline-offset:2px}

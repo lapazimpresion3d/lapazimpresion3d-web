@@ -5,8 +5,8 @@ let ultimosItems=[];
 const nombres={
   objetivo:"¿Qué te gustaría conseguir principalmente con este proyecto?",
   situacion:"¿En qué situación te encuentras ahora mismo?",
-  contacto_actual:"¿Cómo es el contacto principal con las personas a las que quieres llegar?",
-  mejora_deseada:"¿Qué te gustaría mejorar o añadir en esa experiencia?",
+  contacto_actual:"¿Cómo se utilizará o compartirá el resultado de tu proyecto?",
+  mejora_deseada:"¿Qué es lo más importante para tu proyecto?",
   preparacion:"¿Qué tan avanzado tienes tu proyecto o material de apoyo?"
 };
 const etiquetas={
@@ -34,7 +34,17 @@ const etiquetas={
   fotos_referencias:"Tengo fotografías, referencias o un manual básico.",
   presencia_existente:"Ya tengo presencia (redes/web), pero quiero dar el siguiente salto.",
   ayuda_desde_cero:"Necesito que me ayuden a aterrizar la solución desde cero.",
-  cotizando:"Por ahora solo estoy cotizando y viendo posibilidades."
+  cotizando:"Por ahora solo estoy cotizando y viendo posibilidades.",
+  pieza_funcional:"Crear, reemplazar o mejorar una pieza física que cumpla una función.",
+  figura_detallada:"Crear una figura u objeto con muchos detalles visuales.",
+  pieza_reproducir:"Tengo una pieza que necesito reproducir o adaptar.",
+  modelo_fabricar:"Tengo un modelo o diseño que quiero convertir en un objeto físico.",
+  uso_funcional:"Se instalará, ensamblará o utilizará como parte de otro objeto.",
+  pieza_visual:"Será una figura, maqueta o pieza para exhibir y apreciar de cerca.",
+  ajuste_resistencia:"Que una pieza tenga las medidas, el ajuste o la resistencia adecuados.",
+  detalle_acabado:"Que una figura o pieza tenga detalles finos y buen acabado visual.",
+  medidas_modelo:"Tengo medidas, planos, una pieza de muestra o un archivo 3D.",
+  referencia_figura:"Tengo una imagen, escultura o referencia de la figura que quiero."
 };
 async function req(path,options={}){const r=await fetch(path,{...options,credentials:"same-origin",headers:{...(options.body?{"Content-Type":"application/json"}:{}),...options.headers}});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||`Error ${r.status}`);return d;}
 function elem(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;}
@@ -44,7 +54,9 @@ const descripciones={
   R2:"Soportes impresos en 3D para conectar la atención presencial con información digital mediante QR y NFC opcional.",
   R3:"Una página, menú o catálogo para presentar productos y servicios desde el teléfono.",
   R4:"Funciones de pedidos, reservaciones o administración adaptadas a las necesidades del negocio.",
-  R5:"Una solución que combina artículos o soportes físicos personalizados con servicios digitales."
+  R5:"Una solución que combina artículos o soportes físicos personalizados con servicios digitales.",
+  R6:"Piezas a medida, repuestos y prototipos sujetos a revisión de dimensiones, materiales y viabilidad.",
+  R7:"Miniaturas, figuras y modelos detallados sujetos a evaluación de material, acabado y uso."
 };
 function pintar(items){
   lista.replaceChildren();
@@ -62,6 +74,9 @@ function pintar(items){
       resultado.append(elem("p",null,rec.complemento_sugerido));
     }
     const details=elem("details"),summary=elem("summary",null,"Ver cinco respuestas"),dl=elem("dl");
+    if(f.version_esquema === "4.0") {
+      dl.append(elem("dt",null,"Nota"),elem("dd",null,"Las preguntas 3 y 4 se actualizaron para incluir fabricación y piezas físicas."));
+    }
     for(const [campo,label] of Object.entries(nombres)){
       dl.append(elem("dt",null,label),elem("dd",null,etiquetas[f.respuestas?.[campo]]||f.respuestas?.[campo]||"Sin respuesta"));
     }
@@ -82,7 +97,7 @@ async function cargar(){estado.textContent="Cargando diagnósticos...";try{const
     const sep=params?"&":"?";
     const d=await req(`/api/admin/diagnosticos${params}${ref?sep+"referencia="+encodeURIComponent(ref):""}`);
     ultimosItems=d.items;filtrarBusqueda();}catch(e){estado.textContent=e.message;if(e.message==="Acceso restringido"){panel.hidden=true;acceso.hidden=false;}}}
-acceso.addEventListener("submit",async(e)=>{e.preventDefault();error.textContent="";try{await req("/api/admin/login",{method:"POST",body:JSON.stringify({password:document.querySelector("#password").value})});document.querySelector("#password").value="";acceso.hidden=true;panel.hidden=false;await cargar();}catch(e){error.textContent=e.message;}});
+acceso.addEventListener("submit",async(e)=>{e.preventDefault();error.textContent="";try{await req("/api/admin/login",{method:"POST",body:JSON.stringify({password:document.querySelector("#password").value})});document.querySelector("#password").value="";acceso.hidden=true;panel.hidden=false;await Promise.all([cargar(),cargarPropuestas()]);}catch(e){error.textContent=e.message;}});
 document.querySelector("#actualizar").addEventListener("click",cargar);filtro.addEventListener("change",cargar);let ultimaConsulta="";
 busqueda.addEventListener("input",()=>{
   const texto=busqueda.value.trim();
@@ -90,5 +105,41 @@ busqueda.addEventListener("input",()=>{
   if(esReferencia || (ultimaConsulta && !esReferencia)) { ultimaConsulta=esReferencia?texto:""; cargar(); }
   else filtrarBusqueda();
 });document.querySelector("#salir").addEventListener("click",async()=>{await req("/api/admin/salir",{method:"POST",body:"{}"}).catch(()=>{});panel.hidden=true;acceso.hidden=false;lista.replaceChildren();});
-req("/api/admin/sesion").then(()=>{acceso.hidden=true;panel.hidden=false;return cargar();}).catch(()=>{});
+req("/api/admin/sesion").then(()=>{acceso.hidden=true;panel.hidden=false;return Promise.all([cargar(),cargarPropuestas()]);}).catch(()=>{});
+
+const listaPropuestas=document.querySelector("#lista-propuestas"),estadoPropuestas=document.querySelector("#estado-propuestas"),filtroPropuestas=document.querySelector("#filtro-propuestas"),buscarPropuestas=document.querySelector("#buscar-propuestas");
+const estadosPropuestas={nueva:"Nueva",en_revision:"En revisión",contactado:"Contactado",cotizado:"Cotizado",cerrado:"Cerrado"};
+let solicitudBusquedaTimer;
+async function cargarPropuestas(){
+ estadoPropuestas.textContent="Cargando solicitudes…";
+ try {
+  const params=new URLSearchParams(); if(filtroPropuestas.value)params.set("estado",filtroPropuestas.value); if(buscarPropuestas.value.trim())params.set("buscar",buscarPropuestas.value.trim());
+  const d=await req(`/api/admin/propuestas?${params}`);listaPropuestas.replaceChildren();
+  estadoPropuestas.textContent=`${d.items.length} solicitudes mostradas (máximo 100 por búsqueda).`;
+  if(!d.items.length){listaPropuestas.append(elem("p",null,"No hay solicitudes con este filtro."));return;}
+  for(const x of d.items){
+   const art=elem("article","registro");
+   art.append(elem("h2",null,`${x.nombre} · ${x.folio}`),elem("p","metadatos",`${new Date(x.fecha).toLocaleString("es-MX")} · ${estadosPropuestas[x.estado]||x.estado}`));
+   const datos=elem("dl");
+   for(const [t,v] of [["Proyecto",x.proyecto||"Sin indicar"],["WhatsApp",x.telefono],["Comentario",x.comentario||"Sin comentarios"]]){datos.append(elem("dt",null,t),elem("dd",null,v));}
+   art.append(datos);
+   const rec=x.ficha?.recomendacion||{};
+   const box=elem("section","resultado-diagnostico");box.append(elem("p","resultado-etiqueta","RECOMENDACIÓN"),elem("h3",null,rec.titulo||"Sin recomendación"));
+   if(rec.complemento_sugerido)box.append(elem("p",null,rec.complemento_sugerido));art.append(box);
+   const det=elem("details");det.append(elem("summary",null,"Ver cinco respuestas"));const dl=elem("dl");
+   for(const [c,t] of Object.entries(nombres)){dl.append(elem("dt",null,t),elem("dd",null,etiquetas[x.ficha?.respuestas?.[c]]||x.ficha?.respuestas?.[c]||"Sin respuesta"));}det.append(dl);art.append(det);
+   const actions=elem("div","acciones");
+   const wa=elem("a","boton-enlace","Contactar por WhatsApp");wa.href=`https://wa.me/52${x.telefono}?text=${encodeURIComponent(`Hola ${x.nombre}, te contactamos de Lapazimpresion3d sobre tu solicitud ${x.folio}.`)}`;wa.target="_blank";wa.rel="noopener noreferrer";actions.append(wa);
+   const select=elem("select");select.setAttribute("aria-label",`Estado de ${x.folio}`);
+   for(const [valor,titulo] of Object.entries(estadosPropuestas)){const op=document.createElement("option");op.value=valor;op.textContent=titulo;select.append(op);}select.value=x.estado;
+   select.addEventListener("change",async()=>{select.disabled=true;try{await req(`/api/admin/propuestas/${encodeURIComponent(x.id)}`,{method:"PATCH",body:JSON.stringify({estado:select.value})});await cargarPropuestas();}catch(e){estadoPropuestas.textContent=e.message;select.value=x.estado;}finally{select.disabled=false;}});actions.append(select);
+   const jsonBoton=elem("button","secundario","Descargar JSON");jsonBoton.addEventListener("click",()=>descargar({...x.ficha,contacto:{nombre:x.nombre,proyecto:x.proyecto,telefono:x.telefono,comentario:x.comentario},folio:x.folio,estado_solicitud:x.estado}));actions.append(jsonBoton);
+   const borrar=elem("button","secundario","Eliminar");borrar.addEventListener("click",async()=>{if(!confirm(`¿Eliminar definitivamente ${x.folio}?`))return;try{await req(`/api/admin/propuestas/${encodeURIComponent(x.id)}`,{method:"DELETE"});await cargarPropuestas();}catch(e){estadoPropuestas.textContent=e.message;}});actions.append(borrar);
+   art.append(actions);listaPropuestas.append(art);
+  }
+ }catch(e){estadoPropuestas.textContent=e.message;}
+}
+document.querySelector("#actualizar-propuestas").addEventListener("click",cargarPropuestas);
+filtroPropuestas.addEventListener("change",cargarPropuestas);
+buscarPropuestas.addEventListener("input",()=>{clearTimeout(solicitudBusquedaTimer);solicitudBusquedaTimer=setTimeout(cargarPropuestas,350)});
 })();
