@@ -179,6 +179,24 @@ function solicitudWebValida(d) {
    dominioWebValido(d) && d.acepta_privacidad===true;
 }
 
+
+// Mensajes específicos para facilitar la corrección de formularios web.
+function errorSolicitudWeb(d) {
+  if (!d || typeof d !== "object" || Array.isArray(d)) return "Los datos de la solicitud no tienen un formato válido.";
+  if (!textoWeb(d.nombre, 2, 100)) return "Revisa tu nombre (mínimo 2 caracteres).";
+  if (!textoWeb(d.negocio, 2, 100)) return "Revisa el nombre del negocio (mínimo 2 caracteres).";
+  if (!textoWeb(d.giro, 2, 80)) return "Revisa el giro del negocio (mínimo 2 caracteres).";
+  if (typeof d.telefono !== "string" || !/^\d{10}$/.test(d.telefono)) return "Escribe un número de WhatsApp mexicano de 10 dígitos.";
+  if (!WEB_TIPOS.has(d.tipo_pagina)) return "Selecciona un tipo de página válido.";
+  if (!listaWeb(d.funciones, WEB_FUNCIONES)) return "Revisa las funciones seleccionadas en el formulario.";
+  if (!listaWeb(d.complementos, WEB_COMPLEMENTOS)) return "Revisa los complementos seleccionados en el formulario.";
+  if (!textoWeb(d.detalles, 5, 500)) return "Describe tu proyecto con al menos 5 caracteres (máximo 500).";
+  if (!presupuestoValido(d.presupuesto ?? "")) return "Vuelve a seleccionar tu presupuesto.";
+  if (!dominioWebValido(d)) return "Revisa la opción de dominio y la dirección que escribiste.";
+  if (d.acepta_privacidad !== true) return "Debes aceptar el aviso de privacidad.";
+  return null;
+}
+
 // Servicio físico: formulario único con campos específicos, registro en quiz_propuestas.
 const TIPOS_FISICOS = Object.freeze({llaveros:"Llaveros personalizados",fdm_medida:"Impresión 3D a medida",resina:"Figuras y miniaturas en resina",soporte_qr:"Soportes QR/NFC"});
 const CAMPOS_FISICOS = Object.freeze({
@@ -266,7 +284,8 @@ async function api(request,env,ctx) {
     if(!sameOrigin(request)) return error("Origen no autorizado",403);
     if(!await verificarLimite(request,env,"propuesta_web",6,3600)) return error("Demasiadas solicitudes. Intenta más tarde.",429);
     const d=await leerJson(request,6000);
-    if(!solicitudWebValida(d)) return error("Revisa los datos del formulario y acepta el aviso de privacidad.",400);
+    const detalleErrorWeb=errorSolicitudWeb(d);
+    if(detalleErrorWeb || !solicitudWebValida(d)) return error(detalleErrorWeb || "La solicitud contiene un dato incompatible. Actualiza la página e inténtalo nuevamente.",400);
     const id=crypto.randomUUID(), fecha=new Date().toISOString();
     const folio=`WEB-${id.replace(/-/g,"").slice(0,10).toUpperCase()}`;
     const ficha={
