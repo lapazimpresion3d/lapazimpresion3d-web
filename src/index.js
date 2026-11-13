@@ -179,24 +179,6 @@ function solicitudWebValida(d) {
    dominioWebValido(d) && d.acepta_privacidad===true;
 }
 
-
-// Mensajes específicos para facilitar la corrección de formularios web.
-function errorSolicitudWeb(d) {
-  if (!d || typeof d !== "object" || Array.isArray(d)) return "Los datos de la solicitud no tienen un formato válido.";
-  if (!textoWeb(d.nombre, 2, 100)) return "Revisa tu nombre (mínimo 2 caracteres).";
-  if (!textoWeb(d.negocio, 2, 100)) return "Revisa el nombre del negocio (mínimo 2 caracteres).";
-  if (!textoWeb(d.giro, 2, 80)) return "Revisa el giro del negocio (mínimo 2 caracteres).";
-  if (typeof d.telefono !== "string" || !/^\d{10}$/.test(d.telefono)) return "Escribe un número de WhatsApp mexicano de 10 dígitos.";
-  if (!WEB_TIPOS.has(d.tipo_pagina)) return "Selecciona un tipo de página válido.";
-  if (!listaWeb(d.funciones, WEB_FUNCIONES)) return "Revisa las funciones seleccionadas en el formulario.";
-  if (!listaWeb(d.complementos, WEB_COMPLEMENTOS)) return "Revisa los complementos seleccionados en el formulario.";
-  if (!textoWeb(d.detalles, 5, 500)) return "Describe tu proyecto con al menos 5 caracteres (máximo 500).";
-  if (!presupuestoValido(d.presupuesto ?? "")) return "Vuelve a seleccionar tu presupuesto.";
-  if (!dominioWebValido(d)) return "Revisa la opción de dominio y la dirección que escribiste.";
-  if (d.acepta_privacidad !== true) return "Debes aceptar el aviso de privacidad.";
-  return null;
-}
-
 // Servicio físico: formulario único con campos específicos, registro en quiz_propuestas.
 const TIPOS_FISICOS = Object.freeze({llaveros:"Llaveros personalizados",fdm_medida:"Impresión 3D a medida",resina:"Figuras y miniaturas en resina",soporte_qr:"Soportes QR/NFC"});
 const CAMPOS_FISICOS = Object.freeze({
@@ -222,11 +204,48 @@ function solicitudFisicaValida(d){
  if(!d.campos||typeof d.campos!=="object"||Array.isArray(d.campos)||Object.keys(d.campos).some(k=>!claves.includes(k)))return false;
  return claves.every(k=>typeof d.campos[k]==="string"&&d.campos[k].length<=280);
 }
-async function notificarPropuesta(env,folio) {
- if(!env.RESEND_API_KEY || !env.NOTIFY_EMAIL || !env.EMAIL_FROM) return;
- const link=`https://lapazimpresion3d.com/admin/`;
- const res=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":`Bearer ${env.RESEND_API_KEY}`,"Content-Type":"application/json","Idempotency-Key":`quiz-${folio}`},body:JSON.stringify({from:env.EMAIL_FROM,to:[env.NOTIFY_EMAIL],subject:`Nueva solicitud Lapazimpresion3d · ${folio}`,text:`Se registró una solicitud de propuesta: ${folio}.\nConsúltala en el panel privado: ${link}\nEl correo no contiene datos personales.`})});
- if(!res.ok) console.error("No se envió el aviso de propuesta",res.status);
+// Resumen de la solicitud para el correo administrativo. Las imágenes permanecen privadas en R2.
+function etiquetaCorreo(k) {
+  const especiales={nombre:"Nombre",telefono:"WhatsApp",proyecto:"Proyecto",negocio:"Negocio",presupuesto:"Presupuesto",detalles:"Descripción",comentario:"Comentarios",servicio:"Servicio",tipo_pagina:"Tipo de página",situacion_dominio:"Dominio",dominio_actual:"Dominio existente",contexto:"Tipo de solicitud",institucion_academica:"Institución educativa",tipo_trabajo_academico:"Trabajo académico",fecha_deseada:"Fecha deseada",fecha_prioritaria:"Urgencia",cantidad:"Cantidad",tamano:"Tamaño",diseno:"Diseño",colores:"Colores",nfc:"NFC",destino_qr:"Destino QR",material:"Material",giro:"Giro del negocio",funciones:"Funciones",complementos:"Complementos",objetivo:"Objetivo",situacion:"Situación",contacto_actual:"Contacto actual",mejora_deseada:"Mejora deseada",preparacion:"Material disponible"};
+  return especiales[k] || k.replace(/_/g," ").replace(/^./,x=>x.toUpperCase());
+}
+function valorCorreo(v) {
+  if(v==null || v==="") return "No indicado";
+  if(Array.isArray(v)) return v.length?v.map(valorCorreo).join(", "):"Ninguno";
+  if(typeof v==="boolean") return v?"Sí":"No";
+  if(typeof v==="object") return Object.entries(v).filter(([k])=>!['clave','id_solicitud','id_diagnostico','fecha_generacion','estado','precio_final_pendiente'].includes(k)).map(([k,x])=>`${etiquetaCorreo(k)}: ${valorCorreo(x)}`).join("; ");
+  return String(v).replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g," ").slice(0,1600);
+}
+function resumenCorreo(info) {
+  const filas=[];
+  const agregar=(nombre,valor)=>{if(valor!==undefined&&valor!==null&&valor!=="")filas.push(`${nombre}: ${valorCorreo(valor)}`);};
+  agregar("Folio",info.folio);
+  agregar("Servicio",info.servicio);
+  agregar("Cliente",info.nombre);
+  agregar("WhatsApp",info.telefono);
+  agregar("Negocio o proyecto",info.proyecto);
+  agregar("Presupuesto",info.presupuesto);
+  agregar("Tipo de solicitud",info.contexto);
+  if(info.tipo_pagina) agregar("Tipo de página",info.tipo_pagina);
+  if(info.giro) agregar("Giro",info.giro);
+  if(info.dominio) agregar("Dominio",info.dominio);
+  if(info.funciones) agregar("Funciones",info.funciones);
+  if(info.complementos) agregar("Complementos",info.complementos);
+  if(info.academico) agregar("Datos académicos",info.academico);
+  if(info.campos) {filas.push("", "CARACTERÍSTICAS DEL PROYECTO");for(const [k,v] of Object.entries(info.campos))agregar(etiquetaCorreo(k),v);}
+  if(info.respuestas) {filas.push("", "RESPUESTAS DEL CUESTIONARIO");for(const [k,v] of Object.entries(info.respuestas))agregar(etiquetaCorreo(k),v);}
+  if(info.recomendacion) agregar("Recomendación",info.recomendacion);
+  agregar("Descripción",info.detalles);
+  agregar("Comentarios",info.comentario);
+  if(info.imagenes?.length)agregar("Imágenes adjuntas",`${info.imagenes.length} (disponibles únicamente en el panel privado)`);
+  filas.push("", "Consulta y administra la solicitud en:","https://lapazimpresion3d.com/admin/", "", "Correo administrativo confidencial. No reenviar a terceros.");
+  return filas.join("\n").slice(0,14000);
+}
+async function notificarPropuesta(env,info) {
+  if(!env.RESEND_API_KEY || !env.NOTIFY_EMAIL || !env.EMAIL_FROM) return;
+  const folio=info.folio;
+  const res=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":`Bearer ${env.RESEND_API_KEY}`,"Content-Type":"application/json","Idempotency-Key":`quiz-${folio}`},body:JSON.stringify({from:env.EMAIL_FROM,to:[env.NOTIFY_EMAIL],subject:`Nueva cotización ${info.servicio||"Lapazimpresion3d"} · ${folio}`,text:resumenCorreo(info)})});
+  if(!res.ok) console.error("No se envió el aviso de propuesta",res.status);
 }
 // Adjuntos opcionales: solo imágenes seguras, privadas, por solicitud.
 const IMG_MIME={"image/jpeg":"jpg","image/png":"png","image/webp":"webp"};
@@ -277,15 +296,14 @@ async function api(request,env,ctx) {
       .bind(id,folio,fecha,d.nombre.trim(),(d.proyecto||TIPOS_FISICOS[d.servicio]).trim(),d.telefono,d.detalles.trim(),prefijo,JSON.stringify(ficha)).run();}
     catch(e){await limpiarImagenes(env,imagenes);throw e;}
     if(result.meta.changes!==1){await limpiarImagenes(env,imagenes);return error("No se pudo registrar la solicitud",500);}
-    if(ctx?.waitUntil)ctx.waitUntil(notificarPropuesta(env,folio).catch(e=>console.error("Aviso",e)));
+    if(ctx?.waitUntil)ctx.waitUntil(notificarPropuesta(env,{folio,servicio:TIPOS_FISICOS[d.servicio],nombre:d.nombre,telefono:d.telefono,proyecto:d.proyecto,presupuesto:d.presupuesto,contexto:d.contexto,academico:d.contexto==="academico"?{tipo_trabajo:d.tipo_trabajo_academico,institucion:d.institucion_academica}:null,campos:d.campos,detalles:d.detalles,imagenes}).catch(e=>console.error("Aviso",e)));
     return json({ok:true,folio},201);
   }
   if(path==="/api/web/propuestas" && request.method==="POST") {
     if(!sameOrigin(request)) return error("Origen no autorizado",403);
     if(!await verificarLimite(request,env,"propuesta_web",6,3600)) return error("Demasiadas solicitudes. Intenta más tarde.",429);
     const d=await leerJson(request,6000);
-    const detalleErrorWeb=errorSolicitudWeb(d);
-    if(detalleErrorWeb || !solicitudWebValida(d)) return error(detalleErrorWeb || "La solicitud contiene un dato incompatible. Actualiza la página e inténtalo nuevamente.",400);
+    if(!solicitudWebValida(d)) return error("Revisa los datos del formulario y acepta el aviso de privacidad.",400);
     const id=crypto.randomUUID(), fecha=new Date().toISOString();
     const folio=`WEB-${id.replace(/-/g,"").slice(0,10).toUpperCase()}`;
     const ficha={
@@ -299,7 +317,7 @@ async function api(request,env,ctx) {
     const result=await env.QUIZ_DB.prepare("INSERT INTO quiz_propuestas (id,folio,fecha,nombre,proyecto,telefono,comentario,servicio_id,ficha_json,estado,privacidad_aceptada) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,'nueva',1)")
       .bind(id,folio,fecha,d.nombre.trim(),d.negocio.trim(),d.telefono,d.detalles.trim(),"WEB",JSON.stringify(ficha)).run();
     if(result.meta.changes!==1) return error("No se pudo registrar la solicitud",500);
-    if(ctx?.waitUntil) ctx.waitUntil(notificarPropuesta(env,folio).catch(e=>console.error("Aviso por correo",e)));
+    if(ctx?.waitUntil) ctx.waitUntil(notificarPropuesta(env,{folio,servicio:"Página web / servicios digitales",nombre:d.nombre,telefono:d.telefono,proyecto:d.negocio,presupuesto:d.presupuesto,tipo_pagina:d.tipo_pagina,giro:d.giro,dominio:{situacion:d.situacion_dominio||"No indicada",actual:d.dominio_actual||""},funciones:d.funciones,complementos:d.complementos,detalles:d.detalles}).catch(e=>console.error("Aviso por correo",e)));
     return json({ok:true,folio},201);
   }
   if(path==="/api/quiz/propuestas" && request.method==="POST") {
@@ -323,7 +341,7 @@ async function api(request,env,ctx) {
       const anterior=await env.QUIZ_DB.prepare("SELECT telefono FROM quiz_propuestas WHERE id=?1").bind(id).first();
       if(!anterior || anterior.telefono!==telefono) return error("Referencia repetida; vuelve a iniciar la solicitud",409);
     }
-    if(result.meta.changes>0 && ctx?.waitUntil) ctx.waitUntil(notificarPropuesta(env,folio).catch(e=>console.error("Aviso por correo",e)));
+    if(result.meta.changes>0 && ctx?.waitUntil) ctx.waitUntil(notificarPropuesta(env,{folio,servicio:TITULOS[ficha.recomendacion.id],nombre,telefono,proyecto,presupuesto:ficha.respuestas.presupuesto,respuestas:ficha.respuestas,recomendacion:ficha.recomendacion.titulo,comentario}).catch(e=>console.error("Aviso por correo",e)));
     return json({ok:true,folio},result.meta.changes>0?201:200);
   }
   // La ruta histórica no crea prospectos identificables. Conservar solo consulta de registros anteriores.
