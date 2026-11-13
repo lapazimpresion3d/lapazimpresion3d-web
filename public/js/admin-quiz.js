@@ -104,18 +104,37 @@ busqueda.addEventListener("input",()=>{
   const esReferencia=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(texto);
   if(esReferencia || (ultimaConsulta && !esReferencia)) { ultimaConsulta=esReferencia?texto:""; cargar(); }
   else filtrarBusqueda();
-});document.querySelector("#salir").addEventListener("click",async()=>{await req("/api/admin/salir",{method:"POST",body:"{}"}).catch(()=>{});panel.hidden=true;acceso.hidden=false;lista.replaceChildren();});
+});document.querySelector("#salir").addEventListener("click",async()=>{await req("/api/admin/salir",{method:"POST",body:"{}"}).catch(()=>{});panel.hidden=true;acceso.hidden=false;lista.replaceChildren();listaPropuestas.replaceChildren();propuestasVisibles=[];});
 req("/api/admin/sesion").then(()=>{acceso.hidden=true;panel.hidden=false;return Promise.all([cargar(),cargarPropuestas()]);}).catch(()=>{});
 
 const listaPropuestas=document.querySelector("#lista-propuestas"),estadoPropuestas=document.querySelector("#estado-propuestas"),filtroPropuestas=document.querySelector("#filtro-propuestas"),buscarPropuestas=document.querySelector("#buscar-propuestas");
 const estadosPropuestas={nueva:"Nueva",en_revision:"En revisión",contactado:"Contactado",cotizado:"Cotizado",cerrado:"Cerrado"};
 let solicitudBusquedaTimer;
+let propuestasVisibles=[];
+function celdaCSV(valor) {
+ const texto=String(valor??"");
+ // Evitar que Excel/LibreOffice interprete valores como fórmulas.
+ const seguro=/^[\s]*[=+@-]/.test(texto) ? "'"+texto : texto;
+ return '"'+seguro.replace(/"/g,'""')+'"';
+}
+function exportarPropuestasCSV(){
+ if(!propuestasVisibles.length){estadoPropuestas.textContent="No hay resultados visibles para exportar.";return;}
+ const cabeceras=["Folio","Fecha","Estado","Nombre","Proyecto","WhatsApp","Comentario","Recomendación","Complemento"];
+ const filas=propuestasVisibles.map(x=>[x.folio,x.fecha,x.estado,x.nombre,x.proyecto,x.telefono,x.comentario,x.ficha?.recomendacion?.titulo,x.ficha?.recomendacion?.complemento_sugerido]);
+ const csv="\uFEFF"+[cabeceras,...filas].map(f=>f.map(celdaCSV).join(",")).join("\r\n")+"\r\n";
+ const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+ const a=document.createElement("a");a.href=url;a.download="solicitudes-lapazimpresion3d.csv";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
 async function cargarPropuestas(){
  estadoPropuestas.textContent="Cargando solicitudes…";
  try {
   const params=new URLSearchParams(); if(filtroPropuestas.value)params.set("estado",filtroPropuestas.value); if(buscarPropuestas.value.trim())params.set("buscar",buscarPropuestas.value.trim());
   const d=await req(`/api/admin/propuestas?${params}`);listaPropuestas.replaceChildren();
-  estadoPropuestas.textContent=`${d.items.length} solicitudes mostradas (máximo 100 por búsqueda).`;
+  propuestasVisibles=d.items;
+  const conteo=d.items.reduce((acc,x)=>(acc[x.estado]=(acc[x.estado]||0)+1,acc),{});
+  const resumen=Object.entries(conteo).map(([clave,n])=>`${estadosPropuestas[clave]||clave}: ${n}`).join(" · ");
+  estadoPropuestas.textContent=`${d.items.length} solicitudes mostradas (máximo 100 por búsqueda). ${resumen}`;
   if(!d.items.length){listaPropuestas.append(elem("p",null,"No hay solicitudes con este filtro."));return;}
   for(const x of d.items){
    const art=elem("article","registro");
@@ -139,6 +158,7 @@ async function cargarPropuestas(){
   }
  }catch(e){estadoPropuestas.textContent=e.message;}
 }
+document.querySelector("#exportar-propuestas").addEventListener("click",exportarPropuestasCSV);
 document.querySelector("#actualizar-propuestas").addEventListener("click",cargarPropuestas);
 filtroPropuestas.addEventListener("change",cargarPropuestas);
 buscarPropuestas.addEventListener("input",()=>{clearTimeout(solicitudBusquedaTimer);solicitudBusquedaTimer=setTimeout(cargarPropuestas,350)});

@@ -172,21 +172,17 @@ async function api(request,env,ctx) {
     const folio=`LP-${id.replace(/-/g,"").slice(0,10).toUpperCase()}`;
     const result=await env.QUIZ_DB.prepare("INSERT OR IGNORE INTO quiz_propuestas (id,folio,fecha,nombre,proyecto,telefono,comentario,servicio_id,ficha_json,estado,privacidad_aceptada) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,'nueva',1)")
       .bind(id,folio,ficha.fecha_generacion,nombre,proyecto,telefono,comentario,ficha.recomendacion.id,JSON.stringify(ficha)).run();
+    if(result.meta.changes===0) {
+      // Reenvío de una misma ficha: solo devolver el folio si el teléfono coincide.
+      // Un ID reutilizado con otro contacto no debe simular una solicitud recibida.
+      const anterior=await env.QUIZ_DB.prepare("SELECT telefono FROM quiz_propuestas WHERE id=?1").bind(id).first();
+      if(!anterior || anterior.telefono!==telefono) return error("Referencia repetida; vuelve a iniciar la solicitud",409);
+    }
     if(result.meta.changes>0 && ctx?.waitUntil) ctx.waitUntil(notificarPropuesta(env,folio).catch(e=>console.error("Aviso por correo",e)));
     return json({ok:true,folio},result.meta.changes>0?201:200);
   }
-  if(path==="/api/quiz/solicitudes" && request.method==="POST") {
-    if(!sameOrigin(request)) return error("Origen no autorizado",403);
-    if(!await verificarLimite(request,env,"diagnostico",12,3600)) return error("Demasiadas solicitudes. Intenta más tarde.",429);
-    const data=await leerJson(request);
-    if(!data || data.tipo_documento!=="ficha_quiz" || !["3.0","4.0"].includes(data.version_esquema)) return error("Ficha inválida",400);
-    if(!data.respuestas || typeof data.respuestas!=="object" || Array.isArray(data.respuestas) || Object.keys(CAMPOS).some(k=>!(data.version_esquema==="3.0"?CAMPOS_V3:CAMPOS)[k].includes(data.respuestas[k]))) return error("Respuestas inválidas",400);
-    if(!IDS.has(data.recomendacion?.id) || data.recomendacion.titulo!==TITULOS[data.recomendacion.id] || data.recomendacion.id!==(data.version_esquema==="4.0"?recomendacionEsperada(data.respuestas):recomendacionEsperadaV3(data.respuestas))) return error("Recomendación inválida",400);
-    const id=typeof data.id_diagnostico==="string" && ID_UUID.test(data.id_diagnostico) ? data.id_diagnostico : crypto.randomUUID();
-    const ficha={tipo_documento:"ficha_quiz",version_esquema:data.version_esquema,id_diagnostico:id,id_proyecto:null,origen:"lapazimpresion3d_web",fecha_generacion:new Date().toISOString(),respuestas:Object.fromEntries(Object.keys(CAMPOS).map(k=>[k,data.respuestas[k]])),recomendacion:{id:data.recomendacion.id,titulo:data.recomendacion.titulo,estado:"orientativa",complemento_sugerido:typeof data.recomendacion.complemento_sugerido==="string"?data.recomendacion.complemento_sugerido.slice(0,350):null}};
-    await env.QUIZ_DB.prepare("INSERT OR IGNORE INTO quiz_diagnosticos (id,fecha,servicio_id,ficha_json,estado) VALUES (?1,?2,?3,?4,'nuevo')").bind(id,ficha.fecha_generacion,ficha.recomendacion.id,JSON.stringify(ficha)).run();
-    return json({ok:true,id},201);
-  }
+  // La ruta histórica no crea prospectos identificables. Conservar solo consulta de registros anteriores.
+  if(path==="/api/quiz/solicitudes" && request.method==="POST") return error("Este registro fue reemplazado por el formulario de propuestas",410);
   if(path==="/api/admin/login" && request.method==="POST") {
     if(!sameOrigin(request)) return error("Origen no autorizado",403);
     if(!env.ADMIN_PASSWORD || !env.SESSION_SECRET) return error("Acceso no configurado",503);
@@ -256,6 +252,15 @@ export default { async fetch(request,env,ctx) {
   const path=new URL(request.url).pathname;
   try {
     if(path.startsWith("/api/")) return await api(request,env,ctx);
-    return env.ASSETS.fetch(request);
+    const resp=await env.ASSETS.fetch(request);
+    if(path==="/admin" || path.startsWith("/admin/")) {
+      const headers=new Headers(resp.headers);
+      headers.set("Cache-Control","no-store");
+      headers.set("X-Robots-Tag","noindex, nofollow");
+      headers.set("X-Content-Type-Options","nosniff");
+      headers.set("Referrer-Policy","same-origin");
+      return new Response(resp.body,{status:resp.status,statusText:resp.statusText,headers});
+    }
+    return resp;
   } catch(e) { console.error("Error de solicitud",e); return error("Error del servidor",500); }
 } };
