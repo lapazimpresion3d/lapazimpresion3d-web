@@ -405,7 +405,10 @@ async function api(request,env,ctx) {
         const rec=ficha.recomendacion?.id;
         categoria=rec==="R1"?"llaveros":rec==="R2"?"soporte_qr":rec==="R6"?"fdm_medida":rec==="R7"?"resina":"web";
       }
-      return json({proyecto:{folio:p.folio,nombre:p.nombre,proyecto:p.proyecto,estado:p.estado,categoria},secciones:secciones.results,archivos:archivos.results});
+      const cotizacion=ficha.tipo_documento==="solicitud_servicio"
+        ?{campos:ficha.campos&&typeof ficha.campos==="object"?ficha.campos:{},fecha_deseada:ficha.fecha_deseada||"",detalles:ficha.detalles||"",contexto:ficha.contexto||"",fecha_prioritaria:ficha.fecha_prioritaria||""}
+        :null;
+      return json({proyecto:{folio:p.folio,nombre:p.nombre,proyecto:p.proyecto,estado:p.estado,categoria},cotizacion,secciones:secciones.results,archivos:archivos.results});
     }
     const archivoCliente=path.match(/^\/api\/cliente\/archivos\/([0-9a-f-]{36})$/i);
     if(archivoCliente && request.method==="GET"){
