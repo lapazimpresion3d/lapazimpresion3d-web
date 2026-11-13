@@ -156,7 +156,33 @@ async function cargarProyectos(){
      try{await req("/api/admin/proyectos/"+encodeURIComponent(p.id)+"/acceso",{method:"DELETE",body:"{}"});art.querySelector(".enlace-cliente")?.remove();estadoProyectos.textContent="Acceso revocado. El cliente ya no podrá utilizar su enlace.";await cargarProyectos();}
      catch(e){estadoProyectos.textContent=e.message;}finally{revocar.disabled=false;}
    });
-   acciones.append(generar,revocar);art.append(acciones);listaProyectos.append(art);
+   const revisar=elem("button","secundario","Ver materiales recibidos");
+   revisar.type="button";
+   revisar.addEventListener("click",async()=>{
+     revisar.disabled=true;
+     try{
+       const d=await req("/api/admin/proyectos/"+encodeURIComponent(p.id)+"/materiales");
+       art.querySelector(".materiales-administracion")?.remove();
+       const caja=elem("section","materiales-administracion");
+       caja.append(elem("h4",null,"Materiales del proyecto"));
+       const secciones={datos_negocio:"Primer apartado",servicios_productos:"Segundo apartado",horarios_contacto:"Tercer apartado",indicaciones:"Indicaciones adicionales"};
+       if(!d.secciones.length)caja.append(elem("p",null,"El cliente aún no ha entregado textos."));
+       for(const a of d.secciones){
+         const bloque=elem("div","apartado-recibido");
+         bloque.append(elem("strong",null,secciones[a.clave]||a.clave),elem("p",null,a.contenido||"(Sin texto)"));
+         caja.append(bloque);
+       }
+       caja.append(elem("h4",null,"Imágenes recibidas ("+d.archivos.length+")"));
+       if(!d.archivos.length)caja.append(elem("p",null,"Aún no hay imágenes."));
+       for(const a of d.archivos){
+         const link=elem("a","boton-enlace",a.nombre_original||"Ver imagen");
+         link.href="/api/admin/proyectos/"+encodeURIComponent(p.id)+"/archivos/"+encodeURIComponent(a.id);
+         link.target="_blank";link.rel="noopener noreferrer";caja.append(link);
+       }
+       art.append(caja);
+     }catch(e){estadoProyectos.textContent=e.message;}finally{revisar.disabled=false;}
+   });
+   acciones.append(generar,revocar,revisar);art.append(acciones);listaProyectos.append(art);
   }
  }catch(e){estadoProyectos.textContent="Proyectos no disponibles: "+e.message+". Comprueba que la migración 0004 esté aplicada a D1.";}
 }
