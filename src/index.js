@@ -158,7 +158,7 @@ function contactoValido(c) {
 // Solicitudes directas de la sección «Cotiza tu página web».
 // Reutiliza quiz_propuestas sin cambiar el esquema D1 ni alterar la ruta del cuestionario.
 const WEB_TIPOS = new Set(["Página de contacto digital", "Página web para mi negocio", "Menú digital para restaurantes", "Catálogo de productos para comercios"]);
-const WEB_FUNCIONES = new Set(["Carrito y pedidos desde la página", "Pedidos por WhatsApp", "Efectivo y transferencias con registro manual", "Cotizar integración de pagos en línea con tarjeta", "Pedidos para recoger o a domicilio", "Pedidos desde las mesas", "Reservaciones y agenda", "Panel privado", "Pantalla de cocina y comandas", "Seguimiento de pedidos", "Reportes de pedidos y cobros"]);
+const WEB_FUNCIONES = new Set(["Carrito y pedidos desde la página", "Pedidos por WhatsApp", "Efectivo y transferencias con registro manual", "Cotizar integración de pagos en línea con tarjeta", "Pedidos para recoger o a domicilio", "Pedidos desde las mesas", "Reservaciones y agenda", "Reservaciones de tours y pases turísticos", "Panel privado", "Pantalla de cocina y comandas", "Seguimiento de pedidos", "Reportes de pedidos y cobros"]);
 const WEB_COMPLEMENTOS = new Set(["Código QR para la página", "Soportes QR o llaveros con NFC opcional", "Carga inicial de productos, precios y fotografías", "Configuración inicial para buscadores y aviso de privacidad", "Capacitación para administrar la página"]);
 function textoWeb(v,min,max) {return typeof v==='string' && v.trim().length>=min && v.trim().length<=max;}
 function listaWeb(v,permitidos) {return Array.isArray(v) && v.length<=permitidos.size && v.every(x=>typeof x==='string' && permitidos.has(x)) && new Set(v).size===v.length;}
