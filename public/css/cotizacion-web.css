@@ -79,3 +79,9 @@
  .pagina-cotizacion .web label:not(.opcion):not(.privacidad-web){margin-bottom:19px;}
  .pagina-cotizacion .acciones>*{width:100%;}
 }
+
+/* Contexto académico en formulario de impresión 3D */
+.pagina-cotizacion .web .datos-academicos{min-width:0;max-width:100%;margin:0 0 20px;padding:16px;border:1px solid #c8d6eb;border-radius:12px;background:#f5f8fe;}
+.pagina-cotizacion .web .datos-academicos[hidden]{display:none;}
+.pagina-cotizacion .web .datos-academicos .nota-academica{margin:4px 0 0;line-height:1.55;color:#405476;font-size:.92rem;}
+@media(max-width:600px){.pagina-cotizacion .web .datos-academicos{padding:14px 12px;}}

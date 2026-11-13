@@ -179,11 +179,16 @@ const CAMPOS_FISICOS = Object.freeze({
  resina:["cantidad","tamano","uso","detalle","referencia"],
  soporte_qr:["cantidad","tamano","uso","logo","destino_qr","contenido_existente","nfc"]
 });
+const TIPOS_TRABAJO_ACADEMICO=new Set(["proyecto_escolar","prototipo","maqueta","investigacion","otro"]);
 const PRESUPUESTOS = new Set(["menos_500","500_1500","1500_3000","3000_6000","mas_6000","sin_definir",""]);
 function presupuestoValido(v) {return typeof v==="string"&&PRESUPUESTOS.has(v);}
 function solicitudFisicaValida(d){
  if(!d||typeof d!=="object"||Array.isArray(d)||!Object.hasOwn(TIPOS_FISICOS,d.servicio)||!textoWeb(d.nombre,2,100)||!/^\d{10}$/.test(d.telefono||"")||!textoWeb(d.detalles,5,1200)||d.acepta_privacidad!==true||!presupuestoValido(d.presupuesto))return false;
- if(!["","negocio","evento","personal"].includes(d.contexto||""))return false;
+ if(!["","negocio","evento","personal","academico"].includes(d.contexto||""))return false;
+ if(d.contexto==="academico"){
+   if(!TIPOS_TRABAJO_ACADEMICO.has(d.tipo_trabajo_academico))return false;
+   if(typeof d.institucion_academica!=="string"||d.institucion_academica.length>120)return false;
+ }else if((d.tipo_trabajo_academico||"")!==""||(d.institucion_academica||"")!=="")return false;
  if(!["","si","no","no_se"].includes(d.fecha_prioritaria||""))return false;
  if(typeof d.proyecto!=="string"||d.proyecto.length>120 ||typeof d.fecha_deseada!=="string"||d.fecha_deseada.length>30)return false;
  const claves=CAMPOS_FISICOS[d.servicio];
@@ -239,7 +244,7 @@ async function api(request,env,ctx) {
     const folio=`${prefijo}-${id.replace(/-/g,"").slice(0,10).toUpperCase()}`;
     const ficha={tipo_documento:"solicitud_servicio",version_esquema:"1.0",id_solicitud:id,origen:"formulario_directo",fecha_generacion:fecha,
       servicio:d.servicio,titulo_servicio:TIPOS_FISICOS[d.servicio],presupuesto:d.presupuesto,fecha_deseada:d.fecha_deseada,
-      contexto:d.contexto||"",fecha_prioritaria:d.fecha_prioritaria||"",campos:d.campos,detalles:d.detalles,imagenes};
+      contexto:d.contexto||"",tipo_trabajo_academico:d.contexto==="academico"?d.tipo_trabajo_academico:"",institucion_academica:d.contexto==="academico"?d.institucion_academica:"",descuento_academico:{solicitado:d.contexto==="academico",porcentaje_sugerido:d.contexto==="academico"?5:0,estado:"pendiente_de_verificacion",aplicado_automaticamente:false},fecha_prioritaria:d.fecha_prioritaria||"",campos:d.campos,detalles:d.detalles,imagenes};
     let result;
     try{result=await env.QUIZ_DB.prepare("INSERT INTO quiz_propuestas (id,folio,fecha,nombre,proyecto,telefono,comentario,servicio_id,ficha_json,estado,privacidad_aceptada) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,'nueva',1)")
       .bind(id,folio,fecha,d.nombre.trim(),(d.proyecto||TIPOS_FISICOS[d.servicio]).trim(),d.telefono,d.detalles.trim(),prefijo,JSON.stringify(ficha)).run();}

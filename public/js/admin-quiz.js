@@ -110,6 +110,8 @@ req("/api/admin/sesion").then(()=>{acceso.hidden=true;panel.hidden=false;return 
 
 const listaPropuestas=document.querySelector("#lista-propuestas"),estadoPropuestas=document.querySelector("#estado-propuestas"),filtroPropuestas=document.querySelector("#filtro-propuestas"),buscarPropuestas=document.querySelector("#buscar-propuestas");
 const etiquetasPresupuesto={menos_500:"Menos de $500",500_1500:"$500 a $1,500",1500_3000:"$1,500 a $3,000",3000_6000:"$3,000 a $6,000",mas_6000:"Más de $6,000",sin_definir:"Necesita orientación"};
+const tiposAcademicos={proyecto_escolar:"Proyecto escolar o universitario",prototipo:"Prototipo o pieza funcional",maqueta:"Maqueta o modelo a escala",investigacion:"Investigación o tesis",otro:"Otro proyecto académico"};
+const etiquetasContexto={negocio:"Negocio",evento:"Evento",personal:"Personal",academico:"Escolar / Académico"};
 const nombresServicio={llaveros:"Llaveros",fdm_medida:"Impresión FDM",resina:"Resina",soporte_qr:"Soportes QR"};
 const estadosPropuestas={nueva:"Nueva",en_revision:"En revisión",contactado:"Contactado",cotizado:"Cotizado",cerrado:"Cerrado"};
 let solicitudBusquedaTimer;
@@ -122,8 +124,8 @@ function celdaCSV(valor) {
 }
 function exportarPropuestasCSV(){
  if(!propuestasVisibles.length){estadoPropuestas.textContent="No hay resultados visibles para exportar.";return;}
- const cabeceras=["Folio","Fecha","Estado","Nombre","Proyecto","WhatsApp","Comentario","Recomendación","Complemento","Origen","Tipo de página","Giro","Funciones","Complementos","Servicio","Presupuesto","Detalles específicos"];
- const filas=propuestasVisibles.map(x=>[x.folio,x.fecha,x.estado,x.nombre,x.proyecto,x.telefono,x.comentario,x.ficha?.recomendacion?.titulo,x.ficha?.recomendacion?.complemento_sugerido,x.ficha?.origen||"cuestionario",x.ficha?.tipo_pagina||"",x.ficha?.giro||"",(x.ficha?.funciones||[]).join("; "),(x.ficha?.complementos||[]).join("; "),x.ficha?.titulo_servicio||x.ficha?.tipo_pagina||x.ficha?.recomendacion?.titulo||"",etiquetasPresupuesto[x.ficha?.presupuesto||x.ficha?.respuestas?.presupuesto]||"",JSON.stringify(x.ficha?.campos||{})]);
+ const cabeceras=["Folio","Fecha","Estado","Nombre","Proyecto","WhatsApp","Comentario","Recomendación","Complemento","Origen","Tipo de página","Giro","Funciones","Complementos","Servicio","Presupuesto","Detalles específicos","Tipo de solicitud","Trabajo académico","Institución educativa","Descuento académico sugerido"];
+ const filas=propuestasVisibles.map(x=>[x.folio,x.fecha,x.estado,x.nombre,x.proyecto,x.telefono,x.comentario,x.ficha?.recomendacion?.titulo,x.ficha?.recomendacion?.complemento_sugerido,x.ficha?.origen||"cuestionario",x.ficha?.tipo_pagina||"",x.ficha?.giro||"",(x.ficha?.funciones||[]).join("; "),(x.ficha?.complementos||[]).join("; "),x.ficha?.titulo_servicio||x.ficha?.tipo_pagina||x.ficha?.recomendacion?.titulo||"",etiquetasPresupuesto[x.ficha?.presupuesto||x.ficha?.respuestas?.presupuesto]||"",JSON.stringify(x.ficha?.campos||{}),etiquetasContexto[x.ficha?.contexto]||"",tiposAcademicos[x.ficha?.tipo_trabajo_academico]||"",x.ficha?.institucion_academica||"",x.ficha?.contexto==="academico"?"5% sujeto a verificación, no aplicado":""]);
  const csv="\uFEFF"+[cabeceras,...filas].map(f=>f.map(celdaCSV).join(",")).join("\r\n")+"\r\n";
  const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
  const a=document.createElement("a");a.href=url;a.download="solicitudes-lapazimpresion3d.csv";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -152,7 +154,7 @@ async function cargarPropuestas(){
      box.append(elem("p","resultado-etiqueta","COTIZACIÓN DE IMPRESIÓN 3D · SOLICITUD DIRECTA"),elem("h3",null,x.ficha.titulo_servicio||nombresServicio[x.ficha.servicio]||"Servicio"));
      const dl=elem("dl");
      for(const [k,v] of Object.entries(x.ficha.campos||{})) if(v)dl.append(elem("dt",null,k.replace(/_/g," ")),elem("dd",null,v));
-     for(const [k,v] of [["Presupuesto",etiquetasPresupuesto[x.ficha.presupuesto]||"Sin indicar"],["Fecha deseada",x.ficha.fecha_deseada||"Sin indicar"],["Contexto",x.ficha.contexto||"Sin indicar"]])dl.append(elem("dt",null,k),elem("dd",null,v));
+     for(const [k,v] of [["Presupuesto",etiquetasPresupuesto[x.ficha.presupuesto]||"Sin indicar"],["Fecha deseada",x.ficha.fecha_deseada||"Sin indicar"],["Tipo de solicitud",etiquetasContexto[x.ficha.contexto]||"Sin indicar"],...(x.ficha.contexto==="academico"?[["Trabajo académico",tiposAcademicos[x.ficha.tipo_trabajo_academico]||"Sin indicar"],["Institución",x.ficha.institucion_academica||"Sin indicar"],["Descuento académico","5% sugerido, sujeto a revisión y comprobación; no aplicado automáticamente"]]:[])])dl.append(elem("dt",null,k),elem("dd",null,v));
      box.append(dl);
    } else if(esWeb){
      box.append(elem("p","resultado-etiqueta","COTIZACIÓN WEB · SOLICITUD DIRECTA"),elem("h3",null,x.ficha.tipo_pagina));
