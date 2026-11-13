@@ -99,6 +99,17 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.25rem); font-weight: var(--peso-titulo); le
 h2, #titulo-llaveros { font-size: clamp(1.55rem, 2.9vw, 2.25rem); font-weight: var(--peso-titulo); letter-spacing: -.03em; }
 h3 { color: var(--subtitulo); font-size: clamp(1.125rem, 1.75vw, 1.5rem); font-weight: var(--peso-negrita); letter-spacing: -.015em; }
 .introduccion { max-width: 66ch; color: var(--suave); font-size: 1.08rem; margin: 0 0 22px; }
+/* Contraste de los énfasis en la presentación, también en pantallas pequeñas. */
+.presentacion .introduccion strong {
+  color: var(--texto);
+  font-weight: 800;
+}
+.presentacion .introduccion strong a {
+  color: inherit;
+  font-weight: inherit;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
 .presentacion { margin: clamp(24px, 4vw, 48px) 0 0; }
 .presentacion .introduccion { margin-bottom: 12px; }
 .presentacion .introduccion:last-child { margin-bottom: 0; }
