@@ -1,13 +1,54 @@
 // Lapazimpresion3d: sitio estático + recepción de diagnósticos + panel privado.
 // Requiere D1 (QUIZ_DB) y secreto ADMIN_PASSWORD; no publica listas sin autenticación.
 const CAMPOS = {
-  objetivo: ["dar_a_conocer","mejorar_experiencia","celebracion","ahorrar_tiempo","desarrollar_idea"],
+  objetivo: ["dar_a_conocer","mejorar_experiencia","celebracion","automatizar","destacar"],
   situacion: ["comenzando","negocio_existente","organizando_evento","regalo_detalle","explorando"],
-  contacto_actual: ["en_persona","redes_mensajes","pedidos_citas","entregar_a_varios","sin_forma_definida"],
-  mejora_deseada: ["recordar_marca_evento","encontrar_informacion","menos_mensajes","original_personalizado","organizar_atencion"],
-  preparacion: ["diseno_idea","fotos_referencias","mejorar_existente","necesita_orientacion","solo_explorando"]
+  contacto_actual: ["en_persona","internet","reservas_pedidos","fecha_fija","sin_canal"],
+  mejora_deseada: ["recuerdo_fisico","acceso_inmediato","menos_mensajes","producto_personalizado","organizar_trabajo"],
+  preparacion: ["logo_diseno","fotos_referencias","presencia_existente","ayuda_desde_cero","cotizando"]
 };
-const IDS = new Set(["R1","R2","R3","R4","R5"]);
+const TITULOS = Object.freeze({
+  R1:"Llaveros y artículos personalizados en 3D",
+  R2:"Soportes QR/NFC personalizados",
+  R3:"Página web, menú o catálogo digital",
+  R4:"Sistema web personalizado",
+  R5:"Proyecto combinado: impresión 3D y soluciones digitales"
+});
+// Recalcular la recomendación en el servidor: el navegador es editable por el visitante.
+// Las reglas reproducen las prioridades funcionales del cuestionario v3.
+function recomendacionEsperada(r) {
+  const puntos = {R1:0,R2:0,R3:0,R4:0,R5:0};
+  const tabla = {
+    objetivo:{dar_a_conocer:{R1:2,R3:2,R2:1},mejorar_experiencia:{R2:1,R3:2,R4:1},celebracion:{R1:5},automatizar:{R4:6},destacar:{R1:2,R2:1,R5:1}},
+    situacion:{comenzando:{R1:1,R3:1},negocio_existente:{R2:1,R3:1,R4:1},organizando_evento:{R1:5},regalo_detalle:{R1:5},explorando:{R3:1}},
+    contacto_actual:{en_persona:{R1:1,R2:3},internet:{R3:3},reservas_pedidos:{R4:4},fecha_fija:{R1:4},sin_canal:{R3:1}},
+    mejora_deseada:{recuerdo_fisico:{R1:5},acceso_inmediato:{R2:3,R3:4},menos_mensajes:{R4:6},producto_personalizado:{R1:5},organizar_trabajo:{R4:6}},
+    preparacion:{logo_diseno:{R1:1,R2:1},fotos_referencias:{R1:1,R3:1},presencia_existente:{R3:1,R4:1},ayuda_desde_cero:{R3:1},cotizando:{}}
+  };
+  for (const [campo, opciones] of Object.entries(tabla)) {
+    const peso = campo === "contacto_actual" || campo === "mejora_deseada" ? 2 : 1;
+    for (const [id, valor] of Object.entries(opciones[r[campo]] || {})) puntos[id] += valor*peso;
+  }
+  const evento = r.objetivo === "celebracion" || ["organizando_evento","regalo_detalle"].includes(r.situacion);
+  const fisicoExplicito = ["recuerdo_fisico","producto_personalizado"].includes(r.mejora_deseada);
+  const operativo = r.objetivo === "automatizar" || ["menos_mensajes","organizar_trabajo"].includes(r.mejora_deseada);
+  const info = r.mejora_deseada === "acceso_inmediato";
+  const presencial = r.contacto_actual === "en_persona";
+  let id;
+  if(operativo) id="R4";
+  else if(evento && (fisicoExplicito || r.contacto_actual === "fecha_fija" || !info)) id="R1";
+  else if(fisicoExplicito) id="R1";
+  else if(info && presencial) id="R2";
+  else if(info || r.contacto_actual === "internet") id="R3";
+  else if(r.contacto_actual === "reservas_pedidos") id="R4";
+  else id=["R1","R3","R2","R4"].reduce((best,candidate)=>puntos[candidate]>puntos[best]?candidate:best);
+  const fisico = fisicoExplicito || (evento && r.contacto_actual === "fecha_fija");
+  const digital = info || operativo || (r.objetivo === "mejorar_experiencia" && r.contacto_actual === "internet");
+  if(fisico && digital && !operativo && !evento) id="R5";
+  return id;
+}
+const ID_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const IDS = new Set(Object.keys(TITULOS));
 const enc = new TextEncoder();
 function json(data, status=200, extra={}) { return new Response(JSON.stringify(data), { status, headers: {"content-type":"application/json; charset=utf-8", "cache-control":"no-store", "x-content-type-options":"nosniff", ...extra} }); }
 function error(message, status) { return json({error:message}, status); }
@@ -39,23 +80,37 @@ async function leerJson(request, max=6000) {
   if(body.length>max) return null;
   try { return JSON.parse(body); } catch { return null; }
 }
+// Límite por ventana de tiempo, basado en un HMAC efímero de la IP y un secreto.
+// No se persisten direcciones IP ni el identificador de la persona.
+async function verificarLimite(request,env,accion,maximo,ventanaSegundos) {
+  if (!env.RATE_LIMIT_SECRET) return false; // sin secreto, no habilitar recepción en producción
+  const ip = request.headers.get("CF-Connecting-IP") || "ip-desconocida";
+  const ventana = Math.floor(Date.now() / (ventanaSegundos*1000));
+  const clave = await firma(env.RATE_LIMIT_SECRET,`${accion}:${ventana}:${ip}`);
+  await env.QUIZ_DB.prepare("INSERT INTO quiz_limites (clave,accion,contador,caduca) VALUES (?1,?2,1,?3) ON CONFLICT(clave) DO UPDATE SET contador=contador+1")
+    .bind(clave,accion,(ventana+1)*ventanaSegundos).run();
+  const fila = await env.QUIZ_DB.prepare("SELECT contador FROM quiz_limites WHERE clave=?1").bind(clave).first();
+  return (fila?.contador || 0) <= maximo;
+}
 async function api(request,env) {
   const url=new URL(request.url), path=url.pathname;
   if(!env.QUIZ_DB) return error("Base de datos no configurada",503);
   if(path==="/api/quiz/solicitudes" && request.method==="POST") {
     if(!sameOrigin(request)) return error("Origen no autorizado",403);
+    if(!await verificarLimite(request,env,"diagnostico",12,3600)) return error("Demasiadas solicitudes. Intenta más tarde.",429);
     const data=await leerJson(request);
-    if(!data || data.tipo_documento!=="ficha_quiz" || data.version_esquema!=="2.0") return error("Ficha inválida",400);
-    if(!data.respuestas || Object.keys(CAMPOS).some(k=>!CAMPOS[k].includes(data.respuestas[k]))) return error("Respuestas inválidas",400);
-    if(!IDS.has(data.recomendacion?.id) || typeof data.recomendacion?.titulo!=="string" || data.recomendacion.titulo.length>130) return error("Recomendación inválida",400);
-    const id=typeof data.id_diagnostico==="string" && /^[0-9a-f-]{36}$/i.test(data.id_diagnostico) ? data.id_diagnostico : crypto.randomUUID();
-    const ficha={tipo_documento:"ficha_quiz",version_esquema:"2.0",id_diagnostico:id,id_proyecto:null,origen:"lapazimpresion3d_web",fecha_generacion:new Date().toISOString(),respuestas:Object.fromEntries(Object.keys(CAMPOS).map(k=>[k,data.respuestas[k]])),recomendacion:{id:data.recomendacion.id,titulo:data.recomendacion.titulo,estado:"orientativa",complemento_sugerido:typeof data.recomendacion.complemento_sugerido==="string"?data.recomendacion.complemento_sugerido.slice(0,350):null}};
+    if(!data || data.tipo_documento!=="ficha_quiz" || data.version_esquema!=="3.0") return error("Ficha inválida",400);
+    if(!data.respuestas || typeof data.respuestas!=="object" || Array.isArray(data.respuestas) || Object.keys(CAMPOS).some(k=>!CAMPOS[k].includes(data.respuestas[k]))) return error("Respuestas inválidas",400);
+    if(!IDS.has(data.recomendacion?.id) || data.recomendacion.titulo!==TITULOS[data.recomendacion.id] || data.recomendacion.id!==recomendacionEsperada(data.respuestas)) return error("Recomendación inválida",400);
+    const id=typeof data.id_diagnostico==="string" && ID_UUID.test(data.id_diagnostico) ? data.id_diagnostico : crypto.randomUUID();
+    const ficha={tipo_documento:"ficha_quiz",version_esquema:"3.0",id_diagnostico:id,id_proyecto:null,origen:"lapazimpresion3d_web",fecha_generacion:new Date().toISOString(),respuestas:Object.fromEntries(Object.keys(CAMPOS).map(k=>[k,data.respuestas[k]])),recomendacion:{id:data.recomendacion.id,titulo:data.recomendacion.titulo,estado:"orientativa",complemento_sugerido:typeof data.recomendacion.complemento_sugerido==="string"?data.recomendacion.complemento_sugerido.slice(0,350):null}};
     await env.QUIZ_DB.prepare("INSERT OR IGNORE INTO quiz_diagnosticos (id,fecha,servicio_id,ficha_json,estado) VALUES (?1,?2,?3,?4,'nuevo')").bind(id,ficha.fecha_generacion,ficha.recomendacion.id,JSON.stringify(ficha)).run();
     return json({ok:true,id},201);
   }
   if(path==="/api/admin/login" && request.method==="POST") {
     if(!sameOrigin(request)) return error("Origen no autorizado",403);
     if(!env.ADMIN_PASSWORD || !env.SESSION_SECRET) return error("Acceso no configurado",503);
+    if(!await verificarLimite(request,env,"login",5,900)) return error("Demasiados intentos. Intenta más tarde.",429);
     const data=await leerJson(request,512);
     const received=typeof data?.password==="string"?data.password:"";
     // La protección de intentos se debe reforzar con Cloudflare WAF Rate Limiting.
@@ -73,10 +128,17 @@ async function api(request,env) {
     if(path==="/api/admin/diagnosticos" && request.method==="GET") {
       const status=url.searchParams.get("estado");
       const estado=["nuevo","revisado"].includes(status)?status:null;
-      const results=await env.QUIZ_DB.prepare("SELECT id,fecha,servicio_id,estado,ficha_json FROM quiz_diagnosticos WHERE (?1 IS NULL OR estado=?1) ORDER BY fecha DESC LIMIT 100").bind(estado).all();
+      const referencia=url.searchParams.get("referencia")?.trim() || null;
+      if (referencia && !ID_UUID.test(referencia)) return error("Referencia inválida",400);
+      const results=await env.QUIZ_DB.prepare("SELECT id,fecha,servicio_id,estado,ficha_json FROM quiz_diagnosticos WHERE (?1 IS NULL OR estado=?1) AND (?2 IS NULL OR id=?2) ORDER BY fecha DESC LIMIT 100").bind(estado,referencia).all();
       return json({items:results.results.map(x=>({id:x.id,fecha:x.fecha,servicio_id:x.servicio_id,estado:x.estado,ficha:JSON.parse(x.ficha_json)}))});
     }
     const detail=path.match(/^\/api\/admin\/diagnosticos\/([0-9a-f-]{36})$/i);
+    if(detail && request.method==="DELETE") {
+      if(!sameOrigin(request)) return error("Origen no autorizado",403);
+      const result=await env.QUIZ_DB.prepare("DELETE FROM quiz_diagnosticos WHERE id=?1").bind(detail[1]).run();
+      return json({ok:result.meta.changes>0});
+    }
     if(detail && request.method==="PATCH") {
       if(!sameOrigin(request)) return error("Origen no autorizado",403);
       const data=await leerJson(request,100);
