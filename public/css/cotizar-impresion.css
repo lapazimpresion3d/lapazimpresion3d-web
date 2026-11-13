@@ -83,3 +83,21 @@
   #form-servicio select,
   #form-servicio textarea { font-size: 16px; }
 }
+
+/* Presupuesto: rango destacado y descripción independiente */
+#form-servicio #presupuesto-servicio {
+  font-weight: 750;
+  border-color: #aebedc;
+  background: #f7faff;
+}
+#form-servicio .presupuesto-explicacion {
+  margin: -10px 0 3px;
+  padding: 10px 13px;
+  border-left: 3px solid var(--azul);
+  border-radius: 0 8px 8px 0;
+  background: #f1f5fc;
+  color: var(--suave);
+  font-size: .91rem;
+  line-height: 1.5;
+}
+#form-servicio .presupuesto-explicacion[hidden] { display: none; }
