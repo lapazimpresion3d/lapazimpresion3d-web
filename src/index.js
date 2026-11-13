@@ -372,7 +372,7 @@ async function api(request,env,ctx) {
       ).all();
       return json({items:rows.results});
     }
-    const proyectoNuevo=path.match(/^\\/api\\/admin\\/propuestas\\/([0-9a-f-]{36})\\/proyecto$/i);
+    const proyectoNuevo=path.match(/^\/api\/admin\/propuestas\/([0-9a-f-]{36})\/proyecto$/i);
     if(proyectoNuevo && request.method==="POST") {
       if(!sameOrigin(request)) return error("Origen no autorizado",403);
       const data=await leerJson(request,128);
@@ -388,7 +388,7 @@ async function api(request,env,ctx) {
       if(!existente) return error("No se pudo registrar el proyecto",500);
       return json({ok:true,creado:insert.meta.changes===1,proyecto:existente},insert.meta.changes===1?201:200);
     }
-    const proyectoEstado=path.match(/^\\/api\\/admin\\/proyectos\\/([0-9a-f-]{36})$/i);
+    const proyectoEstado=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})$/i);
     if(proyectoEstado && request.method==="PATCH") {
       if(!sameOrigin(request)) return error("Origen no autorizado",403);
       const data=await leerJson(request,160);
