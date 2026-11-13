@@ -241,6 +241,20 @@
     progresoBarra.setAttribute("aria-valuenow", String(actual));
     progresoRelleno.style.width = `${actual * 100 / preguntas.length}%`;
   }
+  // El presupuesto orienta la viabilidad, pero no cambia arbitrariamente la necesidad detectada.
+  function advertenciaPresupuesto(id, presupuesto) {
+    const bajo = ["menos_500", "500_1500"].includes(presupuesto);
+    const medioBajo = presupuesto === "1500_3500";
+    if (id === "R4" && (bajo || medioBajo)) {
+      return bajo
+        ? "El presupuesto seleccionado es muy limitado para desarrollar un sistema web personalizado completo. La recomendación identifica lo que necesitas, no lo que puede construirse por esa cantidad. Podemos revisar contigo una primera etapa o una alternativa más sencilla, con precio sujeto a cotización."
+        : "Un sistema web personalizado puede superar el presupuesto seleccionado. Conviene definir primero las funciones indispensables y cotizar una implementación por etapas.";
+    }
+    if ((id === "R3" || id === "R5") && bajo) {
+      return "El presupuesto seleccionado puede ser insuficiente para desarrollar esta solución completa. Podemos revisar una versión inicial más sencilla o dividir el proyecto en etapas; el alcance y precio se confirman mediante cotización.";
+    }
+    return null;
+  }
   function mostrarResumen() {
     progreso(preguntas.length);
     contenido.replaceChildren();
@@ -265,7 +279,16 @@
       li.textContent = beneficio;
       beneficios.append(li);
     });
-    contenido.append(etiqueta, titulo, descripcion, beneficiosTitulo, beneficios);
+    contenido.append(etiqueta, titulo, descripcion);
+    const avisoPresupuesto = advertenciaPresupuesto(resultado.id, respuestas.presupuesto);
+    if (avisoPresupuesto) {
+      etiqueta.textContent = "NECESIDAD DETECTADA";
+      const aviso = document.createElement("p");
+      aviso.className = "quiz-aviso-presupuesto";
+      aviso.textContent = avisoPresupuesto;
+      contenido.append(aviso);
+    }
+    contenido.append(beneficiosTitulo, beneficios);
     if (resultado.complemento) {
       const complemento = document.createElement("p");
       complemento.className = "quiz-complemento";
