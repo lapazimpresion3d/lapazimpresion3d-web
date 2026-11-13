@@ -32,6 +32,46 @@ const configuraciones={
   ["indicaciones","Preferencias y contenido adicional","Estilo, colores, páginas de referencia y otras funcionalidades."]
  ]}
 };
+// Mostrar lo que ya existe en la cotización; pedir solamente vacíos o ambigüedades.
+function datosLlaveros(cotizacion){
+ const f=cotizacion?.campos||{};
+ const campos=[
+  ["Cantidad",f.cantidad],["Tamaño",f.tamano],["Diseño existente",f.diseno],
+  ["Colores",f.colores],["NFC",f.nfc],["Uso",f.uso],["Fecha deseada",cotizacion?.fecha_deseada]
+ ];
+ const conocido=valor=>valor!=null && String(valor).trim()!=="" && !["no especificado","no estoy seguro"].includes(String(valor).trim().toLowerCase());
+ const grupos={
+  datos_negocio:[["diseno","¿Ya tienes un logotipo o diseño?"]],
+  servicios_productos:[["cantidad","¿Cuántas piezas necesitas?"],["tamano","¿De qué tamaño?"],["colores","¿Qué colores deseas?"]],
+  horarios_contacto:[["uso","¿Para qué se usarán los llaveros?"],["nfc","¿Deseas NFC?"]]
+ };
+ const faltantes={};
+ for(const [seccion,elementos] of Object.entries(grupos)){
+  faltantes[seccion]=elementos.filter(([campo])=>!conocido(f[campo])).map(([,pregunta])=>pregunta);
+ }
+ if(f.nfc==="Sí")faltantes.horarios_contacto.push("¿A qué página o enlace debe dirigir el NFC?");
+ // La fecha es opcional y no debe convertirse en una obligación.
+ return {campos:campos.filter(([,valor])=>conocido(valor)),faltantes,descripcion:cotizacion?.detalles||""};
+}
+function resumenCotizacionLlaveros(cotizacion){
+ const {campos,descripcion}=datosLlaveros(cotizacion);
+ const caja=document.createElement("section");caja.className="bloque datos-cotizacion";
+ const h=document.createElement("h2");h.textContent="Información que ya proporcionaste";
+ const intro=document.createElement("p");intro.className="mensaje";intro.textContent="Estos datos vienen de tu cotización original. No necesitas escribirlos otra vez. Si algo cambió o requiere precisión, puedes aclararlo más abajo.";
+ caja.append(h,intro);
+ if(campos.length){
+  const lista=document.createElement("dl");lista.className="resumen-cotizacion";
+  for(const [titulo,valor] of campos){
+   const dt=document.createElement("dt");dt.textContent=titulo;
+   const dd=document.createElement("dd");dd.textContent=String(valor);
+   lista.append(dt,dd);
+  }caja.append(lista);
+ }
+ if(descripcion){
+  const p=document.createElement("p");p.className="mensaje";p.textContent="Descripción original: "+descripcion;caja.append(p);
+ }
+ return caja;
+}
 const mensaje=document.querySelector("#mensaje-acceso"),panel=document.querySelector("#proyecto"),contenedor=document.querySelector("#secciones"),imagenes=document.querySelector("#imagenes-proyecto"),lista=document.querySelector("#lista-archivos"),estadoFotos=document.querySelector("#estado-archivos");
 let estadoProyecto="",archivos=[];
 async function api(path,method="GET",data){
@@ -74,13 +114,21 @@ async function iniciar(){
   const estados={preparacion:"Preparación",recabando_materiales:"Recabando materiales",en_desarrollo:"En desarrollo",en_revision:"En revisión",finalizado:"Finalizado",cancelado:"Cancelado"};
   document.querySelector("#estado-proyecto").textContent=estados[p.estado]||p.estado;
   contenedor.replaceChildren();
+  const llaveros=p.categoria==="llaveros"&&data.cotizacion;
+  const previo=llaveros?datosLlaveros(data.cotizacion):null;
+  if(llaveros)contenedor.append(resumenCotizacionLlaveros(data.cotizacion));
   for(const [clave,titulo,ayuda] of config.secciones){
    const registro=data.secciones.find(s=>s.clave===clave);
+   const pendientes=llaveros?(previo.faltantes[clave]||[]):[];
+   const esOpcional=llaveros&&pendientes.length===0&&!registro?.contenido?.trim();
    const area=document.createElement("section");area.className="bloque";
-   const encabezado=document.createElement("h2");encabezado.textContent=titulo;
-   const descripcion=document.createElement("p");descripcion.className="mensaje";descripcion.textContent=ayuda;
-   const label=document.createElement("label"),id="contenido-"+clave;label.htmlFor=id;label.textContent="Información para "+titulo.toLowerCase();
-   const input=document.createElement("textarea");input.id=id;input.maxLength=10000;input.value=registro?.contenido||"";input.placeholder=ayuda;
+   const encabezado=document.createElement("h2");encabezado.textContent=llaveros&&clave!=="indicaciones"?(pendientes.length?"Información por completar: "+titulo:"Aclaraciones: "+titulo):titulo;
+   const descripcion=document.createElement("p");descripcion.className="mensaje";
+   descripcion.textContent=llaveros
+     ?(pendientes.length?"Solo necesitamos confirmar: "+pendientes.join(" · "):"La información básica ya está en tu cotización. Completa este apartado únicamente si hay cambios o detalles adicionales.")
+     :ayuda;
+   const label=document.createElement("label"),id="contenido-"+clave;label.htmlFor=id;label.textContent=llaveros?"Aclaraciones o información faltante":"Información para "+titulo.toLowerCase();
+   const input=document.createElement("textarea");input.id=id;input.maxLength=10000;input.value=registro?.contenido||"";input.placeholder=llaveros?(pendientes.join("\n")||"Solo si deseas aclarar algo de lo cotizado"):ayuda;
    const controls=document.createElement("div");controls.className="controles";
    const button=document.createElement("button");button.type="button";button.textContent="Guardar apartado";
    const estado=document.createElement("span");estado.className="mensaje";estado.setAttribute("role","status");estado.textContent=registro?"Información recibida":"Pendiente";
@@ -91,7 +139,13 @@ async function iniciar(){
     finally{button.disabled=false;}
    });
    if(["finalizado","cancelado"].includes(p.estado)){button.disabled=true;input.readOnly=true;}
-   controls.append(button,estado);area.append(encabezado,descripcion,label,input,controls);contenedor.append(area);
+   controls.append(button,estado);
+   area.append(encabezado,descripcion,label,input,controls);
+   if(esOpcional&&clave!=="indicaciones"){
+     const detalle=document.createElement("details");
+     const sum=document.createElement("summary");sum.textContent="Agregar una aclaración (opcional)";
+     detalle.append(sum,area);contenedor.append(detalle);
+   }else contenedor.append(area);
   }
   archivos=data.archivos||[];pintarArchivos();
   if(["finalizado","cancelado"].includes(p.estado)){document.querySelector("#subir-imagenes").disabled=true;imagenes.disabled=true;}
