@@ -115,7 +115,7 @@ async function cargarProyectos(){
  try {
   const d=await req("/api/admin/proyectos");
   listaProyectos.replaceChildren();
-  estadoProyectos.textContent=`${d.items.length} proyecto(s) registrado(s). Los enlaces de cliente todavía no están habilitados.`;
+  estadoProyectos.textContent=`${d.items.length} proyecto(s) registrado(s). Los enlaces privados se generan individualmente.`;
   if(!d.items.length){listaProyectos.append(elem("p",null,"Todavía no hay proyectos aceptados."));return;}
   for(const p of d.items){
    const art=elem("article","registro");
@@ -124,7 +124,39 @@ async function cargarProyectos(){
    select.setAttribute("aria-label",`Estado del proyecto ${p.folio}`);
    for(const [id,nombre] of Object.entries(estadosProyecto)){const option=elem("option",null,nombre);option.value=id;select.append(option);}
    select.value=p.estado;select.addEventListener("change",async()=>{select.disabled=true;try{await req(`/api/admin/proyectos/${encodeURIComponent(p.id)}`,{method:"PATCH",body:JSON.stringify({estado:select.value})});await cargarProyectos();}catch(e){estadoProyectos.textContent=e.message;select.value=p.estado;}finally{select.disabled=false;}});
-   label.append(select);art.append(label,elem("p","metadatos","Acceso del cliente: aún no habilitado"));listaProyectos.append(art);
+   label.append(select);art.append(label);
+   const acciones=elem("div","acciones");
+   const generar=elem("button","secundario","Generar enlace privado");
+   generar.type="button";
+   generar.disabled=["finalizado","cancelado"].includes(p.estado);
+   const revocar=elem("button","secundario","Revocar enlace");
+   revocar.type="button";
+   generar.addEventListener("click",async()=>{
+     if(!confirm("¿Generar un nuevo enlace para "+p.folio+"? Cualquier enlace anterior dejará de funcionar."))return;
+     generar.disabled=true;
+     try{
+       const resultado=await req("/api/admin/proyectos/"+encodeURIComponent(p.id)+"/acceso",{method:"POST",body:"{}"});
+       const caja=elem("div","enlace-cliente");
+       caja.append(elem("p",null,"Enlace privado (válido hasta "+new Date(resultado.expira).toLocaleString("es-MX")+") · solo se mostrará esta vez:"));
+       const url=elem("input");url.type="text";url.readOnly=true;url.value=resultado.url;url.setAttribute("aria-label","Enlace privado del cliente");
+       const copiar=elem("button","secundario","Copiar enlace");copiar.type="button";
+       copiar.addEventListener("click",async()=>{
+         try{await navigator.clipboard.writeText(resultado.url);copiar.textContent="Copiado";}catch(e){url.focus();url.select();copiar.textContent="Seleccionado: usa Ctrl+C";}
+       });
+       caja.append(url,copiar);
+       art.querySelector(".enlace-cliente")?.remove();
+       art.append(caja);
+       estadoProyectos.textContent="Enlace generado. Compártelo únicamente con el cliente. No se envía automáticamente.";
+     }catch(e){estadoProyectos.textContent=e.message;}
+     finally{generar.disabled=false;}
+   });
+   revocar.addEventListener("click",async()=>{
+     if(!confirm("¿Revocar el acceso del cliente al proyecto "+p.folio+"?"))return;
+     revocar.disabled=true;
+     try{await req("/api/admin/proyectos/"+encodeURIComponent(p.id)+"/acceso",{method:"DELETE",body:"{}"});art.querySelector(".enlace-cliente")?.remove();estadoProyectos.textContent="Acceso revocado. El cliente ya no podrá utilizar su enlace.";await cargarProyectos();}
+     catch(e){estadoProyectos.textContent=e.message;}finally{revocar.disabled=false;}
+   });
+   acciones.append(generar,revocar);art.append(acciones);listaProyectos.append(art);
   }
  }catch(e){estadoProyectos.textContent="Proyectos no disponibles: "+e.message+". Comprueba que la migración 0004 esté aplicada a D1.";}
 }
