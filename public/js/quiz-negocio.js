@@ -152,7 +152,7 @@
   // Esquema 4.0: admite siete recomendaciones; diagnósticos anteriores se conservan.
   const VERSION_FICHA_QUIZ = "5.0";
   const TIPO_FICHA_QUIZ = "ficha_quiz";
-  const WHATSAPP_COMERCIAL = "526121999963"; // Mismo número que los CTA existentes del sitio.
+  const WHATSAPP_COMERCIAL = "526121992396"; // Mismo número que los CTA existentes del sitio.
   // URL ya utilizada en el botón de demostración de la página principal.
   const DEMO_RESTAURANTE = "https://desarrollo-taqueria-el-comal.lapazimpresion3d.workers.dev/";
   const RECOMENDACIONES_CON_DEMO = new Set(["R3", "R4"]);
