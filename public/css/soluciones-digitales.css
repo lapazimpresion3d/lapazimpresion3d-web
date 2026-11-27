@@ -18,3 +18,6 @@
 #paginas-web .demo-selectores select{min-width:0;width:100%;min-height:48px;padding:8px;border:1px solid var(--borde);border-radius:8px;background:var(--fondo);color:var(--texto);font:inherit}
 #paginas-web [hidden]{display:none!important}
 @media(max-width:650px){#paginas-web .planes-digitales,#paginas-web .demo-selectores{grid-template-columns:minmax(0,1fr)}}
+
+/* Escaparate comercial: enlaces de revisión únicamente en rama de desarrollo. */
+.tarjetas-demos{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:16px}.tarjeta-demo{display:flex;flex-direction:column;gap:10px;border-top:4px solid #356a78}.tarjeta-demo h4,.tarjeta-demo p{margin:0}.tarjeta-demo .accion{margin:0;justify-content:center}.tarjeta-demo[data-negocio=cafe-mirador]{border-top-color:#68452d}.tarjeta-demo[data-negocio=barberia-elite]{border-top-color:#293b49}.tarjeta-demo[data-negocio=mundo-mascotas]{border-top-color:#176452}.tarjeta-demo[data-negocio=auto-servicio-bahia]{border-top-color:#204c76}.tarjeta-demo[data-negocio=taqueria-el-comal]{border-top-color:#a02f1c}

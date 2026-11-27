@@ -1,0 +1,2 @@
+# Integración de escaparate — preparación
+Tarjetas en rama desarrollo/catalogo-soluciones-digitales. Enlaces de revisión al Worker de desarrollo, claramente identificados. No se cambia el registro de demos verificadas ni se anuncia contratación. Antes de merge: validar imágenes, funciones y dominio público, sustituir enlaces por alias HTTPS definitivos. No publicar esta rama como versión estable sin aceptación.
