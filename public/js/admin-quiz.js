@@ -287,6 +287,18 @@ function agregarEconomica(art,x){
     paquete.addEventListener("change",actualizar);form.addEventListener("input",actualizar);
   }else{paquete.disabled=alcance.readOnly=true;for(const v of Object.values(importes))v.readOnly=true;}
   actualizar();panel.append(form);
+  if(q){
+    const imprimir=elem("button","secundario","Ver cotización / guardar PDF");imprimir.type="button";
+    const notaPDF=elem("p","metadatos","El documento utiliza únicamente la última versión guardada. Guarda tus cambios antes de imprimir. No se envía automáticamente.");
+    const avisoPDF=elem("p","metadatos","");avisoPDF.setAttribute("role","status");
+    imprimir.addEventListener("click",async()=>{
+      if(!globalThis.LP_COTIZACION_DOCUMENTO){avisoPDF.textContent="No se cargó el módulo de documentos. Actualiza el panel.";return;}
+      const vista=window.open("","_blank");if(!vista){avisoPDF.textContent="Permite ventanas emergentes para abrir la cotización.";return;}
+      vista.opener=null;vista.document.title="Preparando cotización";vista.document.body.textContent="Consultando la versión guardada…";imprimir.disabled=true;avisoPDF.textContent="";
+      try{const actual=await req(ruta);if(vista.closed)return;const m=LP_COTIZACION_DOCUMENTO.modelo(x,actual);LP_COTIZACION_DOCUMENTO.pintar(vista.document,m,location.origin,{imprimir:()=>vista.print(),cerrar:()=>vista.close()});}
+      catch(e){if(!vista.closed)vista.close();avisoPDF.textContent=e.message;}finally{imprimir.disabled=false;}
+    });panel.append(imprimir,notaPDF,avisoPDF);
+  }
   if(q&&!aceptada){
     const f=elem("div","economica-aceptar"),l=elem("label",null,"Fecha en que el cliente aceptó la propuesta"),fecha=elem("input");fecha.type="date";fecha.value=fechaLocalEconomica();fecha.max=fechaLocalEconomica();l.append(fecha);
     const btn=elem("button","secundario","Registrar aceptación");btn.type="button";

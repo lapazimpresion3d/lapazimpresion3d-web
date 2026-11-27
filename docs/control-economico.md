@@ -10,3 +10,6 @@
 `npx wrangler d1 migrations list lapazimpresion3d-quiz --remote`
 
 Tras respaldo, prueba de D1 local y autorización: `npx wrangler d1 migrations apply lapazimpresion3d-quiz --remote`. Verificar que 0004 esté aplicada también.
+
+## Cotización imprimible / PDF
+Desde una propuesta guardada, el panel abre una vista de impresión independiente con logo y contacto del sitio, folio de solicitud, versión, datos del cliente, alcance, conceptos, IVA, inversión inicial y mensualidad si procede. Las propuestas aceptadas muestran fecha y resumen de pagos iniciales sin referencias internas. Las condiciones se adaptan a fabricación de pago único o servicios digitales; no implica contratación en borrador. El documento consulta nuevamente la propuesta privada; no usa cambios sin guardar, no expone tokens, comentarios internos ni datos de otras solicitudes. Se construye con textContent, no HTML de usuario. Guardar PDF mediante el diálogo de impresión del navegador; no genera un archivo automáticamente ni lo envía. Sin librerías externas ni nueva migración; requiere 0005. Comprobar vista impresa A4 y páginas largas en navegador antes de uso real.
