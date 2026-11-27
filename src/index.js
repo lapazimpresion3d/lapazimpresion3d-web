@@ -163,7 +163,7 @@ function fichaValida(data) {
   if(!data || data.tipo_documento!=="ficha_quiz" || !["3.0","4.0","5.0"].includes(data.version_esquema)) return false;
   const permitidos=data.version_esquema==="3.0"?CAMPOS_V3:CAMPOS;
   if(!data.respuestas || typeof data.respuestas!=="object" || Array.isArray(data.respuestas) || Object.keys(CAMPOS).some(k=>!permitidos[k].includes(data.respuestas[k]))) return false;
-  if(data.version_esquema==="5.0" && (!presupuestoValido(data.respuestas.presupuesto) || !data.respuestas.presupuesto)) return false;
+  if(data.version_esquema==="5.0" && (!presupuestoQuizValido(data.respuestas.presupuesto,recomendacionEsperada(data.respuestas)) || !data.respuestas.presupuesto)) return false;
   if(!IDS.has(data.recomendacion?.id) || data.recomendacion.titulo!==TITULOS[data.recomendacion.id]) return false;
   return data.recomendacion.id===(data.version_esquema!=="3.0"?recomendacionEsperada(data.respuestas):recomendacionEsperadaV3(data.respuestas));
 }
@@ -215,6 +215,8 @@ function presupuestoValido(v) {return typeof v==="string"&&PRESUPUESTOS.has(v);}
 // Preferencias web separadas: no ampliar valores permitidos en impresión o cuestionario.
 const PREFERENCIAS_WEB = Object.freeze({"web_precios_publicados":"Los precios publicados se ajustan a mi presupuesto","web_ajustar_alcance":"Quiero ajustar el alcance a mi presupuesto","web_presupuesto_propio":"Tengo otro presupuesto (lo indicaré en los detalles)"});
 function presupuestoWebValido(v) {return presupuestoValido(v)||(typeof v==="string"&&Object.hasOwn(PREFERENCIAS_WEB,v));}
+const INVERSIONES_QUIZ_WEB=Object.freeze({"quiz_web_p1":"Presencia digital — implementación desde $750 MXN · $149 MXN al mes + IVA","quiz_web_p2":"Negocio interactivo — implementación desde $1,500 MXN · $249 MXN al mes + IVA","quiz_web_p3":"Gestión comercial — implementación desde $2,500 MXN · $349 MXN al mes + IVA","quiz_web_p4":"Gestión profesional — implementación desde $3,500 MXN · $499 MXN al mes + IVA","quiz_web_medida":"Necesito una solución a medida; quiero conocer los costos"});
+function presupuestoQuizValido(v,id){return presupuestoValido(v)||(typeof v==="string"&&["R3","R4","R5"].includes(id)&&Object.hasOwn(INVERSIONES_QUIZ_WEB,v));}
 function solicitudFisicaValida(d){
  if(!d||typeof d!=="object"||Array.isArray(d)||!Object.hasOwn(TIPOS_FISICOS,d.servicio)||!textoWeb(d.nombre,2,100)||!/^\d{10}$/.test(d.telefono||"")||!textoWeb(d.detalles,5,1200)||d.acepta_privacidad!==true||!presupuestoValido(d.presupuesto))return false;
  if(!["","negocio","evento","personal","academico"].includes(d.contexto||""))return false;
@@ -249,6 +251,7 @@ function resumenCorreo(info) {
   agregar("WhatsApp",info.telefono);
   agregar("Negocio o proyecto",info.proyecto);
   if(typeof info.presupuesto==="string"&&Object.hasOwn(PREFERENCIAS_WEB,info.presupuesto)) agregar("Preferencia de inversión",PREFERENCIAS_WEB[info.presupuesto]);
+  else if(typeof info.presupuesto==="string"&&Object.hasOwn(INVERSIONES_QUIZ_WEB,info.presupuesto)) agregar("Inversión digital de referencia",INVERSIONES_QUIZ_WEB[info.presupuesto]);
   else agregar("Presupuesto",info.presupuesto);
   agregar("Tipo de solicitud",info.contexto);
   if(info.paquete) agregar("Paquete de interés",info.paquete);
@@ -259,7 +262,7 @@ function resumenCorreo(info) {
   if(info.complementos) agregar("Complementos",info.complementos);
   if(info.academico) agregar("Datos académicos",info.academico);
   if(info.campos) {filas.push("", "CARACTERÍSTICAS DEL PROYECTO");for(const [k,v] of Object.entries(info.campos))agregar(etiquetaCorreo(k),v);}
-  if(info.respuestas) {filas.push("", "RESPUESTAS DEL CUESTIONARIO");for(const [k,v] of Object.entries(info.respuestas))agregar(etiquetaCorreo(k),v);}
+  if(info.respuestas) {filas.push("", "RESPUESTAS DEL CUESTIONARIO");for(const [k,v] of Object.entries(info.respuestas))agregar(etiquetaCorreo(k),k==="presupuesto"&&Object.hasOwn(INVERSIONES_QUIZ_WEB,v)?INVERSIONES_QUIZ_WEB[v]:v);}
   if(info.recomendacion) agregar("Recomendación",info.recomendacion);
   agregar("Descripción",info.detalles);
   agregar("Comentarios",info.comentario);

@@ -49,13 +49,13 @@
       ["medidas_modelo", "Tengo medidas, planos, una pieza de muestra o un archivo 3D."],
       ["referencia_figura", "Tengo una imagen, escultura o referencia de la figura que quiero."]
     ] },
-    { campo: "presupuesto", texto: "¿Qué presupuesto aproximado tienes pensado destinar a tu proyecto?", opciones: [
+    { campo: "presupuesto", texto: "¿Qué presupuesto aproximado tienes pensado destinar a tu proyecto físico?", opciones: [
       ["menos_500", "Menos de $500 MXN (muestras, llaveros o piezas para proyectos académicos)"],
       ["500_1500", "De $500 a $1,500 MXN (llaveros personalizados, soportes QR o figuras pequeñas)"],
-      ["1500_3500", "De $1,500 a $3,500 MXN (lotes de impresión 3D o soluciones digitales básicas)"],
-      ["3500_8000", "De $3,500 a $8,000 MXN (páginas web, catálogos o paquetes físicos y digitales)"],
-      ["8000_15000", "De $8,000 a $15,000 MXN (sistemas de pedidos, catálogos administrables o automatizaciones iniciales)"],
-      ["mas_15000", "Más de $15,000 MXN (desarrollos a medida, procesos especiales o proyectos de mayor alcance)"],
+      ["1500_3500", "De $1,500 a $3,500 MXN (lotes de impresión 3D o piezas personalizadas)"],
+      ["3500_8000", "De $3,500 a $8,000 MXN (lotes, maquetas o proyectos de fabricación)"],
+      ["8000_15000", "De $8,000 a $15,000 MXN (fabricación de mayor volumen o proyectos complejos)"],
+      ["mas_15000", "Más de $15,000 MXN (fabricación a medida, procesos especiales o proyectos de mayor alcance)"],
       ["prefiero_no_indicar", "Prefiero no indicarlo (puedes continuar sin compartir tu presupuesto)"],
       ["sin_definir", "Aún no lo sé; necesito orientación (te ayudamos a explorar alternativas y costos)"]
     ] }
@@ -149,7 +149,19 @@
     return {id, titulo:base.titulo, descripcion:base.descripcion, beneficios:[...base.beneficios], complemento, demo:null};
   }
 
-  // Esquema 4.0: admite siete recomendaciones; diagnósticos anteriores se conservan.
+  // La sexta pregunta depende de la necesidad detectada por las cinco primeras.
+  const inversionesWeb = Object.freeze({"quiz_web_p1":"Presencia digital — implementación desde $750 MXN · $149 MXN al mes + IVA","quiz_web_p2":"Negocio interactivo — implementación desde $1,500 MXN · $249 MXN al mes + IVA","quiz_web_p3":"Gestión comercial — implementación desde $2,500 MXN · $349 MXN al mes + IVA","quiz_web_p4":"Gestión profesional — implementación desde $3,500 MXN · $499 MXN al mes + IVA","quiz_web_medida":"Necesito una solución a medida; quiero conocer los costos"});
+  function preguntaActual(pregunta, r) {
+    if (pregunta.campo !== "presupuesto") return pregunta;
+    const id = obtenerRecomendacion(r).id;
+    if (!["R3","R4","R5"].includes(id)) return pregunta;
+    const planes = globalThis.LP_ORIENTACION_WEB?.planes;
+    const claves = ["presencia-digital","negocio-interactivo","gestion-comercial","gestion-profesional"];
+    const opciones = claves.map((clave,i)=>{const codigo="quiz_web_p"+(i+1),plan=planes?.[clave];return [codigo,plan?plan.nombre+" — "+plan.precio:inversionesWeb[codigo]];});
+    opciones.push(["quiz_web_medida",inversionesWeb.quiz_web_medida],["prefiero_no_indicar","Prefiero no indicarlo"],["sin_definir","Aún no lo sé; necesito orientación"]);
+    return {campo:"presupuesto",texto:"¿Qué inversión inicial y mensualidad se ajustan a tu proyecto digital?",opciones,ayuda:"Precios de lanzamiento en MXN + IVA, sin plazos forzosos. Es una referencia de inversión, no una contratación."+ (id==="R5"?" Los componentes físicos se cotizan por separado.":"")};
+  }
+  // Esquema 5.0: conserva el campo presupuesto y los diagnósticos anteriores.
   const VERSION_FICHA_QUIZ = "5.0";
   const TIPO_FICHA_QUIZ = "ficha_quiz";
   const WHATSAPP_COMERCIAL = "526121992396"; // Mismo número que los CTA existentes del sitio.
@@ -187,7 +199,8 @@
       "",
       "Mis respuestas:"
     ];
-    preguntas.forEach((pregunta, indice) => {
+    preguntas.forEach((original, indice) => {
+      const pregunta = preguntaActual(original,r);
       const elegida = pregunta.opciones.find(([id]) => id === ficha.respuestas[pregunta.campo]);
       lineas.push(`${indice + 1}. ${pregunta.texto}`);
       lineas.push(elegida ? elegida[1] : "Sin responder");
@@ -243,6 +256,11 @@
   }
   // El presupuesto orienta la viabilidad, pero no cambia arbitrariamente la necesidad detectada.
   function advertenciaPresupuesto(id, presupuesto) {
+    if (["R3","R4","R5"].includes(id) && Object.hasOwn(inversionesWeb,presupuesto)) {
+      if (id==="R4" && presupuesto==="quiz_web_p1") return "Presencia digital es un punto de partida informativo. Las funciones de pedidos, citas o gestión requieren revisar un paquete superior o una implementación por etapas.";
+      if (id==="R5") return "La tarifa seleccionada corresponde al componente digital. La fabricación 3D y otros complementos se cotizan por separado.";
+      return null;
+    }
     const bajo = ["menos_500", "500_1500"].includes(presupuesto);
     const medioBajo = presupuesto === "1500_3500";
     if (id === "R4" && (bajo || medioBajo)) {
@@ -307,7 +325,8 @@
     detalles.append(resumenTitulo);
     const lista = document.createElement("dl");
     lista.className = "quiz-resumen";
-    preguntas.forEach((pregunta) => {
+    preguntas.forEach((original) => {
+      const pregunta = preguntaActual(original,respuestas);
       const fila = document.createElement("div");
       const dt = document.createElement("dt");
       dt.textContent = pregunta.texto;
@@ -432,7 +451,8 @@
   }
   function mostrarPaso() {
     if (paso >= preguntas.length) { mostrarResumen(); return; }
-    const pregunta = preguntas[paso];
+    const pregunta = preguntaActual(preguntas[paso],respuestas);
+    if (pregunta.campo === "presupuesto" && respuestas.presupuesto && !pregunta.opciones.some(([id])=>id===respuestas.presupuesto)) {delete respuestas.presupuesto;idSolicitud=null;}
     progreso(paso);
     contenido.replaceChildren();
     const titulo = document.createElement("h3");
@@ -458,7 +478,9 @@
       });
       opciones.append(boton);
     });
-    contenido.append(titulo, opciones);
+    contenido.append(titulo);
+    if (pregunta.ayuda) {const ayuda=document.createElement("p");ayuda.className="quiz-resultado-nota";ayuda.textContent=pregunta.ayuda;contenido.append(ayuda);}
+    contenido.append(opciones);
     anterior.disabled = paso === 0;
     enfocar();
   }

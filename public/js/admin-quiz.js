@@ -8,7 +8,7 @@ const nombres={
   contacto_actual:"¿Cómo se utilizará o compartirá el resultado de tu proyecto?",
   mejora_deseada:"¿Qué es lo más importante para tu proyecto?",
   preparacion:"¿Qué tan avanzado tienes tu proyecto o material de apoyo?",
-  presupuesto:"¿Qué presupuesto tienes pensado destinar a tu proyecto?"
+  presupuesto:"Presupuesto o inversión de referencia"
 };
 const etiquetas={
   dar_a_conocer:"Que más personas conozcan mi negocio o proyecto.",
@@ -188,7 +188,7 @@ async function cargarProyectos(){
 }
 document.querySelector("#actualizar-proyectos").addEventListener("click",cargarProyectos);
 const listaPropuestas=document.querySelector("#lista-propuestas"),estadoPropuestas=document.querySelector("#estado-propuestas"),filtroPropuestas=document.querySelector("#filtro-propuestas"),buscarPropuestas=document.querySelector("#buscar-propuestas");
-const etiquetasPresupuesto={menos_500:"Menos de $500",500_1500:"$500 a $1,500",1500_3000:"$1,500 a $3,000",3000_6000:"$3,000 a $6,000",mas_6000:"Más de $6,000",1500_3500:"$1,500 a $3,500",3500_8000:"$3,500 a $8,000",8000_15000:"$8,000 a $15,000",mas_15000:"Más de $15,000",sin_definir:"Necesita orientación",prefiero_no_indicar:"Prefiere no indicarlo",...{"web_precios_publicados":"Los precios publicados se ajustan a mi presupuesto","web_ajustar_alcance":"Quiero ajustar el alcance a mi presupuesto","web_presupuesto_propio":"Tengo otro presupuesto (lo indicaré en los detalles)"}};
+const etiquetasPresupuesto={...{"quiz_web_p1":"Presencia digital — implementación desde $750 MXN · $149 MXN al mes + IVA","quiz_web_p2":"Negocio interactivo — implementación desde $1,500 MXN · $249 MXN al mes + IVA","quiz_web_p3":"Gestión comercial — implementación desde $2,500 MXN · $349 MXN al mes + IVA","quiz_web_p4":"Gestión profesional — implementación desde $3,500 MXN · $499 MXN al mes + IVA","quiz_web_medida":"Necesito una solución a medida; quiero conocer los costos"},menos_500:"Menos de $500",500_1500:"$500 a $1,500",1500_3000:"$1,500 a $3,000",3000_6000:"$3,000 a $6,000",mas_6000:"Más de $6,000",1500_3500:"$1,500 a $3,500",3500_8000:"$3,500 a $8,000",8000_15000:"$8,000 a $15,000",mas_15000:"Más de $15,000",sin_definir:"Necesita orientación",prefiero_no_indicar:"Prefiere no indicarlo",...{"web_precios_publicados":"Los precios publicados se ajustan a mi presupuesto","web_ajustar_alcance":"Quiero ajustar el alcance a mi presupuesto","web_presupuesto_propio":"Tengo otro presupuesto (lo indicaré en los detalles)"}};
 const tiposAcademicos={proyecto_escolar:"Proyecto escolar o universitario",prototipo:"Prototipo o pieza funcional",maqueta:"Maqueta o modelo a escala",investigacion:"Investigación o tesis",otro:"Otro proyecto académico"};
 const etiquetasContexto={negocio:"Negocio",evento:"Evento",personal:"Personal",academico:"Escolar / Académico"};
 const nombresServicio={llaveros:"Llaveros",fdm_medida:"Impresión FDM",resina:"Resina",soporte_qr:"Soportes QR"};
