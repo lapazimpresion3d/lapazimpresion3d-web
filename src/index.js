@@ -176,6 +176,7 @@ function contactoValido(c) {
 
 // Solicitudes directas de la sección «Cotiza tu página web».
 // Reutiliza quiz_propuestas sin cambiar el esquema D1 ni alterar la ruta del cuestionario.
+const WEB_PAQUETES = new Set(["Presencia digital","Negocio interactivo","Gestión comercial","Gestión profesional"]);
 const WEB_TIPOS = new Set(["Página de contacto digital", "Página web para mi negocio", "Menú digital para restaurantes", "Catálogo de productos para comercios"]);
 const WEB_FUNCIONES = new Set(["Carrito y pedidos desde la página", "Pedidos por WhatsApp", "Efectivo y transferencias con registro manual", "Cotizar integración de pagos en línea con tarjeta", "Pedidos para recoger o a domicilio", "Pedidos desde las mesas", "Reservaciones y agenda", "Reservaciones de tours y pases turísticos", "Panel privado", "Pantalla de cocina y comandas", "Seguimiento de pedidos", "Reportes de pedidos y cobros"]);
 const WEB_COMPLEMENTOS = new Set(["Código QR para la página", "Soportes QR o llaveros con NFC opcional", "Carga inicial de productos, precios y fotografías", "Configuración inicial para buscadores y aviso de privacidad", "Capacitación para administrar la página"]);
@@ -193,6 +194,7 @@ function solicitudWebValida(d) {
  return d && typeof d==='object' && !Array.isArray(d) &&
    textoWeb(d.nombre,2,100) && textoWeb(d.negocio,2,100) && textoWeb(d.giro,2,80) &&
    typeof d.telefono==='string' && /^\d{10}$/.test(d.telefono) &&
+   (d.paquete == null || d.paquete === '' || WEB_PAQUETES.has(d.paquete)) &&
    WEB_TIPOS.has(d.tipo_pagina) && listaWeb(d.funciones,WEB_FUNCIONES) &&
    listaWeb(d.complementos,WEB_COMPLEMENTOS) && textoWeb(d.detalles,5,500) && presupuestoValido(d.presupuesto??"") &&
    dominioWebValido(d) && d.acepta_privacidad===true;
@@ -245,6 +247,7 @@ function resumenCorreo(info) {
   agregar("Negocio o proyecto",info.proyecto);
   agregar("Presupuesto",info.presupuesto);
   agregar("Tipo de solicitud",info.contexto);
+  if(info.paquete) agregar("Paquete de interés",info.paquete);
   if(info.tipo_pagina) agregar("Tipo de página",info.tipo_pagina);
   if(info.giro) agregar("Giro",info.giro);
   if(info.dominio) agregar("Dominio",info.dominio);
@@ -328,7 +331,7 @@ async function api(request,env,ctx) {
     const ficha={
       tipo_documento:"solicitud_web",version_esquema:"1.0",id_solicitud:id,
       origen:"cotiza_pagina_web",fecha_generacion:fecha,
-      tipo_pagina:d.tipo_pagina,funciones:d.funciones,complementos:d.complementos,
+      paquete:d.paquete||"",tipo_pagina:d.tipo_pagina,funciones:d.funciones,complementos:d.complementos,
       giro:d.giro,detalles:d.detalles,presupuesto:d.presupuesto||"",estado:"orientativa",
       dominio:{situacion:d.situacion_dominio||"no_indicado",actual:d.dominio_actual||"",precio_anual_referencia_mxn:700,precio_final_pendiente:true},
       renovacion_anual:{dominio:"segun_propuesta",operacion_y_soporte:"segun_propuesta"}
@@ -336,7 +339,7 @@ async function api(request,env,ctx) {
     const result=await env.QUIZ_DB.prepare("INSERT INTO quiz_propuestas (id,folio,fecha,nombre,proyecto,telefono,comentario,servicio_id,ficha_json,estado,privacidad_aceptada) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,'nueva',1)")
       .bind(id,folio,fecha,d.nombre.trim(),d.negocio.trim(),d.telefono,d.detalles.trim(),"WEB",JSON.stringify(ficha)).run();
     if(result.meta.changes!==1) return error("No se pudo registrar la solicitud",500);
-    if(ctx?.waitUntil) ctx.waitUntil(notificarPropuesta(env,{folio,servicio:"Página web / servicios digitales",nombre:d.nombre,telefono:d.telefono,proyecto:d.negocio,presupuesto:d.presupuesto,tipo_pagina:d.tipo_pagina,giro:d.giro,dominio:{situacion:d.situacion_dominio||"No indicada",actual:d.dominio_actual||""},funciones:d.funciones,complementos:d.complementos,detalles:d.detalles}).catch(e=>console.error("Aviso por correo",e)));
+    if(ctx?.waitUntil) ctx.waitUntil(notificarPropuesta(env,{folio,servicio:"Página web / servicios digitales",nombre:d.nombre,telefono:d.telefono,proyecto:d.negocio,presupuesto:d.presupuesto,paquete:d.paquete||"",tipo_pagina:d.tipo_pagina,giro:d.giro,dominio:{situacion:d.situacion_dominio||"No indicada",actual:d.dominio_actual||""},funciones:d.funciones,complementos:d.complementos,detalles:d.detalles}).catch(e=>console.error("Aviso por correo",e)));
     return json({ok:true,folio},201);
   }
   if(path==="/api/quiz/propuestas" && request.method==="POST") {
