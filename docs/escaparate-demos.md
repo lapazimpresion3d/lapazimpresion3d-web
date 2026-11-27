@@ -1,0 +1,9 @@
+# Escaparate multicomercio 38.3 — revisión
+Base comercial 097988b; reutiliza tarjetas de 8c89c4c. Origen de recursos: prueba-cloudflare/desarrollo 523079db58d6f47c6ffd79ada72cc32d8d5b16a6.
+- Cinco portadas WebP y cinco logotipos SVG locales, originales con hashes coincidentes. El banner de El Comal conserva sus 414 KB; optimización adicional pendiente.
+- URL base central en public/js/demos-config.js. No se usa dominio futuro ni se modifica DNS.
+- Vista previa: añadir ?revision-demos=1#paginas-web a la URL de preview. Permite explorar 20 pares con sus dos enlaces como revisión no verificada. Sin ese parámetro los botones se habilitan únicamente con la lista de combinaciones verificadas. Galería y comparador tienen validación independiente. No fusionar sin comprobar ambos destinos y sus flujos, seguridad y visualización.
+- Consultas al Worker desde herramienta web: cache miss; curl local: DNS no resolvió el host. No se ha confirmado ninguna combinación pública. El commit de origen tuvo ejecución exitosa de Actions 46003299222 y contiene pruebas de las 20 combinaciones. No equivalen a comprobación pública.
+- No se anuncian POS, caja, inventario, costos, fidelización, automatización ni reportes como módulos listos. No realizar pagos reales ni usar información personal. Mantener repositorios separados.
+- Precios: se conservan últimos aprobados en main, implementación desde 750/1500/2500/3500; mensual 149/249/349/499 MXN + IVA. Documento recibido y comparador del SaaS conservan precios anteriores; armonizar antes de publicación.
+- Pruebas: node --test tests/escaparate-demos.test.cjs; node scripts/verificar-demos-publicas.cjs (solo GET). Revisión visual 320/375/768 y escritorio, teclado, enlaces, vistas de práctica aisladas y ausencia de cobros reales. No enviar solicitudes de prueba a D1 de producción. No modificar wrangler ni migraciones. No fusionar sin aprobación.
