@@ -9,8 +9,8 @@
   <link rel="stylesheet" href="css/cabecera-fotografica.css">
   <link rel="stylesheet" href="css/inicio.css">
   <link rel="stylesheet" href="css/cotizacion-web.css">
-  <link rel="stylesheet" href="css/soluciones-digitales.css">
-  <script src="js/cotizacion-web.js" defer></script>
+  <link rel="stylesheet" href="css/soluciones-digitales.css?v=20261127-2">
+  <script src="js/cotizacion-web.js?v=20261127-2" defer></script>
 </head>
 <body class="pagina-cotizacion">
   <header class="cabecera cabecera-fotografica cabecera-cotizacion">
@@ -43,6 +43,7 @@
           <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="a-medida" required checked><span>Proyecto a medida</span></label></th><td colspan="2">Bajo cotización</td></tr>
         </tbody>
       </table>
+      <p id="estado-paquete-web" class="estado-paquete-web" role="status" aria-live="polite"></p>
       <p class="nota">MXN + IVA. La implementación depende del alcance; las mensualidades corresponden al paquete estándar. La disponibilidad se confirma en la propuesta.</p>
       <p class="nota"><a href="paquetes-web.html#fichas-paquetes">Ver características y alcance de cada paquete</a>.</p>
     </section>
@@ -81,10 +82,11 @@
           <a id="ficha-paquete-web" href="paquetes-web.html">Ver ficha del paquete</a>
         </div>
       <fieldset id="funciones-web" hidden>
-        <legend>Características y funciones del proyecto</legend>
-        <p id="orientacion-paquete-web" class="ayuda-cotizacion" hidden>Selecciona las funciones del paquete que necesita tu negocio. Las opciones comunes se sugieren automáticamente; el menú, catálogo, pedidos y reservaciones se eligen según tus necesidades. Puedes modificar la selección.</p>
+        <legend id="leyenda-funciones-web">Características y funciones del proyecto</legend>
+        <p id="orientacion-paquete-web" class="ayuda-cotizacion" hidden>Aquí aparecen las funciones correspondientes al paquete seleccionado. Marca las que necesitas; no es necesario seleccionar todas. Las funciones fuera del paquete se encuentran en el apartado de adicionales.</p>
         <p id="ayuda-pedidos" class="ayuda-cotizacion" hidden>Para vender desde tu sitio, marca <strong>Carrito y pedidos desde la página</strong>. Eso habilita las opciones de cobro. Si prefieres atender los pedidos en el chat, selecciona <strong>Pedidos por WhatsApp</strong>.</p>
-        <h3 id="titulo-funciones-plan" hidden>Características del paquete</h3>
+        <h3 id="titulo-funciones-plan" hidden>Funciones del paquete</h3>
+        <p id="conteo-funciones-plan" class="nota" hidden></p>
         <div id="funciones-plan">
         <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Página comercial personalizada"><span>Página comercial personalizada<small>Presentación del negocio, identidad y servicios.</small></span></label>
         <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Información de contacto y horarios"><span>Información de contacto y horarios<small>WhatsApp, redes, ubicación y horarios.</small></span></label>

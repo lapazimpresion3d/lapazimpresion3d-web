@@ -154,7 +154,16 @@ function actualizarFunciones() {
     document.getElementById('alcance-paquete-web').textContent = plan.alcance;
     document.getElementById('ficha-paquete-web').href = 'paquetes-web.html#' + clave;
   }
-  document.getElementById('titulo-funciones-plan').hidden = !plan;
+  const tituloFunciones = document.getElementById('titulo-funciones-plan');
+  const conteoFunciones = document.getElementById('conteo-funciones-plan');
+  document.getElementById('leyenda-funciones-web').textContent = plan ? 'Características de ' + plan.nombre : 'Características y funciones del proyecto a medida';
+  tituloFunciones.hidden = !plan;
+  tituloFunciones.textContent = plan ? 'Funciones de ' + plan.nombre : 'Funciones del proyecto';
+  conteoFunciones.hidden = !plan;
+  conteoFunciones.textContent = plan ? nuevasIncluidas.size + ' funciones disponibles para solicitar en este paquete, según el giro y la disponibilidad.' : '';
+  const extrasSeleccionadas = opcionesWeb.length && Array.from(opcionesWeb).filter(o=>o.parentElement===bloqueExtra && o.querySelector('input').checked).length;
+  document.getElementById('estado-paquete-web').textContent = plan ? plan.nombre + ' seleccionado · ' + nuevasIncluidas.size + ' funciones del paquete. Revisa sus características debajo.' : 'Proyecto a medida seleccionado · elige las funciones que necesitas.';
+  contenedorExtra.querySelector('summary').textContent = 'Funciones adicionales bajo cotización' + (extrasSeleccionadas ? ' (' + extrasSeleccionadas + ' seleccionadas)' : '');
   document.getElementById('orientacion-paquete-web').hidden = !plan;
   contenedorExtra.hidden = !hayExtra;
   ayudaPedidos.hidden = Boolean(plan && !nuevasIncluidas.has("Carrito y pedidos desde la página"));
@@ -166,11 +175,14 @@ formularioWeb.addEventListener('change', evento => {
 
 formularioWeb.addEventListener('change', actualizarFunciones);
 // Los radios pertenecen al formulario mediante form=, pero sus eventos no suben por él.
-tablaPaquetes.addEventListener('change', actualizarFunciones);
-for (const radio of radiosPaquete) radio.closest('tr').addEventListener('click', evento => {
-  if (evento.target.closest('label, input')) return;
-  radio.click();
-});
+for (const radio of radiosPaquete) {
+  radio.addEventListener('change', actualizarFunciones);
+  radio.closest('tr').addEventListener('click', evento => {
+    if (evento.target.closest('label, input')) return;
+    radio.checked = true;
+    actualizarFunciones();
+  });
+}
 window.addEventListener('pageshow', actualizarFunciones);
 
 const telefonoWeb = formularioWeb.elements.telefono;

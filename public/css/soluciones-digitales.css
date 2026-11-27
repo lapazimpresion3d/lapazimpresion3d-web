@@ -83,3 +83,7 @@
 #precios-paquetes tr.paquete-seleccionado th{box-shadow:inset 3px 0 0 var(--titulo)}
 #precios-paquetes .selector-paquete:focus-within{outline:2px solid var(--titulo);outline-offset:3px;border-radius:3px}
 @media(max-width:420px){#precios-paquetes .selector-paquete{gap:4px}#precios-paquetes .selector-paquete input{width:16px;height:16px;min-width:16px}}
+
+#precios-paquetes .estado-paquete-web{margin:12px 0 0;padding:10px 12px;border-inline-start:3px solid var(--titulo);background:#edf2fc;color:var(--texto);font-size:.9rem;font-weight:700}
+#precios-paquetes .estado-paquete-web:empty{display:none}
+#form-web #conteo-funciones-plan{margin:4px 0 12px}
