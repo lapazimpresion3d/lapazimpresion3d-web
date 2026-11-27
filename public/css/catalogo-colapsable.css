@@ -33,3 +33,16 @@ main > #llaveros.servicio-colapsable{margin-top:clamp(24px,4vw,44px)}
 }
 @media(max-width:350px){.servicio-resumen h1,.servicio-resumen h2{grid-template-columns:48px minmax(0,1fr) 24px;gap:7px}.servicio-miniatura{width:48px;height:58px}.servicio-resumen{padding:10px}.servicio-contenido{padding:10px}}
 @media print{.servicio-resumen{cursor:default}.servicio-indicador{display:none}}
+
+/* Jerarquía comercial de inicio: el amarillo sólido se reserva para cotizar. */
+.inicio-catalogo{--naranja-accion:#f59a35;--naranja-hover:#ffb364}
+.inicio-catalogo .accion:not(.secundaria){background:var(--marino);color:#fff;border-color:transparent}
+.inicio-catalogo .accion:not(.secundaria):hover{background:#244372}
+.inicio-catalogo .accion.accion-cotizar{background:var(--amarillo);color:var(--texto-acento);border-color:transparent}
+.inicio-catalogo .accion.accion-cotizar:hover{background:var(--amarillo-hover)}
+.inicio-catalogo .accion.accion-demo,.inicio-catalogo .quiz-negocio-boton{background:var(--naranja-accion);color:#16203a;border-color:transparent}
+.inicio-catalogo .accion.accion-demo:hover,.inicio-catalogo .quiz-negocio-boton:hover{background:var(--naranja-hover)}
+.inicio-catalogo .accion.accion-contacto{background:#087f5b;color:#fff;border-color:transparent}
+.inicio-catalogo .accion.accion-contacto:hover{background:#096b4e}
+.inicio-catalogo .servicio-indicador{background:#edf2fc;color:#0f2347}
+.inicio-catalogo #paginas-web .asistente-abrir{color:#e0e8f7;border-color:#e0e8f7}

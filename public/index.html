@@ -8,7 +8,7 @@
   <link rel="icon" href="favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="css/cabecera-fotografica.css">
   <link rel="stylesheet" href="css/inicio.css?v=20261127-3">
-  <link rel="stylesheet" href="css/catalogo-colapsable.css?v=1">
+  <link rel="stylesheet" href="css/catalogo-colapsable.css?v=2">
   <script src="js/catalogo-colapsable.js?v=1" defer></script>
   <script src="js/navegacion.js" defer></script>
   <script src="js/orientacion-web.js?v=1" defer></script>
@@ -18,7 +18,7 @@
   <script src="js/soluciones-digitales.js?v=5" defer></script>
   <script src="js/asistente-web.js?v=1" defer></script>
 </head>
-<body>
+<body class="inicio-catalogo">
   <header class="cabecera cabecera-fotografica cabecera-inicio">
     <picture>
       <source media="(min-width: 768px)"
@@ -124,7 +124,7 @@
         <p><strong>Puedes pedir menos de 10 piezas.</strong> A partir de 10 piezas, el diseño está incluido. Entregamos en 2 a 3 días hábiles después de aprobar el diseño.</p>
       </div>
       <div class="acciones">
-        <a class="accion" href="cotizar-impresion.html?servicio=llaveros">Cotizar llaveros <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#flecha"/></svg></a>
+        <a class="accion accion-cotizar" href="cotizar-impresion.html?servicio=llaveros">Cotizar llaveros <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#flecha"/></svg></a>
       </div>
       <p class="nota" id="ayuda-cotizar-llaveros">Completa la solicitud con cantidad y detalles de tu idea. Si tienes logotipo, foto o dibujo, podremos pedirte la referencia durante la revisión. Te enviaremos una propuesta digital para aprobar el diseño antes de imprimir.</p>
         </div>
@@ -143,8 +143,8 @@
         <div>
           <p>Coloca en tus mesas o mostrador un soporte impreso en 3D con tu marca. Tus clientes pueden escanearlo para abrir el menú, catálogo, WhatsApp o reseñas de Google. También puedes pedirlo con NFC.</p>
           <div class="acciones">
-            <a class="accion" href="cotizar-impresion.html?servicio=soporte_qr">Cotizar soporte QR <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#flecha"/></svg></a>
-            <a class="accion secundaria" href="https://desarrollo-taqueria-el-comal.lapazimpresion3d.workers.dev/?mesa=3#menu">Probar el menú de una mesa <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#externo"/></svg></a>
+            <a class="accion accion-cotizar" href="cotizar-impresion.html?servicio=soporte_qr">Cotizar soporte QR <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#flecha"/></svg></a>
+            <a class="accion accion-demo" href="https://desarrollo-taqueria-el-comal.lapazimpresion3d.workers.dev/?mesa=3#menu">Probar el menú de una mesa <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#externo"/></svg></a>
           </div>
         </div>
         <figure>
@@ -178,8 +178,8 @@
           </div>
           <div class="plan-demostraciones">
             <h4>Demostración del paquete</h4>
-            <div class="ejemplos-integrados"><div class="tarjeta-demo ejemplo-integrado" data-negocio="cafe-mirador" data-paquete="p1"><img class="demo-portada" src="images/demos/cafe-mirador-portada.webp" alt="" loading="lazy" decoding="async"><div class="demo-cuerpo"><div class="demo-identidad"><img class="demo-logo" src="images/demos/cafe-mirador-logo.svg" alt="" width="64" height="64" loading="lazy"><div><p class="demo-ejemplo">Ejemplo: Café Mirador</p><p class="nota">Cafetería</p></div></div><p>Identidad, horarios y menú de tu cafetería.</p><ul><li>Página comercial</li><li>Menú y catálogo informativo</li><li>Horarios e información</li></ul><p class="nota" data-estado-demo>Demostración de práctica · versión en desarrollo.</p><div class="acciones demo-botones"><a class="accion" data-vista="cliente" hidden>Ver demostración</a><a class="accion secundaria" data-vista="panel" hidden>Probar panel administrativo</a></div></div></div></div>
-            <div class="acciones plan-cotizar"><a class="accion" href="cotizacion-web.html?paquete=presencia-digital#precios-paquetes">Me interesa este paquete</a></div>
+            <div class="ejemplos-integrados"><div class="tarjeta-demo ejemplo-integrado" data-negocio="cafe-mirador" data-paquete="p1"><img class="demo-portada" src="images/demos/cafe-mirador-portada.webp" alt="" loading="lazy" decoding="async"><div class="demo-cuerpo"><div class="demo-identidad"><img class="demo-logo" src="images/demos/cafe-mirador-logo.svg" alt="" width="64" height="64" loading="lazy"><div><p class="demo-ejemplo">Ejemplo: Café Mirador</p><p class="nota">Cafetería</p></div></div><p>Identidad, horarios y menú de tu cafetería.</p><ul><li>Página comercial</li><li>Menú y catálogo informativo</li><li>Horarios e información</li></ul><p class="nota" data-estado-demo>Demostración de práctica · versión en desarrollo.</p><div class="acciones demo-botones"><a class="accion accion-demo" data-vista="cliente" hidden>Ver demostración</a><a class="accion secundaria" data-vista="panel" hidden>Probar panel administrativo</a></div></div></div></div>
+            <div class="acciones plan-cotizar"><a class="accion accion-cotizar" href="cotizacion-web.html?paquete=presencia-digital#precios-paquetes">Me interesa este paquete</a></div>
           </div>
         </article>
 <article class="caja plan-digital plan-integrado" data-plan="negocio-interactivo">
@@ -192,8 +192,8 @@
           </div>
           <div class="plan-demostraciones">
             <h4>Demostración del paquete</h4>
-            <div class="ejemplos-integrados"><div class="tarjeta-demo ejemplo-integrado" data-negocio="barberia-elite" data-paquete="p2"><img class="demo-portada" src="images/demos/barberia-elite-portada.webp" alt="" loading="lazy" decoding="async"><div class="demo-cuerpo"><div class="demo-identidad"><img class="demo-logo" src="images/demos/barberia-elite-logo.svg" alt="" width="64" height="64" loading="lazy"><div><p class="demo-ejemplo">Ejemplo: Barbería Elite</p><p class="nota">Barberías y estéticas</p></div></div><p>Presenta servicios y organiza la atención mediante citas.</p><ul><li>Catálogo de servicios</li><li>Reservación de citas</li><li>Agenda de práctica</li></ul><p class="nota" data-estado-demo>Demostración de práctica · versión en desarrollo.</p><div class="acciones demo-botones"><a class="accion" data-vista="cliente" hidden>Ver demostración</a><a class="accion secundaria" data-vista="panel" hidden>Probar panel administrativo</a></div></div></div></div>
-            <div class="acciones plan-cotizar"><a class="accion" href="cotizacion-web.html?paquete=negocio-interactivo#precios-paquetes">Me interesa este paquete</a></div>
+            <div class="ejemplos-integrados"><div class="tarjeta-demo ejemplo-integrado" data-negocio="barberia-elite" data-paquete="p2"><img class="demo-portada" src="images/demos/barberia-elite-portada.webp" alt="" loading="lazy" decoding="async"><div class="demo-cuerpo"><div class="demo-identidad"><img class="demo-logo" src="images/demos/barberia-elite-logo.svg" alt="" width="64" height="64" loading="lazy"><div><p class="demo-ejemplo">Ejemplo: Barbería Elite</p><p class="nota">Barberías y estéticas</p></div></div><p>Presenta servicios y organiza la atención mediante citas.</p><ul><li>Catálogo de servicios</li><li>Reservación de citas</li><li>Agenda de práctica</li></ul><p class="nota" data-estado-demo>Demostración de práctica · versión en desarrollo.</p><div class="acciones demo-botones"><a class="accion accion-demo" data-vista="cliente" hidden>Ver demostración</a><a class="accion secundaria" data-vista="panel" hidden>Probar panel administrativo</a></div></div></div></div>
+            <div class="acciones plan-cotizar"><a class="accion accion-cotizar" href="cotizacion-web.html?paquete=negocio-interactivo#precios-paquetes">Me interesa este paquete</a></div>
           </div>
         </article>
 <article class="caja plan-digital plan-integrado" data-plan="gestion-comercial">
@@ -206,9 +206,9 @@
           </div>
           <div class="plan-demostraciones">
             <h4>Demostraciones del paquete</h4>
-            <div class="ejemplos-integrados ejemplos-dobles"><div class="tarjeta-demo ejemplo-integrado" data-negocio="mundo-mascotas" data-paquete="p3"><img class="demo-portada" src="images/demos/mundo-mascotas-portada.webp" alt="" loading="lazy" decoding="async"><div class="demo-cuerpo"><div class="demo-identidad"><img class="demo-logo" src="images/demos/mundo-mascotas-logo.svg" alt="" width="64" height="64" loading="lazy"><div><p class="demo-ejemplo">Ejemplo: Mundo Mascotas</p><p class="nota">Tiendas y comercios</p></div></div><p>Presenta productos y explora la recepción de pedidos.</p><ul><li>Catálogo de productos</li><li>Carrito y gestión de pedidos</li><li>Seguimiento de pedidos</li></ul><p class="nota" data-estado-demo>Demostración de práctica · versión en desarrollo.</p><div class="acciones demo-botones"><a class="accion" data-vista="cliente" hidden>Ver demostración</a><a class="accion secundaria" data-vista="panel" hidden>Probar panel administrativo</a></div></div></div>
-<div class="tarjeta-demo ejemplo-integrado" data-negocio="auto-servicio-bahia" data-paquete="p3"><img class="demo-portada" src="images/demos/auto-servicio-bahia-portada.webp" alt="" loading="lazy" decoding="async"><div class="demo-cuerpo"><div class="demo-identidad"><img class="demo-logo" src="images/demos/auto-servicio-bahia-logo.svg" alt="" width="64" height="64" loading="lazy"><div><p class="demo-ejemplo">Ejemplo: Auto Servicio Bahía</p><p class="nota">Talleres y servicios</p></div></div><p>Organiza tus servicios y refacciones y agenda citas.</p><ul><li>Catálogo de servicios y refacciones</li><li>Citas por servicio</li><li>Agenda de práctica</li></ul><p class="nota" data-estado-demo>Demostración de práctica · versión en desarrollo.</p><div class="acciones demo-botones"><a class="accion" data-vista="cliente" hidden>Ver demostración</a><a class="accion secundaria" data-vista="panel" hidden>Probar panel administrativo</a></div></div></div></div>
-            <div class="acciones plan-cotizar"><a class="accion" href="cotizacion-web.html?paquete=gestion-comercial#precios-paquetes">Me interesa este paquete</a></div>
+            <div class="ejemplos-integrados ejemplos-dobles"><div class="tarjeta-demo ejemplo-integrado" data-negocio="mundo-mascotas" data-paquete="p3"><img class="demo-portada" src="images/demos/mundo-mascotas-portada.webp" alt="" loading="lazy" decoding="async"><div class="demo-cuerpo"><div class="demo-identidad"><img class="demo-logo" src="images/demos/mundo-mascotas-logo.svg" alt="" width="64" height="64" loading="lazy"><div><p class="demo-ejemplo">Ejemplo: Mundo Mascotas</p><p class="nota">Tiendas y comercios</p></div></div><p>Presenta productos y explora la recepción de pedidos.</p><ul><li>Catálogo de productos</li><li>Carrito y gestión de pedidos</li><li>Seguimiento de pedidos</li></ul><p class="nota" data-estado-demo>Demostración de práctica · versión en desarrollo.</p><div class="acciones demo-botones"><a class="accion accion-demo" data-vista="cliente" hidden>Ver demostración</a><a class="accion secundaria" data-vista="panel" hidden>Probar panel administrativo</a></div></div></div>
+<div class="tarjeta-demo ejemplo-integrado" data-negocio="auto-servicio-bahia" data-paquete="p3"><img class="demo-portada" src="images/demos/auto-servicio-bahia-portada.webp" alt="" loading="lazy" decoding="async"><div class="demo-cuerpo"><div class="demo-identidad"><img class="demo-logo" src="images/demos/auto-servicio-bahia-logo.svg" alt="" width="64" height="64" loading="lazy"><div><p class="demo-ejemplo">Ejemplo: Auto Servicio Bahía</p><p class="nota">Talleres y servicios</p></div></div><p>Organiza tus servicios y refacciones y agenda citas.</p><ul><li>Catálogo de servicios y refacciones</li><li>Citas por servicio</li><li>Agenda de práctica</li></ul><p class="nota" data-estado-demo>Demostración de práctica · versión en desarrollo.</p><div class="acciones demo-botones"><a class="accion accion-demo" data-vista="cliente" hidden>Ver demostración</a><a class="accion secundaria" data-vista="panel" hidden>Probar panel administrativo</a></div></div></div></div>
+            <div class="acciones plan-cotizar"><a class="accion accion-cotizar" href="cotizacion-web.html?paquete=gestion-comercial#precios-paquetes">Me interesa este paquete</a></div>
           </div>
         </article>
 <article class="caja plan-digital plan-integrado" data-plan="gestion-profesional">
@@ -221,12 +221,12 @@
           </div>
           <div class="plan-demostraciones">
             <h4>Demostración del paquete</h4>
-            <div class="ejemplos-integrados"><div class="tarjeta-demo ejemplo-integrado" data-negocio="taqueria-el-comal" data-paquete="p4"><img class="demo-portada" src="images/demos/taqueria-el-comal-portada.webp" alt="" loading="lazy" decoding="async"><div class="demo-cuerpo"><div class="demo-identidad"><img class="demo-logo" src="images/demos/taqueria-el-comal-logo.svg" alt="" width="64" height="64" loading="lazy"><div><p class="demo-ejemplo">Ejemplo: Taquería El Comal</p><p class="nota">Restaurantes y taquerías</p></div></div><p>Ejemplo avanzado para coordinar la atención del restaurante.</p><ul><li>Menú interactivo, carrito y seguimiento</li><li>Cocina, reservaciones y comandas</li><li>Cuentas por mesa y cobros simulados</li></ul><p class="nota" data-estado-demo>Demostración de práctica · versión en desarrollo.</p><div class="acciones demo-botones"><a class="accion" data-vista="cliente" hidden>Ver demostración</a><a class="accion secundaria" data-vista="panel" hidden>Probar panel administrativo</a></div><p class="nota"><a href="https://desarrollo-taqueria-el-comal.lapazimpresion3d.workers.dev/">Ejemplo anterior de El Comal</a> (enlace histórico).</p></div></div></div>
-            <div class="acciones plan-cotizar"><a class="accion" href="cotizacion-web.html?paquete=gestion-profesional#precios-paquetes">Me interesa este paquete</a></div>
+            <div class="ejemplos-integrados"><div class="tarjeta-demo ejemplo-integrado" data-negocio="taqueria-el-comal" data-paquete="p4"><img class="demo-portada" src="images/demos/taqueria-el-comal-portada.webp" alt="" loading="lazy" decoding="async"><div class="demo-cuerpo"><div class="demo-identidad"><img class="demo-logo" src="images/demos/taqueria-el-comal-logo.svg" alt="" width="64" height="64" loading="lazy"><div><p class="demo-ejemplo">Ejemplo: Taquería El Comal</p><p class="nota">Restaurantes y taquerías</p></div></div><p>Ejemplo avanzado para coordinar la atención del restaurante.</p><ul><li>Menú interactivo, carrito y seguimiento</li><li>Cocina, reservaciones y comandas</li><li>Cuentas por mesa y cobros simulados</li></ul><p class="nota" data-estado-demo>Demostración de práctica · versión en desarrollo.</p><div class="acciones demo-botones"><a class="accion accion-demo" data-vista="cliente" hidden>Ver demostración</a><a class="accion secundaria" data-vista="panel" hidden>Probar panel administrativo</a></div><p class="nota"><a href="https://desarrollo-taqueria-el-comal.lapazimpresion3d.workers.dev/">Ejemplo anterior de El Comal</a> (enlace histórico).</p></div></div></div>
+            <div class="acciones plan-cotizar"><a class="accion accion-cotizar" href="cotizacion-web.html?paquete=gestion-profesional#precios-paquetes">Me interesa este paquete</a></div>
           </div>
         </article>
       </div>
-      <div class="acciones demos-generales"><a class="accion" id="demo-galeria" hidden>Explorar todas las demostraciones</a><a class="accion secundaria" id="demo-comparador" hidden>Comparar negocios y paquetes</a></div>
+      <div class="acciones demos-generales"><a class="accion accion-demo" id="demo-galeria" hidden>Explorar todas las demostraciones</a><a class="accion secundaria" id="demo-comparador" hidden>Comparar negocios y paquetes</a></div>
       <section class="caja explorar-demos destacar-selector" id="selector-demos" aria-labelledby="titulo-selector-demos">
         <div class="selector-cabecera">
           <p class="sobrelinea-demo">PRUEBA INTERACTIVA · 20 COMBINACIONES</p>
@@ -241,7 +241,7 @@
             <p id="demo-resultado" role="status">Demostraciones de práctica en desarrollo.</p>
           </div>
           <p class="selector-paso-final"><b class="selector-numero" aria-hidden="true">3</b> Explora la página o su panel administrativo</p>
-          <div class="acciones acciones-selector-demo"><a id="demo-seleccionada" class="accion accion-principal-demo" hidden>Ver demostración</a><a id="demo-panel" class="accion secundaria" hidden>Probar panel administrativo</a><a id="demo-cotizar" class="accion secundaria" hidden>Me interesa este paquete</a></div>
+          <div class="acciones acciones-selector-demo"><a id="demo-seleccionada" class="accion accion-principal-demo accion-demo" hidden>Ver demostración</a><a id="demo-panel" class="accion secundaria" hidden>Probar panel administrativo</a><a id="demo-cotizar" class="accion accion-cotizar" hidden>Me interesa este paquete</a></div>
           <p class="selector-beneficio">Cambia el giro o el paquete cuantas veces quieras. Puedes probar las funciones disponibles sin generar pedidos, citas ni cobros reales.</p>
           <noscript><p class="nota">Activa JavaScript para explorar las combinaciones interactivas.</p></noscript>
         </div>
@@ -287,7 +287,7 @@
             <details><summary>Ver las funciones seleccionadas</summary><ul id="asistente-funciones"></ul></details>
             <p id="asistente-extra" class="nota" hidden>La integración de pagos en línea con tarjeta se cotiza por separado.</p>
             <p class="nota">Recomendación orientativa. Las funciones en desarrollo requieren revisión antes de contratar.</p>
-            <div class="acciones"><a id="asistente-cotizar" class="accion" href="cotizacion-web.html">Personalizar y solicitar cotización</a><button id="asistente-limpiar" type="button" class="accion secundaria">Empezar de nuevo</button></div>
+            <div class="acciones"><a id="asistente-cotizar" class="accion accion-cotizar" href="cotizacion-web.html">Personalizar y solicitar cotización</a><button id="asistente-limpiar" type="button" class="accion secundaria">Empezar de nuevo</button></div>
           </div>
           <p id="asistente-aviso" class="nota" role="status" aria-live="polite">Elige tu giro para obtener una recomendación.</p>
         </div>
@@ -297,7 +297,7 @@
       <div class="caja cierre-cotizacion-web">
         <h3>¿Qué solución necesita tu negocio?</h3>
         <p>Cuéntanos qué necesitas y prepararemos una propuesta adaptada a tu negocio.</p>
-        <div class="acciones"><a class="accion" href="cotizacion-web.html">Solicitar cotización</a></div>
+        <div class="acciones"><a class="accion accion-cotizar" href="cotizacion-web.html">Solicitar cotización</a></div>
       </div>
         </div>
       </details>
@@ -366,7 +366,7 @@
 
       <p class="caja resina-ahorro"><span aria-hidden="true">💡</span> <strong>Tip de ahorro:</strong> Al imprimir varias figuras del mismo tamaño en una sola tanda, el costo de preparación se reparte entre más piezas. Por eso baja el precio por figura en paquetes grandes.</p>
       <div class="acciones">
-        <a class="accion" href="cotizar-impresion.html?servicio=resina">Cotizar resina <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#flecha"/></svg></a>
+        <a class="accion accion-cotizar" href="cotizar-impresion.html?servicio=resina">Cotizar resina <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#flecha"/></svg></a>
       </div>
       <p class="nota">Entrega en 24 a 48 horas según el pedido. Entregas personales y envíos locales por Uber Flash.</p>
         </div>
@@ -390,7 +390,7 @@
           <li><strong>Pedido:</strong> para qué la necesitas, cuántas piezas quieres y la fecha, si tienes una.</li>
         </ul>
         <div class="acciones">
-          <a class="accion" href="cotizar-impresion.html?servicio=fdm_medida">Solicitar impresión 3D <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#flecha"/></svg></a>
+          <a class="accion accion-cotizar" href="cotizar-impresion.html?servicio=fdm_medida">Solicitar impresión 3D <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#flecha"/></svg></a>
         </div>
       </div>
         </div>
@@ -405,7 +405,7 @@
         <a class="caja red facebook" href="https://www.facebook.com/profile.php?id=61587977253393"><span><strong>Ver Facebook</strong><small>Lapazimpresion3d</small></span><svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#externo"/></svg></a>
       </div>
       <div class="acciones contacto-redes">
-        <a class="accion" href="https://wa.me/526121992396">Escríbenos por WhatsApp <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#mensaje"/></svg></a>
+        <a class="accion accion-contacto" href="https://wa.me/526121992396">Escríbenos por WhatsApp <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#mensaje"/></svg></a>
       </div>
     </section>
 
