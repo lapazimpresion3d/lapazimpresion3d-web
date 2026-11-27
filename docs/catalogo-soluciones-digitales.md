@@ -46,3 +46,6 @@ Beneficio comercial aprobado: implementación inicial independiente y mensualida
 
 ## Navegación directa a cotización
 El enlace comercial `cotizacion-web.html#precios-paquetes` conserva su destino. Tras la inicialización y carga de la página, JavaScript posiciona el encabezado Paquete de interés; también responde a cambios de ancla. `#condiciones-paquetes` abre las condiciones plegadas y desplaza a su encabezado. No se reinician los datos ni se fuerza el desplazamiento al volver desde el historial. Se añadió acceso directo a condiciones desde la tabla.
+
+## Asistente para elegir paquete
+Guía comercial local independiente del cuestionario general. El giro y las necesidades explícitas determinan las funciones, las dependencias del carrito y el paquete estándar mínimo; la tarjeta se cotiza aparte. El catálogo de planes se comparte con el configurador (`public/js/orientacion-web.js`). Los parámetros de orientación son claves cerradas, no datos personales; la cotización reconstruye y precarga únicamente las funciones elegidas, sin seleccionar todo el paquete, y conserva su ajuste dinámico. Sin IA externa, envío automático, cambios de API/D1, ni afirmaciones nuevas sobre disponibilidad. Las opciones del asistente son orientativas y el cliente puede editar todas las 25 funciones.

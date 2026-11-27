@@ -13,95 +13,7 @@ function actualizarDominio() {
 formularioWeb.addEventListener('change', actualizarDominio);
 
 
-const planesCotizacion = {
-  "presencia-digital": {
-    "nombre": "Presencia digital",
-    "precio": "Implementación desde $750 MXN · $149 MXN al mes + IVA",
-    "alcance": "Página comercial con identidad, horarios, ubicación y contacto. Menú o catálogo básico, según el tipo de negocio. Acceso desde QR/NFC y consultas por WhatsApp.",
-    "funciones": [
-      "Página comercial personalizada",
-      "Información de contacto y horarios",
-      "Menú digital",
-      "Catálogo de productos",
-      "Pedidos por WhatsApp"
-    ]
-  },
-  "negocio-interactivo": {
-    "nombre": "Negocio interactivo",
-    "precio": "Implementación desde $1,500 MXN · $249 MXN al mes + IVA",
-    "alcance": "Funciones de presencia digital. Carrito, pedidos y seguimiento para menús o catálogos. Agenda o reservaciones según el giro. Panel privado; cocina básica y pedidos de mesa cuando corresponda.",
-    "funciones": [
-      "Página comercial personalizada",
-      "Información de contacto y horarios",
-      "Menú digital",
-      "Catálogo de productos",
-      "Pedidos por WhatsApp",
-      "Carrito y pedidos desde la página",
-      "Pedidos para recoger o a domicilio",
-      "Pedidos desde las mesas",
-      "Reservaciones y agenda",
-      "Reservaciones de tours y pases turísticos",
-      "Panel privado",
-      "Pantalla de cocina y comandas",
-      "Seguimiento de pedidos"
-    ]
-  },
-  "gestion-comercial": {
-    "nombre": "Gestión comercial",
-    "precio": "Implementación desde $2,500 MXN · $349 MXN al mes + IVA",
-    "alcance": "Funciones de Negocio interactivo, según el giro. Punto de venta, caja y registro de cobros. Inventario básico para productos; comandas o atención de servicios. Tickets y reportes de pedidos y cobros.",
-    "funciones": [
-      "Página comercial personalizada",
-      "Información de contacto y horarios",
-      "Menú digital",
-      "Catálogo de productos",
-      "Pedidos por WhatsApp",
-      "Carrito y pedidos desde la página",
-      "Pedidos para recoger o a domicilio",
-      "Pedidos desde las mesas",
-      "Reservaciones y agenda",
-      "Reservaciones de tours y pases turísticos",
-      "Panel privado",
-      "Pantalla de cocina y comandas",
-      "Seguimiento de pedidos",
-      "Efectivo y transferencias con registro manual",
-      "Reportes de pedidos y cobros",
-      "Punto de venta y caja",
-      "Inventario básico",
-      "Tickets"
-    ]
-  },
-  "gestion-profesional": {
-    "nombre": "Gestión profesional",
-    "precio": "Implementación desde $3,500 MXN · $499 MXN al mes + IVA",
-    "alcance": "Funciones de Gestión comercial, según el giro. Inventario avanzado, costos y proveedores. Fidelización y administración avanzada. Automatizaciones y reportes avanzados.",
-    "funciones": [
-      "Página comercial personalizada",
-      "Información de contacto y horarios",
-      "Menú digital",
-      "Catálogo de productos",
-      "Pedidos por WhatsApp",
-      "Carrito y pedidos desde la página",
-      "Pedidos para recoger o a domicilio",
-      "Pedidos desde las mesas",
-      "Reservaciones y agenda",
-      "Reservaciones de tours y pases turísticos",
-      "Panel privado",
-      "Pantalla de cocina y comandas",
-      "Seguimiento de pedidos",
-      "Efectivo y transferencias con registro manual",
-      "Reportes de pedidos y cobros",
-      "Punto de venta y caja",
-      "Tickets",
-      "Inventario avanzado",
-      "Costos y proveedores",
-      "Fidelización",
-      "Administración avanzada",
-      "Automatizaciones",
-      "Reportes avanzados"
-    ]
-  }
-};
+const planesCotizacion = LP_ORIENTACION_WEB.planes;
 const resumenPaquete = document.getElementById('resumen-paquete-web');
 const tablaPaquetes = document.getElementById('precios-paquetes');
 const radiosPaquete = Array.from(tablaPaquetes.querySelectorAll('input[name="paquete"]'));
@@ -117,11 +29,7 @@ let avisoAjuste = '';
 function camposSeleccionados() {
   return Array.from(opcionesWeb).map(o=>o.querySelector('input')).filter(c=>c.checked).map(c=>c.value);
 }
-function recomendarPaquete(seleccionadas) {
-  const estandar = seleccionadas.filter(v=>funcionesCatalogo.has(v));
-  if (!estandar.length) return 'a-medida';
-  return ordenPaquetes.find(clave=>estandar.every(v=>coberturas.get(clave).has(v))) || 'a-medida';
-}
+function recomendarPaquete(seleccionadas) { return LP_ORIENTACION_WEB.recomendar(seleccionadas); }
 function seleccionarPaquete(clave) {
   claveActiva = ordenPaquetes.includes(clave) ? clave : 'a-medida';
   modoMedida = claveActiva === 'a-medida';
@@ -295,9 +203,17 @@ const parametrosCatalogo = new URLSearchParams(location.search);
 const paqueteCatalogo = parametrosCatalogo.get('paquete');
 const radioInicial = radiosPaquete.find(r => r.value === paqueteCatalogo);
 seleccionarPaquete(radioInicial?.value || radiosPaquete.find(r=>r.checked)?.value || 'a-medida');
-const girosCatalogo = new Map([["restaurante","Restaurante / taquería"],["cafeteria","Cafetería"],["barberia","Barbería / estética"],["mascotas","Tienda de mascotas"],["comercio","Comercio / tienda"],["servicios","Servicios profesionales"],["taller","Taller / servicios automotrices"],["turismo","Turismo y actividades"],["otro","Otro giro"]]);
 const giroCatalogo = parametrosCatalogo.get('giro');
-if (!formularioWeb.elements.giro.value && girosCatalogo.has(giroCatalogo)) formularioWeb.elements.giro.value = girosCatalogo.get(giroCatalogo);
+if (!formularioWeb.elements.giro.value && Object.hasOwn(LP_ORIENTACION_WEB.giros,giroCatalogo)) formularioWeb.elements.giro.value = LP_ORIENTACION_WEB.giros[giroCatalogo];
+const orientacionInicial = LP_ORIENTACION_WEB.leer(parametrosCatalogo);
+if (orientacionInicial) {
+  claveActiva = orientacionInicial.paquete;
+  modoMedida = false;
+  const elegidas = new Set(orientacionInicial.funciones);
+  for (const opcion of opcionesWeb) opcion.querySelector('input').checked = elegidas.has(opcion.querySelector('input').value);
+  avisoAjuste = 'Se cargaron las funciones de tu orientación. Puedes cambiarlas antes de solicitar la cotización.';
+  actualizarFunciones();
+}
 actualizarDominio();
 formularioWeb.hidden = false;
 // Resolver las anclas después de inicializar el formulario y estabilizar su diseño.
