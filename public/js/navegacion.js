@@ -28,7 +28,7 @@ navegacion.addEventListener('click', (evento) => {
   const enlace = evento.target.closest('a');
   if (!enlace || !pantallaPequena.matches) return;
 
-  const titulo = document.querySelector(enlace.hash)?.querySelector('h1, h2');
+  const titulo = enlace.hash ? document.querySelector(enlace.hash)?.querySelector('h1, h2') : null;
   titulo?.focus({ preventScroll: true });
   mostrarMenu(false);
 });
