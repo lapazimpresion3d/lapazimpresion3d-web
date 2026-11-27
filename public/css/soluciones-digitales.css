@@ -123,7 +123,7 @@
 @media(max-width:1000px){#paginas-web .ejemplos-dobles{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:700px){#paginas-web .plan-integrado{grid-template-columns:minmax(0,1fr);gap:16px}#paginas-web .plan-demostraciones{border-inline-start:0;border-top:1px solid var(--borde);padding-inline-start:0;padding-top:16px}}
 
-#paginas-web .plan-cotizar{margin-top:18px}#paginas-web .plan-cotizar .accion{width:100%;text-align:center;justify-content:center;white-space:normal}
+#paginas-web .plan-demostraciones > .plan-cotizar{margin-top:14px;width:100%}#paginas-web .plan-cotizar .accion{width:100%;min-height:48px;text-align:center;justify-content:center;white-space:normal;overflow-wrap:anywhere}
 
 /* Selector protagonista: misma identidad marino/amarillo, controles claros y amplios. */
 #paginas-web .acceso-selector-demo{align-items:center;margin:14px 0 22px}
@@ -150,14 +150,14 @@
 @media(max-width:700px){#paginas-web .destacar-selector .demo-selectores,#paginas-web .acciones-selector-demo{grid-template-columns:minmax(0,1fr)}#paginas-web .selector-cabecera{padding:22px 18px}#paginas-web .selector-contenido{padding:18px}}
 
 /* Ventajas del modelo mensual, sin cambiar las fichas ni el selector. */
-.ventajas-suscripcion{margin:20px 0 24px;padding:clamp(18px,3vw,26px);background:#f1f5fc;border:1px solid #c6d4ee;border-inline-start:5px solid var(--amarillo);border-radius:14px;color:var(--texto)}
+.ventajas-suscripcion{margin:20px 0 24px;padding:clamp(16px,3vw,26px);background:#f1f5fc;border:1px solid #c6d4ee;border-inline-start:5px solid var(--amarillo);border-radius:14px;color:#16203a;min-width:0;max-width:100%;height:auto;overflow-wrap:anywhere;color-scheme:light}
 .ventajas-suscripcion h2,.ventajas-suscripcion h3{margin:0 0 8px;color:var(--marino);font-size:clamp(1.25rem,3vw,1.65rem);line-height:1.25}
-.ventajas-suscripcion p{margin:0;line-height:1.6}
+.ventajas-suscripcion > p{display:block;margin:0;color:#16203a;font-size:1rem;line-height:1.6;white-space:normal;max-width:100%;height:auto}
 .ventajas-suscripcion-lista{list-style:none;padding:0;margin:18px 0 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.ventajas-suscripcion-lista li{min-width:0;padding:12px;border-radius:10px;background:var(--tarjeta);border:1px solid var(--borde);display:grid;align-content:start;gap:6px}
+.ventajas-suscripcion-lista li{min-width:0;padding:12px;border-radius:10px;background:#fff;border:1px solid #d9dde6;display:grid;align-content:start;gap:6px}
 .ventajas-suscripcion-lista strong{color:var(--marino);line-height:1.4}
-.ventajas-suscripcion-lista span{font-size:.9rem;color:var(--suave);line-height:1.5}
-@media(max-width:700px){.ventajas-suscripcion-lista{grid-template-columns:minmax(0,1fr)}}
+.ventajas-suscripcion-lista span{display:block;font-size:.95rem;color:#46536d;line-height:1.5;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:700px){.ventajas-suscripcion{padding:16px}.ventajas-suscripcion-lista{grid-template-columns:minmax(0,1fr);gap:10px}.ventajas-suscripcion-lista li{padding:12px}}
 
 /* Orientación comercial: independiente del cuestionario general y del selector de demos. */
 #paginas-web .asistente-paquetes{scroll-margin-top:24px;margin:26px 0;padding:clamp(18px,3.5vw,28px);border:1px solid #c6d4ee;border-inline-start:5px solid var(--amarillo);background:#f6f9ff}

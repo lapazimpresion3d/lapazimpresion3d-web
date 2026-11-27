@@ -25,3 +25,6 @@ Cada ficha tiene «Me interesa este paquete», con precarga por slug del paquete
 
 ## Selector destacado
 El bloque Explora una demo para tu negocio conserva su ubicación tras las cuatro fichas y recibe un acceso directo desde el comienzo de Servicios Web. Cabecera marino/amarillo, tres pasos numerados, controles grandes, resumen de giro/paquete actualizado en tiempo real, tres acciones y aviso de práctica. Una columna en móvil. No modifica el mapa de URLs, precios, estados de verificación ni el configurador de cotización.
+
+## Legibilidad en móvil y orden de cotización
+El aviso Sin plazos forzosos mantiene fondo claro y colores de texto explícitos de alto contraste incluso con el modo oscuro del sistema. Las ventajas se apilan en una columna en pantallas pequeñas. El botón Me interesa este paquete se coloca después de las demostraciones dentro de cada ficha (en P3, después de ambos negocios), conservando el destino y la precarga. El selector interactivo conserva su orden y los tres enlaces. No cambia precios, lógica o datos.
