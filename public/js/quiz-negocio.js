@@ -150,16 +150,21 @@
   }
 
   // La sexta pregunta depende de la necesidad detectada por las cinco primeras.
-  const inversionesWeb = Object.freeze({"quiz_web_p1":"Presencia digital — implementación desde $750 MXN · $149 MXN al mes + IVA","quiz_web_p2":"Negocio interactivo — implementación desde $1,500 MXN · $249 MXN al mes + IVA","quiz_web_p3":"Gestión comercial — implementación desde $2,500 MXN · $349 MXN al mes + IVA","quiz_web_p4":"Gestión profesional — implementación desde $3,500 MXN · $499 MXN al mes + IVA","quiz_web_medida":"Necesito una solución a medida; quiero conocer los costos"});
+  const inversionesWeb = Object.freeze({"quiz_web_p1":"Presencia digital — implementación desde $750 MXN · $149 MXN al mes + IVA","quiz_web_p2":"Negocio interactivo — implementación desde $1,500 MXN · $249 MXN al mes + IVA","quiz_web_p3":"Gestión comercial — implementación desde $2,500 MXN · $349 MXN al mes + IVA","quiz_web_p4":"Gestión profesional — implementación desde $3,500 MXN · $499 MXN al mes + IVA","quiz_web_medida":"Necesito una solución digital a medida; quiero conocer los costos","quiz_web_combinado":"Proyecto combinado: cotizar fabricación 3D y servicio digital por separado"});
   function preguntaActual(pregunta, r) {
     if (pregunta.campo !== "presupuesto") return pregunta;
-    const id = obtenerRecomendacion(r).id;
-    if (!["R3","R4","R5"].includes(id)) return pregunta;
     const planes = globalThis.LP_ORIENTACION_WEB?.planes;
     const claves = ["presencia-digital","negocio-interactivo","gestion-comercial","gestion-profesional"];
-    const opciones = claves.map((clave,i)=>{const codigo="quiz_web_p"+(i+1),plan=planes?.[clave];return [codigo,plan?plan.nombre+" — "+plan.precio:inversionesWeb[codigo]];});
-    opciones.push(["quiz_web_medida",inversionesWeb.quiz_web_medida],["prefiero_no_indicar","Prefiero no indicarlo"],["sin_definir","Aún no lo sé; necesito orientación"]);
-    return {campo:"presupuesto",texto:"¿Qué inversión inicial y mensualidad se ajustan a tu proyecto digital?",opciones,ayuda:"Precios de lanzamiento en MXN + IVA, sin plazos forzosos. Es una referencia de inversión, no una contratación."+ (id==="R5"?" Los componentes físicos se cotizan por separado.":"")};
+    const digitales = claves.map((clave,i)=>{const codigo="quiz_web_p"+(i+1),plan=planes?.[clave];return [codigo,plan?plan.nombre+" — "+plan.precio:inversionesWeb[codigo]];});
+    digitales.push(["quiz_web_medida",inversionesWeb.quiz_web_medida]);
+    const generales = [["quiz_web_combinado",inversionesWeb.quiz_web_combinado],["prefiero_no_indicar","Prefiero no indicarlo"],["sin_definir","Aún no lo sé; necesito orientación"]];
+    const fisicas=pregunta.opciones.filter(([id])=>!["prefiero_no_indicar","sin_definir"].includes(id));
+    const grupos=[
+      {titulo:"Impresión 3D y productos físicos · pago único",ayuda:"Llaveros, soportes QR/NFC, figuras, prototipos y otras piezas. Sin mensualidad por la fabricación.",opciones:fisicas},
+      {titulo:"Páginas web y sistemas digitales · implementación + mensualidad",ayuda:"Tarifas de lanzamiento en MXN + IVA. Sin plazos forzosos de permanencia.",opciones:digitales},
+      {titulo:"Otras opciones",ayuda:"Si necesitas ambos servicios o todavía no has decidido.",opciones:generales}
+    ];
+    return {campo:"presupuesto",texto:"¿Qué presupuesto o inversión tienes pensado para tu proyecto?",opciones:grupos.flatMap(g=>g.opciones),grupos,ayuda:"Elige la opción correspondiente al servicio que necesitas. Los importes son referencias, no una contratación."};
   }
   // Esquema 5.0: conserva el campo presupuesto y los diagnósticos anteriores.
   const VERSION_FICHA_QUIZ = "5.0";
@@ -256,21 +261,15 @@
   }
   // El presupuesto orienta la viabilidad, pero no cambia arbitrariamente la necesidad detectada.
   function advertenciaPresupuesto(id, presupuesto) {
-    if (["R3","R4","R5"].includes(id) && Object.hasOwn(inversionesWeb,presupuesto)) {
+    const digital=["R3","R4","R5"].includes(id);
+    if (presupuesto==="quiz_web_combinado") return "La fabricación física se cotiza como pago único; el servicio digital se cotiza por separado con implementación y mensualidad cuando corresponda.";
+    if (Object.hasOwn(inversionesWeb,presupuesto)) {
+      if (!digital) return "La inversión que elegiste corresponde a un servicio digital. La recomendación detectó una necesidad física, cuya fabricación se cotiza por separado y sin mensualidad.";
       if (id==="R4" && presupuesto==="quiz_web_p1") return "Presencia digital es un punto de partida informativo. Las funciones de pedidos, citas o gestión requieren revisar un paquete superior o una implementación por etapas.";
       if (id==="R5") return "La tarifa seleccionada corresponde al componente digital. La fabricación 3D y otros complementos se cotizan por separado.";
       return null;
     }
-    const bajo = ["menos_500", "500_1500"].includes(presupuesto);
-    const medioBajo = presupuesto === "1500_3500";
-    if (id === "R4" && (bajo || medioBajo)) {
-      return bajo
-        ? "El presupuesto seleccionado es muy limitado para desarrollar un sistema web personalizado completo. La recomendación identifica lo que necesitas, no lo que puede construirse por esa cantidad. Podemos revisar contigo una primera etapa o una alternativa más sencilla, con precio sujeto a cotización."
-        : "Un sistema web personalizado puede superar el presupuesto seleccionado. Conviene definir primero las funciones indispensables y cotizar una implementación por etapas.";
-    }
-    if ((id === "R3" || id === "R5") && bajo) {
-      return "El presupuesto seleccionado puede ser insuficiente para desarrollar esta solución completa. Podemos revisar una versión inicial más sencilla o dividir el proyecto en etapas; el alcance y precio se confirman mediante cotización.";
-    }
+    if(digital && preguntas[5].opciones.some(([k])=>k===presupuesto) && !["sin_definir","prefiero_no_indicar"].includes(presupuesto)) return "Elegiste un presupuesto de pago único para un proyecto físico. Si también necesitas una página web, podemos revisar su implementación y mensualidad por separado.";
     return null;
   }
   function mostrarResumen() {
@@ -464,7 +463,8 @@
     opciones.className = "quiz-opciones";
     opciones.setAttribute("role", "group");
     opciones.setAttribute("aria-labelledby", titulo.id);
-    pregunta.opciones.forEach(([id, etiqueta]) => {
+    function agregarOpciones(lista, contenedor) {
+    lista.forEach(([id, etiqueta]) => {
       const boton = document.createElement("button");
       boton.type = "button";
       boton.className = "quiz-opcion";
@@ -476,8 +476,20 @@
         paso += 1;
         mostrarPaso();
       });
-      opciones.append(boton);
+      contenedor.append(boton);
     });
+    }
+    if (pregunta.grupos) {
+      opciones.className="quiz-grupos-presupuesto";
+      pregunta.grupos.forEach((g,i)=>{
+        const grupo=document.createElement("section");grupo.className="quiz-grupo-presupuesto";
+        const encabezado=document.createElement("h4");encabezado.id="quiz-presupuesto-grupo-"+i;encabezado.textContent=g.titulo;
+        grupo.setAttribute("aria-labelledby",encabezado.id);
+        const ayuda=document.createElement("p");ayuda.textContent=g.ayuda;
+        const botones=document.createElement("div");botones.className="quiz-opciones";agregarOpciones(g.opciones,botones);
+        grupo.append(encabezado,ayuda,botones);opciones.append(grupo);
+      });
+    } else agregarOpciones(pregunta.opciones,opciones);
     contenido.append(titulo);
     if (pregunta.ayuda) {const ayuda=document.createElement("p");ayuda.className="quiz-resultado-nota";ayuda.textContent=pregunta.ayuda;contenido.append(ayuda);}
     contenido.append(opciones);

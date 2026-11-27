@@ -454,3 +454,9 @@ footer { text-align: center; margin: 42px 16px 24px; color: var(--suave); font-s
 .quiz-estado-solicitud{font-weight:650}
 .quiz-confirmacion{display:grid;gap:12px;border-left:4px solid var(--amarillo);padding:18px;background:rgb(255 255 255 / 10%);max-width:550px}
 .quiz-formulario-contacto button:disabled{opacity:.6;cursor:wait}
+
+/* Presupuesto del cuestionario: elección explícita por tipo de servicio. */
+.quiz-grupos-presupuesto{display:grid;gap:18px}
+.quiz-grupo-presupuesto{min-width:0;border:1px solid rgb(255 255 255 / 30%);border-radius:14px;padding:clamp(12px,2.4vw,20px)}
+.quiz-grupo-presupuesto h4{color:var(--amarillo);font-size:1.08rem;line-height:1.4;margin:0 0 6px}
+.quiz-grupo-presupuesto p{color:#e0e8f7;margin:0 0 14px;font-size:.9rem;line-height:1.5}

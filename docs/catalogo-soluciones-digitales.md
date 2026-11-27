@@ -52,3 +52,6 @@ Guía comercial local independiente del cuestionario general. El giro y las nece
 
 ## Pregunta 6 del cuestionario general
 La recomendación R3/R4/R5 según las cinco primeras respuestas muestra inversión inicial y mensualidad de los cuatro paquetes (catálogo compartido), proyecto a medida u orientación. R1/R2/R6/R7 conservan rangos de pago único para fabricación física. Los componentes físicos de R5 se cotizan aparte. La inversión orienta, no cambia la recomendación ni obliga a contratar. Se conserva esquema 5.0, claves anteriores y campo presupuesto; las nuevas claves quiz_web_* se aceptan solo en diagnósticos digitales. Se actualizan resumen, correo, panel y CSV; no se modifica D1 ni los formularios directos.
+
+## Elección libre del presupuesto del cuestionario
+Sustituye la selección automática del tipo de inversión en pregunta 6. Todos los visitantes ven tres grupos: impresión 3D y productos físicos (pago único sin mensualidad), servicios digitales (implementación y mensualidad), y opciones combinadas/orientación. Las necesidades detectadas no restringen las opciones ni cambian por el importe elegido. Se conserva el esquema 5.0 y los valores anteriores; las claves de inversión digital o combinada se admiten exclusivamente en el quiz. Panel, correo y CSV conservan las etiquetas. No se cambia D1 ni los formularios directos.
