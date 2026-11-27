@@ -21,6 +21,6 @@ for(const card of document.querySelectorAll('#paginas-web [data-plan]')){
 }
 enlace($('demo-galeria'),c.general('galeria'),accesoPractica||c.generalesVerificadas.galeria);
 enlace($('demo-comparador'),c.general('comparador'),accesoPractica||c.generalesVerificadas.comparador);
-function actualizar(){const n=giro.value,p=paquete.value,activa=accesoPractica||c.verificada(n,p);enlace($('demo-seleccionada'),c.url(n,p),activa);enlace($('demo-panel'),c.url(n,p,'panel'),activa);$('demo-resultado').textContent=estado(n,p);}
+function actualizar(){const n=giro.value,p=paquete.value,activa=accesoPractica||c.verificada(n,p);const cot=$('demo-cotizar'),destino=c.cotizacion(p,n);cot.hidden=!destino;if(destino)cot.href=destino;else cot.removeAttribute('href');enlace($('demo-seleccionada'),c.url(n,p),activa);enlace($('demo-panel'),c.url(n,p,'panel'),activa);$('demo-resultado').textContent=estado(n,p);}
 giro.addEventListener('change',actualizar);paquete.addEventListener('change',actualizar);window.addEventListener('pageshow',actualizar);actualizar();
 })();

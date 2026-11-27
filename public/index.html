@@ -10,9 +10,9 @@
   <link rel="stylesheet" href="css/inicio.css">
   <script src="js/navegacion.js" defer></script>
   <script src="js/quiz-negocio.js" defer></script>
-  <link rel="stylesheet" href="css/soluciones-digitales.css?v=4">
-  <script src="js/demos-config.js?v=2" defer></script>
-  <script src="js/soluciones-digitales.js?v=3" defer></script>
+  <link rel="stylesheet" href="css/soluciones-digitales.css?v=5">
+  <script src="js/demos-config.js?v=3" defer></script>
+  <script src="js/soluciones-digitales.js?v=4" defer></script>
 </head>
 <body>
   <header class="cabecera cabecera-fotografica cabecera-inicio">
@@ -150,6 +150,7 @@
           <p class="nota">MXN + IVA</p>
           <p class="plan-subtitulo">Características del paquete</p>
           <ul><li>Página comercial, contacto y horarios</li><li>Menú o catálogo digital básico</li><li>Acceso desde QR/NFC y WhatsApp</li></ul>
+          <div class="acciones plan-cotizar"><a class="accion" href="cotizacion-web.html?paquete=presencia-digital#precios-paquetes">Me interesa este paquete</a></div>
           </div>
           <div class="plan-demostraciones">
             <h4>Demostración del paquete</h4>
@@ -163,6 +164,7 @@
           <p class="nota">MXN + IVA</p>
           <p class="plan-subtitulo">Características del paquete</p>
           <ul><li>Pedidos y seguimiento según el giro</li><li>Citas o reservaciones</li><li>Panel de gestión y cocina básica cuando aplique</li></ul>
+          <div class="acciones plan-cotizar"><a class="accion" href="cotizacion-web.html?paquete=negocio-interactivo#precios-paquetes">Me interesa este paquete</a></div>
           </div>
           <div class="plan-demostraciones">
             <h4>Demostración del paquete</h4>
@@ -175,7 +177,8 @@
           <dl class="plan-precios"><div><dt>Implementación</dt><dd>Desde $2,500</dd></div><div><dt>Mensualidad</dt><dd>$349</dd></div></dl>
           <p class="nota">MXN + IVA</p>
           <p class="plan-subtitulo">Características del paquete</p>
-          <ul><li>Pedidos, comandas o atención de servicios</li><li>Registro de cobros de práctica</li><li>En desarrollo: POS, caja, inventario y reportes</li></ul>
+          <ul><li>Pedidos, comandas o atención de servicios</li><li>Registro de cobros de práctica</li><li>POS, caja, tickets e inventario: demostraciones de práctica; disponibilidad comercial por confirmar</li></ul>
+          <div class="acciones plan-cotizar"><a class="accion" href="cotizacion-web.html?paquete=gestion-comercial#precios-paquetes">Me interesa este paquete</a></div>
           </div>
           <div class="plan-demostraciones">
             <h4>Demostraciones del paquete</h4>
@@ -189,7 +192,8 @@
           <dl class="plan-precios"><div><dt>Implementación</dt><dd>Desde $3,500</dd></div><div><dt>Mensualidad</dt><dd>$499</dd></div></dl>
           <p class="nota">MXN + IVA</p>
           <p class="plan-subtitulo">Características del paquete</p>
-          <ul><li>Ejemplo avanzado de pedidos y cuentas por mesa</li><li>En desarrollo: inventario avanzado, costos y proveedores</li><li>En desarrollo: fidelización, automatizaciones y reportes</li></ul>
+          <ul><li>Ejemplo avanzado de pedidos y cuentas por mesa</li><li>Inventario, almacenes y compras de práctica; costos e inventario avanzado en desarrollo</li><li>En desarrollo: fidelización, automatizaciones y reportes</li></ul>
+          <div class="acciones plan-cotizar"><a class="accion" href="cotizacion-web.html?paquete=gestion-profesional#precios-paquetes">Me interesa este paquete</a></div>
           </div>
           <div class="plan-demostraciones">
             <h4>Demostración del paquete</h4>
@@ -199,7 +203,7 @@
       </div>
       <p class="nota"><a href="cotizacion-web.html#precios-paquetes">Ver detalles y condiciones de los paquetes</a>.</p>
       <div class="acciones demos-generales"><a class="accion" id="demo-galeria" hidden>Explorar todas las demostraciones</a><a class="accion secundaria" id="demo-comparador" hidden>Comparar negocios y paquetes</a></div>
-      <div class="caja explorar-demos" id="selector-demos"><h3>Explora una demo para tu negocio</h3><p>Selecciona un giro y paquete para conocer sus dos vistas.</p><div class="demo-selectores"><label for="demo-giro">Giro comercial<select id="demo-giro"><option value="cafe-mirador">Cafetería · Café Mirador</option><option value="barberia-elite">Barberías y estéticas · Barbería Elite</option><option value="mundo-mascotas">Tiendas y comercios · Mundo Mascotas</option><option value="auto-servicio-bahia">Talleres y servicios · Auto Servicio Bahía</option><option value="taqueria-el-comal">Restaurantes y taquerías · Taquería El Comal</option></select></label><label for="demo-paquete">Paquete<select id="demo-paquete"><option value="p1">P1 — Presencia digital</option><option value="p2">P2 — Negocio interactivo</option><option value="p3">P3 — Gestión comercial</option><option value="p4">P4 — Gestión profesional</option></select></label></div><p id="demo-resultado" role="status" aria-live="polite">Demostraciones de práctica en desarrollo.</p><div class="acciones"><a id="demo-seleccionada" class="accion" hidden>Ver demostración</a><a id="demo-panel" class="accion secundaria" hidden>Probar panel administrativo</a></div></div>
+      <div class="caja explorar-demos" id="selector-demos"><h3>Explora una demo para tu negocio</h3><p>Selecciona un giro y paquete para conocer sus dos vistas.</p><div class="demo-selectores"><label for="demo-giro">Giro comercial<select id="demo-giro"><option value="cafe-mirador">Cafetería · Café Mirador</option><option value="barberia-elite">Barberías y estéticas · Barbería Elite</option><option value="mundo-mascotas">Tiendas y comercios · Mundo Mascotas</option><option value="auto-servicio-bahia">Talleres y servicios · Auto Servicio Bahía</option><option value="taqueria-el-comal">Restaurantes y taquerías · Taquería El Comal</option></select></label><label for="demo-paquete">Paquete<select id="demo-paquete"><option value="p1">P1 — Presencia digital</option><option value="p2">P2 — Negocio interactivo</option><option value="p3">P3 — Gestión comercial</option><option value="p4">P4 — Gestión profesional</option></select></label></div><p id="demo-resultado" role="status" aria-live="polite">Demostraciones de práctica en desarrollo.</p><div class="acciones"><a id="demo-seleccionada" class="accion" hidden>Ver demostración</a><a id="demo-panel" class="accion secundaria" hidden>Probar panel administrativo</a><a id="demo-cotizar" class="accion secundaria" hidden>Me interesa este paquete</a></div></div>
 <div class="caja cierre-cotizacion-web">
         <h3>¿Qué solución necesita tu negocio?</h3>
         <p>Cuéntanos qué necesitas y prepararemos una propuesta adaptada a tu negocio.</p>

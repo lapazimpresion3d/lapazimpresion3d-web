@@ -122,3 +122,5 @@
 #paginas-web .demos-generales{justify-content:center;margin:16px 0}
 @media(max-width:1000px){#paginas-web .ejemplos-dobles{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:700px){#paginas-web .plan-integrado{grid-template-columns:minmax(0,1fr);gap:16px}#paginas-web .plan-demostraciones{border-inline-start:0;border-top:1px solid var(--borde);padding-inline-start:0;padding-top:16px}}
+
+#paginas-web .plan-cotizar{margin-top:18px}#paginas-web .plan-cotizar .accion{width:100%;text-align:center;justify-content:center;white-space:normal}

@@ -19,3 +19,6 @@ Se reúnen los precios, características y demostraciones en cuatro fichas comer
 
 ## Redacción comercial
 Presentar los ejemplos como demostraciones interactivas, no como negocios ficticios. Explicar que se pueden probar las funciones disponibles sin generar pedidos, citas, mensajes ni cobros reales; usar datos de ejemplo. La redacción no cambia la disponibilidad comercial ni la lógica de práctica.
+
+## Captación desde paquetes y demos
+Cada ficha tiene «Me interesa este paquete», con precarga por slug del paquete. El selector añade únicamente un giro permitido, editable en cotización. No se copian nombres de establecimientos de demostración ni datos de práctica; no se envía una solicitud sin revisión y confirmación. POS, caja, inventario, almacenes y compras se describen como ejemplos de práctica, no contratación validada. No modificar contratos ni estados de verificación.

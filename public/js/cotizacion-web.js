@@ -295,7 +295,7 @@ const parametrosCatalogo = new URLSearchParams(location.search);
 const paqueteCatalogo = parametrosCatalogo.get('paquete');
 const radioInicial = radiosPaquete.find(r => r.value === paqueteCatalogo);
 seleccionarPaquete(radioInicial?.value || radiosPaquete.find(r=>r.checked)?.value || 'a-medida');
-const girosCatalogo = new Map([["restaurante","Restaurante / taquería"],["cafeteria","Cafetería"],["barberia","Barbería / estética"],["mascotas","Tienda de mascotas"],["comercio","Comercio / tienda"],["servicios","Servicios profesionales"],["turismo","Turismo y actividades"],["otro","Otro giro"]]);
+const girosCatalogo = new Map([["restaurante","Restaurante / taquería"],["cafeteria","Cafetería"],["barberia","Barbería / estética"],["mascotas","Tienda de mascotas"],["comercio","Comercio / tienda"],["servicios","Servicios profesionales"],["taller","Taller / servicios automotrices"],["turismo","Turismo y actividades"],["otro","Otro giro"]]);
 const giroCatalogo = parametrosCatalogo.get('giro');
 if (!formularioWeb.elements.giro.value && girosCatalogo.has(giroCatalogo)) formularioWeb.elements.giro.value = girosCatalogo.get(giroCatalogo);
 actualizarDominio();
