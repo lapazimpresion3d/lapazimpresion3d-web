@@ -35,13 +35,15 @@ main > #llaveros.servicio-colapsable{margin-top:clamp(24px,4vw,44px)}
 @media print{.servicio-resumen{cursor:default}.servicio-indicador{display:none}}
 
 /* Jerarquía comercial de inicio: el amarillo sólido se reserva para cotizar. */
-.inicio-catalogo{--naranja-accion:#f28c32;--naranja-hover:#ffa64f;--dorado-panel:#f8ac39;--dorado-panel-hover:#ffc06a}
+.inicio-catalogo{--rojo-demo:#ce382b;--rojo-demo-hover:#b92f24;--naranja-accion:#f28c32;--naranja-hover:#ffa64f}
 .inicio-catalogo .accion:not(.secundaria){background:var(--marino);color:#fff;border-color:transparent}
 .inicio-catalogo .accion:not(.secundaria):hover{background:#244372}
 .inicio-catalogo .accion.accion-cotizar{background:var(--amarillo);color:var(--texto-acento);border-color:transparent}
 .inicio-catalogo .accion.accion-cotizar:hover{background:var(--amarillo-hover)}
-.inicio-catalogo .accion.accion-demo,.inicio-catalogo .quiz-negocio-boton{background:var(--naranja-accion);color:#16203a;border-color:transparent}
-.inicio-catalogo .accion.accion-demo:hover,.inicio-catalogo .quiz-negocio-boton:hover{background:var(--naranja-hover)}
+.inicio-catalogo .accion.accion-demo{background:var(--rojo-demo);color:#fff;border-color:transparent}
+.inicio-catalogo .quiz-negocio-boton{background:var(--naranja-accion);color:#16203a;border-color:transparent}
+.inicio-catalogo .accion.accion-demo:hover{background:var(--rojo-demo-hover)}
+.inicio-catalogo .quiz-negocio-boton:hover{background:var(--naranja-hover)}
 .inicio-catalogo .accion.accion-contacto{background:#087f5b;color:#fff;border-color:transparent}
 .inicio-catalogo .accion.accion-contacto:hover{background:#096b4e}
 .inicio-catalogo .servicio-indicador{background:#edf2fc;color:#0f2347}
@@ -73,8 +75,8 @@ html:has(.whatsapp-flotante){scroll-padding-bottom:calc(84px + env(safe-area-ins
 @media(max-width:700px){.comparativa-publica table{font-size:.76rem}.comparativa-publica th,.comparativa-publica td{padding:8px 3px}.comparativa-publica th:first-child{width:36%}}
 
 /* Secuencia cromática de acciones: explorar → probar → cotizar. */
-.inicio-catalogo .accion.accion-panel{background:var(--dorado-panel);color:#16203a;border-color:transparent}
-.inicio-catalogo .accion.accion-panel:hover{background:var(--dorado-panel-hover)}
+.inicio-catalogo .accion.accion-panel{background:var(--naranja-accion);color:#16203a;border-color:transparent}
+.inicio-catalogo .accion.accion-panel:hover{background:var(--naranja-hover)}
 .inicio-catalogo .accion.accion-demo,.inicio-catalogo .accion.accion-panel,.inicio-catalogo .accion.accion-cotizar{font-weight:750}
 .inicio-catalogo .accion.accion-demo:focus-visible,.inicio-catalogo .accion.accion-panel:focus-visible,.inicio-catalogo .accion.accion-cotizar:focus-visible{outline:3px solid var(--azul);outline-offset:3px}
 /* Las cotizaciones tienen exactamente el mismo fondo en todos los servicios. */
