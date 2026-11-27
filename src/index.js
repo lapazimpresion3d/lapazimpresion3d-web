@@ -196,7 +196,7 @@ function solicitudWebValida(d) {
    typeof d.telefono==='string' && /^\d{10}$/.test(d.telefono) &&
    (d.paquete == null || d.paquete === '' || WEB_PAQUETES.has(d.paquete)) &&
    (d.tipo_pagina == null || d.tipo_pagina === "" || WEB_TIPOS.has(d.tipo_pagina)) && listaWeb(d.funciones,WEB_FUNCIONES) &&
-   listaWeb(d.complementos,WEB_COMPLEMENTOS) && textoWeb(d.detalles,5,500) && presupuestoValido(d.presupuesto??"") &&
+   listaWeb(d.complementos,WEB_COMPLEMENTOS) && textoWeb(d.detalles,5,500) && presupuestoWebValido(d.presupuesto??"") &&
    dominioWebValido(d) && d.acepta_privacidad===true;
 }
 
@@ -212,6 +212,9 @@ const TIPOS_TRABAJO_ACADEMICO=new Set(["proyecto_escolar","prototipo","maqueta",
 // Mantener rangos anteriores para solicitudes/formularios ya abiertos en el navegador.
 const PRESUPUESTOS = new Set(["menos_500","500_1500","1500_3500","3500_8000","8000_15000","mas_15000","prefiero_no_indicar","sin_definir","1500_3000","3000_6000","mas_6000",""]);
 function presupuestoValido(v) {return typeof v==="string"&&PRESUPUESTOS.has(v);}
+// Preferencias web separadas: no ampliar valores permitidos en impresión o cuestionario.
+const PREFERENCIAS_WEB = Object.freeze({"web_precios_publicados":"Los precios publicados se ajustan a mi presupuesto","web_ajustar_alcance":"Quiero ajustar el alcance a mi presupuesto","web_presupuesto_propio":"Tengo otro presupuesto (lo indicaré en los detalles)"});
+function presupuestoWebValido(v) {return presupuestoValido(v)||(typeof v==="string"&&Object.hasOwn(PREFERENCIAS_WEB,v));}
 function solicitudFisicaValida(d){
  if(!d||typeof d!=="object"||Array.isArray(d)||!Object.hasOwn(TIPOS_FISICOS,d.servicio)||!textoWeb(d.nombre,2,100)||!/^\d{10}$/.test(d.telefono||"")||!textoWeb(d.detalles,5,1200)||d.acepta_privacidad!==true||!presupuestoValido(d.presupuesto))return false;
  if(!["","negocio","evento","personal","academico"].includes(d.contexto||""))return false;
@@ -245,7 +248,8 @@ function resumenCorreo(info) {
   agregar("Cliente",info.nombre);
   agregar("WhatsApp",info.telefono);
   agregar("Negocio o proyecto",info.proyecto);
-  agregar("Presupuesto",info.presupuesto);
+  if(typeof info.presupuesto==="string"&&Object.hasOwn(PREFERENCIAS_WEB,info.presupuesto)) agregar("Preferencia de inversión",PREFERENCIAS_WEB[info.presupuesto]);
+  else agregar("Presupuesto",info.presupuesto);
   agregar("Tipo de solicitud",info.contexto);
   if(info.paquete) agregar("Paquete de interés",info.paquete);
   if(info.tipo_pagina) agregar("Tipo de página",info.tipo_pagina);

@@ -1,0 +1,5 @@
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+test('preferencias web y compatibilidad histórica, sin extender presupuesto físico',()=>{
+const s=fs.readFileSync('src/index.js','utf8');const parte=s.slice(s.indexOf('const PRESUPUESTOS ='),s.indexOf('function solicitudFisicaValida'));const v=new Function(parte+'return {presupuestoValido,presupuestoWebValido,PREFERENCIAS_WEB};')();
+const h=fs.readFileSync('public/cotizacion-web.html','utf8');const inicio=h.indexOf('<select name="presupuesto"');assert.ok(inicio>=0);const opciones=h.slice(inicio,h.indexOf('</select>',inicio));
+for(const m of opciones.matchAll(/<option value="([^"]*)">/g))assert.ok(v.presupuestoWebValido(m[1]));for(const k of Object.keys(v.PREFERENCIAS_WEB)){assert.ok(opciones.includes('value="'+k+'"'));assert.ok(v.presupuestoWebValido(k));assert.equal(v.presupuestoValido(k),false);}for(const k of ['menos_500','1500_3500','sin_definir',''])assert.ok(v.presupuestoWebValido(k)&&v.presupuestoValido(k));assert.equal(v.presupuestoWebValido('__proto__'),false);assert.equal(v.presupuestoWebValido('otro'),false);assert.ok(!opciones.includes('menos_500'));});

@@ -37,3 +37,6 @@ Se mantienen los importes de implementación desde $750, $1,500, $2,500 y $3,500
 
 ## Escaparate multicomercio 38.3
 Se conserva la tarifa de lanzamiento aprobada en 097988b (149/249/349/499). El documento de integración y el comparador del proyecto de demos muestran tarifas anteriores: armonizar antes de publicar. Ver docs/escaparate-demos.md.
+
+## Preferencia de inversión en cotización web
+Se sustituyen los rangos de presupuesto por una preferencia opcional sobre las tarifas publicadas, ajuste de alcance, presupuesto propio indicado en detalles u orientación. La implementación y mensualidad ya constan en el paquete. Se conserva el campo `presupuesto` y los rangos históricos en API, JSON, panel y CSV; las tres claves `web_` solo se aceptan en el formulario web. No se alteran las cotizaciones físicas, el cuestionario, los precios ni las bases de datos.

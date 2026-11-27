@@ -241,7 +241,7 @@ formularioWeb.addEventListener('submit', (evento) => {
     `Funciones: ${datosPendientes.funciones.join('; ') || 'Ninguna'}`,
     ...(datosPendientes.paquete ? [`Funciones adicionales bajo revisión: ${datosPendientes.funciones.filter(x => !incluidas.has(x)).join('; ') || 'Ninguna'}`] : []),
     `Complementos: ${datosPendientes.complementos.join('; ') || 'Ninguno'}`,
-    `Presupuesto: ${datosPendientes.presupuesto || "No indicado"}`,
+    `Preferencia de inversión: ${formularioWeb.elements.presupuesto.selectedOptions[0]?.value ? formularioWeb.elements.presupuesto.selectedOptions[0].textContent.trim() : "No indicada"}`,
     `Modalidad de dirección: ${({subdominio:"Subdominio incluido",necesito_dominio:"Dominio .com nuevo",tengo_dominio:"Dominio existente",orientacion:"Necesita orientación"})[datosPendientes.situacion_dominio] || datosPendientes.situacion_dominio}`,
     `Dirección actual: ${datosPendientes.dominio_actual || 'No indicada'}`,
     `Descripción: ${datosPendientes.detalles}`
