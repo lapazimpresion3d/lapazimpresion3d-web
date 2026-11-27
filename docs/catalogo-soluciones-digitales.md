@@ -19,3 +19,6 @@ Los precios son referencias en MXN + IVA, no oferta de contratación. Publicaci�
 
 ## Fichas y cotización adaptada
 Las tarjetas enlazan a `public/paquetes-web.html`. La cotización muestra un resumen del paquete y propone funciones por tipo de sitio. El usuario puede modificarlas y agregar otras bajo cotización. Los precios y alcances son orientativos y los módulos no disponibles siguen sujetos a revisión. Los complementos, datos, privacidad, dominio, folio y panel administrativo conservan su flujo. El formulario de proyecto a medida mantiene todas las opciones compatibles. Los giros del selector precargan un tipo sugerido sin bloquear su cambio.
+
+## Presentación simplificada
+Las tarjetas no repiten el botón de consulta ni el estado de la demo. Hay un único enlace textual al detalle de paquetes y un único botón general de cotización. El selector sirve exclusivamente para explorar demostraciones y permanece oculto si no existen combinaciones verificadas. Al registrar demos, aparecen sus botones y solo los giros/paquetes con URL válida. El Comal sigue visible como ejemplo independiente. No se modifican los formularios ni el servidor.

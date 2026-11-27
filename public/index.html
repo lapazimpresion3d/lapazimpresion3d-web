@@ -138,7 +138,7 @@
     <section id="paginas-web" aria-labelledby="titulo-web">
       <h2 id="titulo-web" tabindex="-1">Soluciones digitales para tu negocio</h2>
       <p class="introduccion">Desde una página de contacto hasta herramientas para organizar tus pedidos, citas y operaciones. Compara las soluciones previstas y explora las demostraciones conforme estén disponibles.</p>
-      <p class="caja plan-aviso"><strong>Demostraciones en desarrollo.</strong> Por ahora puedes explorar Taquería El Comal. Los precios y funciones de los paquetes son referencias previstas; consulta disponibilidad o solicita un proyecto a medida.</p>
+      <p class="caja plan-aviso"><strong>Demostraciones en desarrollo.</strong> Por ahora puedes explorar Taquería El Comal. Los precios y funciones de los paquetes son referencias previstas. Las nuevas demostraciones se habilitarán cuando estén listas.</p>
       <div class="planes-digitales" aria-label="Comparación de paquetes digitales">
         <article class="caja plan-digital" data-plan="presencia-digital">
           <h3>Presencia digital</h3>
@@ -147,10 +147,8 @@
           <p class="nota">MXN + IVA · precios previstos</p>
           <p class="plan-subtitulo">Funciones previstas</p>
           <ul><li>Página comercial, contacto y horarios</li><li>Menú o catálogo digital básico</li><li>Acceso desde QR/NFC y WhatsApp</li></ul>
-          <div class="plan-acciones">
-            <p class="nota" data-demo-pendiente>Demostración en desarrollo</p>
+          <div class="plan-acciones" hidden>
             <a class="accion secundaria" data-demo hidden>Ver demo de Presencia digital</a>
-            <a class="accion" href="paquetes-web.html#presencia-digital">Consultar paquete</a>
           </div>
         </article>
         <article class="caja plan-digital" data-plan="negocio-interactivo">
@@ -160,10 +158,8 @@
           <p class="nota">MXN + IVA · precios previstos</p>
           <p class="plan-subtitulo">Funciones previstas</p>
           <ul><li>Pedidos y seguimiento según el giro</li><li>Citas o reservaciones</li><li>Panel de gestión y cocina básica cuando aplique</li></ul>
-          <div class="plan-acciones">
-            <p class="nota" data-demo-pendiente>Demostración en desarrollo</p>
+          <div class="plan-acciones" hidden>
             <a class="accion secundaria" data-demo hidden>Ver demo de Negocio interactivo</a>
-            <a class="accion" href="paquetes-web.html#negocio-interactivo">Consultar paquete</a>
           </div>
         </article>
         <article class="caja plan-digital" data-plan="gestion-comercial">
@@ -173,10 +169,8 @@
           <p class="nota">MXN + IVA · precios previstos</p>
           <p class="plan-subtitulo">Funciones previstas</p>
           <ul><li>Punto de venta, caja y registro de cobros</li><li>Mesas, comandas o atención de servicios</li><li>Inventario básico, tickets y reportes</li></ul>
-          <div class="plan-acciones">
-            <p class="nota" data-demo-pendiente>Demostración en desarrollo</p>
+          <div class="plan-acciones" hidden>
             <a class="accion secundaria" data-demo hidden>Ver demo de Gestión comercial</a>
-            <a class="accion" href="paquetes-web.html#gestion-comercial">Consultar paquete</a>
           </div>
         </article>
         <article class="caja plan-digital" data-plan="gestion-profesional">
@@ -186,17 +180,15 @@
           <p class="nota">MXN + IVA · precios previstos</p>
           <p class="plan-subtitulo">Funciones previstas</p>
           <ul><li>Inventario avanzado, costos y proveedores</li><li>Fidelización y administración avanzada</li><li>Automatizaciones y reportes avanzados</li></ul>
-          <div class="plan-acciones">
-            <p class="nota" data-demo-pendiente>Demostración en desarrollo</p>
+          <div class="plan-acciones" hidden>
             <a class="accion secundaria" data-demo hidden>Ver demo de Gestión profesional</a>
-            <a class="accion" href="paquetes-web.html#gestion-profesional">Consultar paquete</a>
           </div>
         </article>
       </div>
-      <div class="caja explorar-demos">
+      <div class="caja explorar-demos" id="selector-demos" hidden>
         <h3>Explora una demo para tu negocio</h3>
         <p>Selecciona tu giro y el paquete que quieres conocer.</p>
-        <form action="cotizacion-web.html" method="get" id="explorar-demos">
+        <div id="explorar-demos">
           <div class="demo-selectores">
             <label for="demo-giro">Giro comercial<select id="demo-giro" name="giro"><option value="restaurante">Restaurante / taquería</option>
 <option value="cafeteria">Cafetería</option>
@@ -214,12 +206,11 @@
           <p id="demo-resultado" role="status" aria-live="polite">Demostración en desarrollo.</p>
           <div class="acciones">
             <a id="demo-seleccionada" class="accion secundaria" hidden>Ver demostración</a>
-            <button class="accion" type="submit">Solicitar cotización</button>
           </div>
-        </form>
-        <noscript><p class="nota">Puedes enviar tu selección al formulario; activa JavaScript para consultar el estado de las demos.</p></noscript>
+        </div>
       </div>
-      <div class="acciones"><a class="accion secundaria" href="cotizacion-web.html">Cotiza tu página web a medida</a></div>
+      <div class="acciones"><a class="accion" href="cotizacion-web.html">Solicitar cotización web</a></div>
+      <p class="nota"><a href="paquetes-web.html">Ver detalles y alcance de los cuatro paquetes</a>.</p>
       <article class="demo">
         <img src="images/demo-el-comal.webp"
                srcset="images/demo-el-comal-480.webp 480w, images/demo-el-comal-800.webp 800w, images/demo-el-comal-1200.webp 1200w, images/demo-el-comal-1600.webp 1600w, images/demo-el-comal.webp 2172w"
