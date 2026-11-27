@@ -1,60 +1,26 @@
-(() => {
-  'use strict';
-  // Registrar únicamente URLs HTTPS de demos ya desplegadas y verificadas.
-  // Clave: paquete/giro. El Comal conserva su tarjeta independiente.
-  const demos = Object.freeze({
-    // 'presencia-digital/cafeteria': { url: URL verificada, listaParaContratar: false }
-  });
-  const selector = document.getElementById('selector-demos');
-  const giro = document.getElementById('demo-giro');
-  const paquete = document.getElementById('demo-paquete');
-  const resultado = document.getElementById('demo-resultado');
-  const enlace = document.getElementById('demo-seleccionada');
-  if (!selector || !giro || !paquete || !resultado || !enlace) return;
-  function publicada(demo) {
-    if (!demo || typeof demo.url !== 'string') return false;
-    try { return new URL(demo.url).protocol === 'https:'; } catch { return false; }
-  }
-  function configurarEnlace(a, demo) {
-    const activa = publicada(demo);
-    a.hidden = !activa;
-    if (activa) a.href = demo.url; else a.removeAttribute('href');
-    return activa;
-  }
-  const giros = Array.from(giro.options);
-  const paquetes = Array.from(paquete.options);
-  const disponible = (p,g) => publicada(demos[p + '/' + g]);
-  function actualizar() {
-    // Mostrar únicamente combinaciones que cuentan con demo.
-    for (const o of paquetes) {
-      o.disabled = !disponible(o.value, giro.value);
-      o.hidden = o.disabled;
-    }
-    if (!disponible(paquete.value, giro.value)) {
-      const primero = paquetes.find(o => !o.disabled);
-      if (primero) paquete.value = primero.value;
-    }
-    const demo = demos[paquete.value + '/' + giro.value];
-    const activa = configurarEnlace(enlace, demo);
-    resultado.textContent = activa ? 'Demostración disponible.' : 'Demostración en desarrollo.';
-  }
-  for (const card of document.querySelectorAll('#paginas-web [data-plan]')) {
-    const entradas = giros.map(o => demos[card.dataset.plan + '/' + o.value]).filter(publicada);
-    const demo = entradas.find(d => d.listaParaContratar === true) || entradas[0];
-    const activa = configurarEnlace(card.querySelector('[data-demo]'), demo);
-    card.querySelector('.plan-acciones').hidden = !activa;
-    card.querySelector('[data-estado]').textContent = !activa ? 'Demo próximamente' : demo.listaParaContratar === true ? 'Demo disponible' : 'Demo disponible · contratación en desarrollo';
-  }
-  for (const o of giros) {
-    o.disabled = !paquetes.some(p => disponible(p.value, o.value));
-    o.hidden = o.disabled;
-  }
-  const primero = giros.find(o => !o.disabled);
-  if (!primero) return; // Sin demos de paquete: ni selector ni botones vacíos.
-  if (!giros.some(o => o.value === giro.value && !o.disabled)) giro.value = primero.value;
-  actualizar();
-  selector.hidden = false;
-  giro.addEventListener('change', actualizar);
-  paquete.addEventListener('change', actualizar);
-  window.addEventListener('pageshow', actualizar);
+(()=>{
+'use strict';
+const c=globalThis.LP_DEMOS;if(!c)return;
+const revision=new URLSearchParams(location.search).get('revision-demos')==='1';
+const accesoPractica=revision||c.vistasPracticaPublicas;
+const $=id=>document.getElementById(id);
+const giro=$('demo-giro'),paquete=$('demo-paquete');if(!giro||!paquete)return;
+$('aviso-revision-demos').hidden=!revision;
+function enlace(a,url,activo){if(!a)return;a.hidden=!(url&&activo);if(a.hidden){a.removeAttribute('href');return;}a.href=url;a.target='_blank';a.rel='noopener noreferrer';}
+function estado(n,p){return c.verificada(n,p)?'Demostración de práctica verificada.':accesoPractica?'Demostración de práctica · versión en desarrollo.':'Validación pública pendiente.';}
+for(const card of document.querySelectorAll('.tarjeta-demo[data-negocio]')){
+ const n=card.dataset.negocio,p=card.dataset.paquete,activa=accesoPractica||c.verificada(n,p);
+ enlace(card.querySelector('[data-vista=cliente]'),c.url(n,p),activa);
+ enlace(card.querySelector('[data-vista=panel]'),c.url(n,p,'panel'),activa);
+ card.querySelector('[data-estado-demo]').textContent=estado(n,p);
+}
+for(const card of document.querySelectorAll('#paginas-web [data-plan]')){
+ const p=Object.keys(c.planes).find(p=>c.planes[p]===card.dataset.plan);
+ const disponible=c.negocios.some(n=>c.verificada(n,p));
+ card.querySelector('[data-estado]').textContent=disponible?'Demo de práctica disponible':accesoPractica?'Explora la demo de práctica':'Demostración pendiente de validación';
+}
+enlace($('demo-galeria'),c.general('galeria'),accesoPractica||c.generalesVerificadas.galeria);
+enlace($('demo-comparador'),c.general('comparador'),accesoPractica||c.generalesVerificadas.comparador);
+function actualizar(){const n=giro.value,p=paquete.value,activa=accesoPractica||c.verificada(n,p);enlace($('demo-seleccionada'),c.url(n,p),activa);enlace($('demo-panel'),c.url(n,p,'panel'),activa);$('demo-resultado').textContent=estado(n,p);}
+giro.addEventListener('change',actualizar);paquete.addEventListener('change',actualizar);window.addEventListener('pageshow',actualizar);actualizar();
 })();

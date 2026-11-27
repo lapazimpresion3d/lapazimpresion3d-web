@@ -34,3 +34,6 @@ Todas las 25 casillas se muestran juntas y conservan su orden. La selección man
 
 ## Tarifas de lanzamiento
 Se mantienen los importes de implementación desde $750, $1,500, $2,500 y $3,500 MXN. Mensualidades de lanzamiento P1–P4: $149, $249, $349 y $499 MXN, respectivamente, más IVA. No se modifica el alcance, las condiciones comerciales ni la selección dinámica de paquetes. Las tarifas definitivas podrán revisarse posteriormente.
+
+## Escaparate multicomercio 38.3
+Se conserva la tarifa de lanzamiento aprobada en 097988b (149/249/349/499). El documento de integración y el comparador del proyecto de demos muestran tarifas anteriores: armonizar antes de publicar. Ver docs/escaparate-demos.md.
