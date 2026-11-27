@@ -102,75 +102,98 @@ const planesCotizacion = {
     ]
   }
 };
-const bloquePlan = document.getElementById('funciones-plan');
-const bloqueExtra = document.getElementById('funciones-extra');
-const contenedorExtra = document.getElementById('funciones-adicionales');
 const resumenPaquete = document.getElementById('resumen-paquete-web');
 const tablaPaquetes = document.getElementById('precios-paquetes');
 const radiosPaquete = Array.from(tablaPaquetes.querySelectorAll('input[name="paquete"]'));
-let ultimoPaquete = null;
+const ordenPaquetes = Object.keys(planesCotizacion);
+const coberturas = new Map(ordenPaquetes.map(clave=>[clave,new Set(planesCotizacion[clave].funciones)]));
+// El inventario avanzado cubre el básico, aunque no se premarquen dos módulos de inventario.
+coberturas.get('gestion-profesional').add('Inventario básico');
+const funcionesCatalogo = new Set(Array.from(coberturas.values()).flatMap(s=>Array.from(s)));
+let claveActiva = 'a-medida';
+let modoMedida = false;
 let incluidas = new Set();
-// Al cambiar de paquete se carga su selección completa, sin extras heredados.
+let avisoAjuste = '';
+function camposSeleccionados() {
+  return Array.from(opcionesWeb).map(o=>o.querySelector('input')).filter(c=>c.checked).map(c=>c.value);
+}
+function recomendarPaquete(seleccionadas) {
+  const estandar = seleccionadas.filter(v=>funcionesCatalogo.has(v));
+  if (!estandar.length) return 'a-medida';
+  return ordenPaquetes.find(clave=>estandar.every(v=>coberturas.get(clave).has(v))) || 'a-medida';
+}
+function seleccionarPaquete(clave) {
+  claveActiva = ordenPaquetes.includes(clave) ? clave : 'a-medida';
+  modoMedida = claveActiva === 'a-medida';
+  avisoAjuste = '';
+  const funciones = new Set(planesCotizacion[claveActiva]?.funciones || []);
+  for (const opcion of opcionesWeb) opcion.querySelector('input').checked = funciones.has(opcion.querySelector('input').value);
+  actualizarFunciones();
+}
 function actualizarFunciones() {
-  const clave = radiosPaquete.find(r => r.checked)?.value || 'a-medida';
-  for (const radio of radiosPaquete) radio.closest('tr').classList.toggle('paquete-seleccionado',radio.checked);
-  const plan = Object.hasOwn(planesCotizacion, clave) ? planesCotizacion[clave] : null;
-  const cambio = ultimoPaquete !== clave;
-  const nuevasIncluidas = new Set(plan?.funciones || []);
-  if (cambio) {
-    // Aplicar todas las casillas antes de evaluar sus dependencias (carrito, etc.).
-    for (const opcion of opcionesWeb) {
-      const campo = opcion.querySelector('input');
-      campo.checked = nuevasIncluidas.has(campo.value);
-    }
+  const plan = planesCotizacion[claveActiva];
+  incluidas = coberturas.get(claveActiva) || new Set();
+  for (const radio of radiosPaquete) {
+    radio.checked = radio.value === claveActiva;
+    radio.closest('tr').classList.toggle('paquete-seleccionado',radio.checked);
   }
-  let hayExtra = false;
+  const seleccionadas = camposSeleccionados();
   for (const opcion of opcionesWeb) {
     const campo = opcion.querySelector('input');
-    const requiere = opcion.dataset.requiere;
-    const destino = !plan || nuevasIncluidas.has(campo.value) ? bloquePlan : bloqueExtra;
-    if (opcion.parentElement !== destino) destino.append(opcion);
+    // Todas las casillas son seleccionables; las dependencias se resuelven al editarlas.
     opcion.hidden = false;
-    campo.disabled = Boolean(requiere && !document.getElementById(requiere).checked);
-    if (campo.disabled) campo.checked = false;
-    opcion.classList.toggle('funcion-seleccionada', campo.checked);
-    if (destino === bloqueExtra) hayExtra = true;
+    campo.disabled = false;
+    opcion.classList.toggle('funcion-seleccionada',campo.checked);
+    const minimo = ordenPaquetes.find(clave=>coberturas.get(clave).has(campo.value));
+    const etiqueta = opcion.querySelector('.nivel-funcion');
+    etiqueta.textContent = !minimo ? 'Integración bajo cotización' : plan && !incluidas.has(campo.value) ? 'Desde ' + planesCotizacion[minimo].nombre : '';
+    etiqueta.hidden = !etiqueta.textContent;
   }
-  // No arrastrar adicionales de otra cotización al cambiar de paquete.
-  if (cambio) contenedorExtra.open = false;
-  ultimoPaquete = clave;
-  incluidas = nuevasIncluidas;
   resumenPaquete.hidden = !plan;
   if (plan) {
     document.getElementById('nombre-paquete-web').textContent = plan.nombre;
     document.getElementById('precio-paquete-web').textContent = plan.precio;
     document.getElementById('alcance-paquete-web').textContent = plan.alcance;
-    document.getElementById('ficha-paquete-web').href = 'paquetes-web.html#' + clave;
+    document.getElementById('ficha-paquete-web').href = 'paquetes-web.html#' + claveActiva;
   }
-  const tituloFunciones = document.getElementById('titulo-funciones-plan');
-  const conteoFunciones = document.getElementById('conteo-funciones-plan');
-  document.getElementById('leyenda-funciones-web').textContent = plan ? 'Características de ' + plan.nombre : 'Características y funciones del proyecto a medida';
-  tituloFunciones.hidden = !plan;
-  tituloFunciones.textContent = plan ? 'Funciones de ' + plan.nombre : 'Funciones del proyecto';
-  conteoFunciones.hidden = !plan;
-  const marcadasPlan = Array.from(opcionesWeb).filter(o=>o.parentElement===bloquePlan && o.querySelector('input').checked).length;
-  conteoFunciones.textContent = plan ? marcadasPlan + ' de ' + nuevasIncluidas.size + ' funciones seleccionadas. Puedes desmarcar las que no necesites.' : '';
-  const extrasSeleccionadas = opcionesWeb.length && Array.from(opcionesWeb).filter(o=>o.parentElement===bloqueExtra && o.querySelector('input').checked).length;
-  document.getElementById('estado-paquete-web').textContent = plan ? plan.nombre + ' seleccionado · ' + marcadasPlan + ' de ' + nuevasIncluidas.size + ' funciones marcadas. Revisa sus características debajo.' : 'Proyecto a medida seleccionado · elige las funciones que necesitas.';
-  contenedorExtra.querySelector('summary').textContent = 'Funciones adicionales bajo cotización' + (extrasSeleccionadas ? ' (' + extrasSeleccionadas + ' seleccionadas)' : '');
-  document.getElementById('orientacion-paquete-web').hidden = !plan;
-  contenedorExtra.hidden = !hayExtra;
-  ayudaPedidos.hidden = Boolean(plan && !nuevasIncluidas.has("Carrito y pedidos desde la página"));
+  document.getElementById('leyenda-funciones-web').textContent = 'Características y funciones del proyecto';
+  document.getElementById('titulo-funciones-plan').hidden = false;
+  document.getElementById('titulo-funciones-plan').textContent = plan ? 'Funciones de ' + plan.nombre : 'Funciones del proyecto a medida';
+  const conteo = document.getElementById('conteo-funciones-plan');
+  conteo.hidden = false;
+  const extras = seleccionadas.filter(v=>!funcionesCatalogo.has(v));
+  conteo.textContent = seleccionadas.length + ' de ' + opcionesWeb.length + ' funciones seleccionadas.' + (extras.length ? ' ' + extras.length + ' integración adicional bajo cotización.' : '');
+  document.getElementById('estado-paquete-web').textContent = (plan ? plan.nombre + ' · ' + plan.precio : 'Proyecto a medida · bajo cotización') + (extras.length ? ' · incluye una integración por cotizar por separado' : '');
+  const aviso = document.getElementById('aviso-ajuste-paquete');
+  aviso.textContent = avisoAjuste;
+  aviso.hidden = !avisoAjuste;
+  document.getElementById('orientacion-paquete-web').hidden = false;
+  ayudaPedidos.hidden = false;
   funcionesWeb.hidden = false;
 }
-formularioWeb.addEventListener('change', actualizarFunciones);
-// Los radios pertenecen al formulario mediante form=, pero sus eventos no suben por él.
+function editarFuncion(campo) {
+  const opcion = campo.closest('[data-funcion]');
+  if (!opcion) return;
+  // Elegir una función dependiente activa su requisito; quitar el requisito retira sus dependientes.
+  if (campo.checked && opcion.dataset.requiere) document.getElementById(opcion.dataset.requiere).checked = true;
+  if (!campo.checked && campo.id) {
+    for (const otra of opcionesWeb) if (otra.dataset.requiere === campo.id) otra.querySelector('input').checked = false;
+  }
+  if (!modoMedida) {
+    const anterior = claveActiva;
+    claveActiva = recomendarPaquete(camposSeleccionados());
+    if (anterior !== claveActiva) avisoAjuste = 'Paquete ajustado automáticamente a ' + (planesCotizacion[claveActiva]?.nombre || 'Proyecto a medida') + ' según tus funciones. Se conservaron tus selecciones.';
+  }
+  actualizarFunciones();
+}
+formularioWeb.addEventListener('change', evento => {
+  if (evento.target?.name === 'funciones') editarFuncion(evento.target);
+});
 for (const radio of radiosPaquete) {
-  radio.addEventListener('change', actualizarFunciones);
+  radio.addEventListener('change',()=>seleccionarPaquete(radio.value));
   radio.closest('tr').addEventListener('click', evento => {
     if (evento.target.closest('label, input')) return;
-    radio.checked = true;
-    actualizarFunciones();
+    if (!radio.checked) seleccionarPaquete(radio.value);
   });
 }
 window.addEventListener('pageshow', actualizarFunciones);
@@ -271,11 +294,10 @@ botonEnviar.addEventListener('click', async () => {
 const parametrosCatalogo = new URLSearchParams(location.search);
 const paqueteCatalogo = parametrosCatalogo.get('paquete');
 const radioInicial = radiosPaquete.find(r => r.value === paqueteCatalogo);
-if (radioInicial) radioInicial.checked = true;
+seleccionarPaquete(radioInicial?.value || radiosPaquete.find(r=>r.checked)?.value || 'a-medida');
 const girosCatalogo = new Map([["restaurante","Restaurante / taquería"],["cafeteria","Cafetería"],["barberia","Barbería / estética"],["mascotas","Tienda de mascotas"],["comercio","Comercio / tienda"],["servicios","Servicios profesionales"],["turismo","Turismo y actividades"],["otro","Otro giro"]]);
 const giroCatalogo = parametrosCatalogo.get('giro');
 if (!formularioWeb.elements.giro.value && girosCatalogo.has(giroCatalogo)) formularioWeb.elements.giro.value = girosCatalogo.get(giroCatalogo);
-actualizarFunciones();
 actualizarDominio();
 formularioWeb.hidden = false;
 // El panel está cerrado inicialmente; el enlace directo a condiciones lo abre.

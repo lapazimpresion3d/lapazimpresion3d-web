@@ -28,3 +28,6 @@ Se conservan las cuatro tarifas: implementación desde $750/$1,500/$2,500/$3,500
 
 ## Cotización centrada en el paquete
 Se elimina la selección independiente de tipo de página. El campo libre de giro permanece únicamente en datos del negocio. Las características se organizan por paquete y las funciones específicas (menú, catálogo, pedidos, agenda, inventario, etc.) se seleccionan según necesidad, sin inferir el giro. Las funciones adicionales permanecen en un panel desplegable. La API admite solicitudes nuevas sin tipo_pagina y mantiene validación de tipos históricos; el panel y CSV conservan los datos anteriores. No se modifica D1 ni se cambia el flujo de folio y correo.
+
+## Selección dinámica de paquete
+Todas las 25 casillas se muestran juntas y conservan su orden. La selección manual de un paquete carga sus funciones iniciales; las modificaciones posteriores buscan el paquete estándar de menor precio que cubre las funciones elegidas, sin añadir otras casillas. El inventario avanzado cubre el básico. Las dependencias activan el carrito al seleccionar una función que lo requiere y se retiran al desmarcar el carrito. Los pagos con tarjeta se cotizan aparte. Elegir Proyecto a medida directamente mantiene ese modo personalizado. Se conservan tarifas, API y datos de solicitudes.

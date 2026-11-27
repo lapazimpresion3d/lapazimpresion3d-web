@@ -9,8 +9,8 @@
   <link rel="stylesheet" href="css/cabecera-fotografica.css">
   <link rel="stylesheet" href="css/inicio.css">
   <link rel="stylesheet" href="css/cotizacion-web.css">
-  <link rel="stylesheet" href="css/soluciones-digitales.css?v=20261127-3">
-  <script src="js/cotizacion-web.js?v=20261127-4" defer></script>
+  <link rel="stylesheet" href="css/soluciones-digitales.css?v=20261127-5">
+  <script src="js/cotizacion-web.js?v=20261127-5" defer></script>
 </head>
 <body class="pagina-cotizacion">
   <header class="cabecera cabecera-fotografica cabecera-cotizacion">
@@ -32,7 +32,7 @@
   <section id="cotizacion-web" aria-labelledby="titulo-cotizacion">
     <section id="precios-paquetes" class="caja comparativa-cotizacion" aria-labelledby="titulo-precios-paquetes">
       <h2 id="titulo-precios-paquetes">Paquete de interés</h2>
-      <p id="ayuda-seleccion-paquete" class="nota">Selecciona un paquete para marcar automáticamente sus funciones en la cotización.</p>
+      <p id="ayuda-seleccion-paquete" class="nota">Selecciona un paquete como punto de partida. Al agregar o retirar funciones, el paquete y su precio se ajustan automáticamente.</p>
       <table class="tabla-precios-cotizacion">
         <thead><tr><th scope="col">Paquete</th><th scope="col">Implementación</th><th scope="col">Mensualidad</th></tr></thead>
         <tbody>
@@ -83,74 +83,74 @@
         </div>
       <fieldset id="funciones-web" hidden>
         <legend id="leyenda-funciones-web">Características y funciones del proyecto</legend>
-        <p id="orientacion-paquete-web" class="ayuda-cotizacion" hidden>Al elegir un paquete se marcan automáticamente todas sus funciones. Desmarca las que no necesites para tu negocio. Si cambias de paquete, se restablece la selección de funciones y adicionales.</p>
-        <p id="ayuda-pedidos" class="ayuda-cotizacion" hidden>Para vender desde tu sitio, marca <strong>Carrito y pedidos desde la página</strong>. Eso habilita las opciones de cobro. Si prefieres atender los pedidos en el chat, selecciona <strong>Pedidos por WhatsApp</strong>.</p>
+        <p id="orientacion-paquete-web" class="ayuda-cotizacion" hidden>Todas las funciones están disponibles para seleccionar. Al marcar o desmarcar opciones se ajusta el paquete al que cubre tus necesidades, sin marcar otras funciones automáticamente. Si eliges otro paquete directamente en la tabla, se carga su selección inicial. Proyecto a medida conserva la cotización personalizada.</p>
+        <p id="ayuda-pedidos" class="ayuda-cotizacion" hidden>Las funciones que requieren carrito lo seleccionan automáticamente. Si desmarcas el carrito, se desmarcan también sus funciones dependientes.</p>
         <h3 id="titulo-funciones-plan" hidden>Funciones del paquete</h3>
         <p id="conteo-funciones-plan" class="nota" hidden></p>
+        <p id="aviso-ajuste-paquete" class="aviso-ajuste-paquete" role="status" aria-live="polite" hidden></p>
         <div id="funciones-plan">
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Página comercial personalizada"><span>Página comercial personalizada<small>Presentación del negocio, identidad y servicios.</small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Información de contacto y horarios"><span>Información de contacto y horarios<small>WhatsApp, redes, ubicación y horarios.</small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Menú digital"><span>Menú digital<small>Platillos, bebidas, fotografías y precios por categoría.</small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Catálogo de productos"><span>Catálogo de productos<small>Artículos, fotografías, precios y variantes según el proyecto.</small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Página comercial personalizada"><span>Página comercial personalizada<small>Presentación del negocio, identidad y servicios.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Información de contacto y horarios"><span>Información de contacto y horarios<small>WhatsApp, redes, ubicación y horarios.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Menú digital"><span>Menú digital<small>Platillos, bebidas, fotografías y precios por categoría.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Catálogo de productos"><span>Catálogo de productos<small>Artículos, fotografías, precios y variantes según el proyecto.</small><small class="nivel-funcion" hidden></small></span></label>
         <label class="opcion" data-funcion>
           <input type="checkbox" id="pedidos-web" name="funciones" value="Carrito y pedidos desde la página">
-          <span>Carrito y pedidos desde la página<small>El cliente agrega artículos, elige cantidades y confirma su pedido en el sitio. El negocio recibe el pedido registrado.</small></span>
+          <span>Carrito y pedidos desde la página<small>El cliente agrega artículos, elige cantidades y confirma su pedido en el sitio. El negocio recibe el pedido registrado.</small><small class="nivel-funcion" hidden></small></span>
         </label>
         <label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Pedidos por WhatsApp">
-          <span>Pedidos por WhatsApp<small>El cliente abre el chat con su solicitud y el negocio confirma el pedido por WhatsApp. Puedes elegir esta opción por sí sola o junto al carrito.</small></span>
+          <span>Pedidos por WhatsApp<small>El cliente abre el chat con su solicitud y el negocio confirma el pedido por WhatsApp. Puedes elegir esta opción por sí sola o junto al carrito.</small><small class="nivel-funcion" hidden></small></span>
         </label>
         <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Efectivo y transferencias con registro manual">
-          <span>Efectivo y transferencias<small>Muestra las instrucciones de pago. El encargado verifica las transferencias o registra el cobro en efectivo. Requiere carrito.</small></span>
+          <span>Efectivo y transferencias<small>Muestra las instrucciones de pago. El encargado verifica las transferencias o registra el cobro en efectivo. Requiere carrito.</small><small class="nivel-funcion" hidden></small></span>
         </label>
         <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Cotizar integración de pagos en línea con tarjeta">
-          <span>Pagos en línea con tarjeta<small>Solicita cotización para integrar una plataforma de pagos. Requiere carrito y una cuenta del negocio con el proveedor de pagos.</small></span>
+          <span>Pagos en línea con tarjeta<small>Solicita cotización para integrar una plataforma de pagos. Requiere carrito y una cuenta del negocio con el proveedor de pagos.</small><small class="nivel-funcion" hidden></small></span>
         </label>
         <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Pedidos para recoger o a domicilio">
-          <span>Pedidos para recoger o a domicilio<small>Dirección y costo de envío. Requiere pedidos desde la página.</small></span>
+          <span>Pedidos para recoger o a domicilio<small>Dirección y costo de envío. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
         </label>
         <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Pedidos desde las mesas">
-          <span>Pedidos desde las mesas<small>QR por mesa. Requiere pedidos desde la página.</small></span>
+          <span>Pedidos desde las mesas<small>QR por mesa. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
         </label>
         <label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Reservaciones y agenda">
-          <span>Agenda y reservaciones de citas<small>Para dentistas, estilistas, barberías, consultorios y servicios profesionales. Los clientes pueden solicitar una fecha y hora; el negocio organiza la disponibilidad y confirma las citas.</small></span>
+          <span>Agenda y reservaciones de citas<small>Para dentistas, estilistas, barberías, consultorios y servicios profesionales. Los clientes pueden solicitar una fecha y hora; el negocio organiza la disponibilidad y confirma las citas.</small><small class="nivel-funcion" hidden></small></span>
         </label>
         <label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Reservaciones de tours y pases turísticos">
-          <span>Reservaciones de tours, actividades y pases turísticos<small>Para excursiones, paseos y experiencias. Permite solicitar fecha, horario y número de personas, consultar cupos y gestionar confirmaciones. La emisión de pases digitales y los pagos en línea se cotizan según el proyecto.</small></span>
+          <span>Reservaciones de tours, actividades y pases turísticos<small>Para excursiones, paseos y experiencias. Permite solicitar fecha, horario y número de personas, consultar cupos y gestionar confirmaciones. La emisión de pases digitales y los pagos en línea se cotizan según el proyecto.</small><small class="nivel-funcion" hidden></small></span>
         </label>
         <label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Panel privado">
-          <span>Panel privado<small>Edita contenido, precios, horarios o disponibilidad según tu página.</small></span>
+          <span>Panel privado<small>Edita contenido, precios, horarios o disponibilidad según tu página.</small><small class="nivel-funcion" hidden></small></span>
         </label>
         <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Pantalla de cocina y comandas">
-          <span>Pantalla de cocina y comandas<small>Preparación y comandas imprimibles. Requiere pedidos desde la página.</small></span>
+          <span>Pantalla de cocina y comandas<small>Preparación y comandas imprimibles. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
         </label>
         <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Seguimiento de pedidos">
-          <span>Seguimiento de pedidos<small>Estado de preparación, entrega y pago por folio. Requiere pedidos desde la página.</small></span>
+          <span>Seguimiento de pedidos<small>Estado de preparación, entrega y pago por folio. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
         </label>
         <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Reportes de pedidos y cobros">
-          <span>Reportes de pedidos y cobros<small>Exportación en CSV. Requiere pedidos desde la página.</small></span>
+          <span>Reportes de pedidos y cobros<small>Exportación en CSV. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Punto de venta y caja"><span>Punto de venta y caja<small>Registro de ventas y control de caja.</small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Inventario básico"><span>Inventario básico<small>Existencias de productos y movimientos básicos.</small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Tickets"><span>Tickets<small>Emisión de comprobantes internos de operación, no facturas fiscales.</small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Inventario avanzado"><span>Inventario avanzado<small>Control avanzado de existencias y movimientos.</small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Costos y proveedores"><span>Costos y proveedores<small>Organización de costos y proveedores.</small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Fidelización"><span>Fidelización<small>Herramientas para atención y fidelización de clientes.</small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Administración avanzada"><span>Administración avanzada<small>Herramientas adicionales de administración según el giro.</small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Automatizaciones"><span>Automatizaciones<small>Automatización de tareas según el alcance acordado.</small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Reportes avanzados"><span>Reportes avanzados<small>Indicadores y reportes de operación según el giro.</small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Punto de venta y caja"><span>Punto de venta y caja<small>Registro de ventas y control de caja.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Inventario básico"><span>Inventario básico<small>Existencias de productos y movimientos básicos.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Tickets"><span>Tickets<small>Emisión de comprobantes internos de operación, no facturas fiscales.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Inventario avanzado"><span>Inventario avanzado<small>Control avanzado de existencias y movimientos.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Costos y proveedores"><span>Costos y proveedores<small>Organización de costos y proveedores.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Fidelización"><span>Fidelización<small>Herramientas para atención y fidelización de clientes.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Administración avanzada"><span>Administración avanzada<small>Herramientas adicionales de administración según el giro.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Automatizaciones"><span>Automatizaciones<small>Automatización de tareas según el alcance acordado.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Reportes avanzados"><span>Reportes avanzados<small>Indicadores y reportes de operación según el giro.</small><small class="nivel-funcion" hidden></small></span></label>
         </div>
-        <details id="funciones-adicionales" hidden><summary>Funciones adicionales bajo cotización</summary><p class="nota">No están incluidas en la mensualidad estándar. Se revisan por separado en tu propuesta.</p><div id="funciones-extra"></div></details>
         <p class="nota">Las funcionalidades se adaptan a las necesidades de tu negocio. El alcance definitivo se confirma en la propuesta antes de contratar, de acuerdo con la disponibilidad de los módulos.</p>
       </fieldset>
 

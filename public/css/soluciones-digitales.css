@@ -91,3 +91,7 @@
 /* Resaltar las funciones realmente marcadas, además de la casilla nativa. */
 #form-web #funciones-web .opcion.funcion-seleccionada{background:#edf2fc;border-color:#b7c9ef}
 #form-web #funciones-web input[type=checkbox]{accent-color:var(--titulo)}
+
+#form-web #funciones-web .nivel-funcion{display:block;margin-top:4px;color:var(--titulo);font-size:.82rem;font-weight:700}
+#form-web #funciones-web .nivel-funcion[hidden]{display:none!important}
+#form-web #aviso-ajuste-paquete{padding:10px 12px;border-inline-start:3px solid var(--titulo);background:#edf2fc;color:var(--texto);font-weight:600;margin:8px 0 14px}
