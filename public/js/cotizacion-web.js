@@ -16,7 +16,7 @@ formularioWeb.addEventListener('change', actualizarDominio);
 const planesCotizacion = {
   "presencia-digital": {
     "nombre": "Presencia digital",
-    "precio": "Implementación $750 MXN · $149 MXN al mes + IVA (referencias)",
+    "precio": "Implementación desde $750 MXN · $149 MXN al mes + IVA",
     "alcance": "Página comercial con identidad, horarios, ubicación y contacto. Menú o catálogo básico, según el tipo de negocio. Acceso desde QR/NFC y consultas por WhatsApp.",
     "funciones": [
       "Pedidos por WhatsApp"
@@ -24,7 +24,7 @@ const planesCotizacion = {
   },
   "negocio-interactivo": {
     "nombre": "Negocio interactivo",
-    "precio": "Implementación $1,500 MXN · $299 MXN al mes + IVA (referencias)",
+    "precio": "Implementación desde $1,500 MXN · $299 MXN al mes + IVA",
     "alcance": "Funciones de presencia digital. Carrito, pedidos y seguimiento para menús o catálogos. Agenda o reservaciones según el giro. Panel privado; cocina básica y pedidos de mesa cuando corresponda.",
     "funciones": [
       "Pedidos por WhatsApp",
@@ -40,7 +40,7 @@ const planesCotizacion = {
   },
   "gestion-comercial": {
     "nombre": "Gestión comercial",
-    "precio": "Implementación $2,500 MXN · $449 MXN al mes + IVA (referencias)",
+    "precio": "Implementación desde $2,500 MXN · $449 MXN al mes + IVA",
     "alcance": "Funciones de Negocio interactivo, según el giro. Punto de venta, caja y registro de cobros. Inventario básico para productos; comandas o atención de servicios. Tickets y reportes de pedidos y cobros.",
     "funciones": [
       "Pedidos por WhatsApp",
@@ -61,7 +61,7 @@ const planesCotizacion = {
   },
   "gestion-profesional": {
     "nombre": "Gestión profesional",
-    "precio": "Implementación $3,500 MXN · $649 MXN al mes + IVA (referencias)",
+    "precio": "Implementación desde $3,500 MXN · $649 MXN al mes + IVA",
     "alcance": "Funciones de Gestión comercial, según el giro. Inventario avanzado, costos y proveedores. Fidelización y administración avanzada. Automatizaciones y reportes avanzados.",
     "funciones": [
       "Pedidos por WhatsApp",
