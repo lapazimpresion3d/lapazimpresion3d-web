@@ -30,8 +30,22 @@
   <main class="envoltura envoltura-cotizacion">
     <a class="regreso" href="index.html#paginas-web">← Servicios digitales</a>
   <section id="cotizacion-web" aria-labelledby="titulo-cotizacion">
-    <details id="condiciones-paquetes" class="condiciones-comerciales condiciones-desplegables" open>
-        <summary><h2 id="titulo-condiciones-web">Detalles y condiciones de los paquetes</h2></summary>
+    <section id="precios-paquetes" class="caja comparativa-cotizacion" aria-labelledby="titulo-precios-paquetes">
+      <h2 id="titulo-precios-paquetes">Paquetes y precios</h2>
+      <table class="tabla-precios-cotizacion">
+        <thead><tr><th scope="col">Paquete</th><th scope="col">Implementación</th><th scope="col">Mensualidad</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Presencia digital</th><td><span class="precio-desde">Desde</span> <strong>$750</strong></td><td><strong>$149</strong><span class="precio-periodo"> / mes</span></td></tr>
+          <tr><th scope="row">Negocio interactivo</th><td><span class="precio-desde">Desde</span> <strong>$1,500</strong></td><td><strong>$299</strong><span class="precio-periodo"> / mes</span></td></tr>
+          <tr><th scope="row">Gestión comercial</th><td><span class="precio-desde">Desde</span> <strong>$2,500</strong></td><td><strong>$449</strong><span class="precio-periodo"> / mes</span></td></tr>
+          <tr><th scope="row">Gestión profesional</th><td><span class="precio-desde">Desde</span> <strong>$3,500</strong></td><td><strong>$649</strong><span class="precio-periodo"> / mes</span></td></tr>
+        </tbody>
+      </table>
+      <p class="nota">MXN + IVA. La implementación depende del alcance; las mensualidades corresponden al paquete estándar.</p>
+      <p class="nota"><a href="paquetes-web.html#fichas-paquetes">Ver características y alcance de cada paquete</a>.</p>
+    </section>
+    <details id="condiciones-paquetes" class="condiciones-comerciales condiciones-desplegables">
+        <summary><h2 id="titulo-condiciones-web">Condiciones generales del servicio</h2></summary>
         <div class="contenido-condiciones">
         <p>Consulta las <a href="paquetes-web.html#fichas-paquetes">características, precios y alcance de los cuatro paquetes</a>. A continuación te explicamos las condiciones de implementación y mantenimiento.</p>
         <p>Antes de contratar, conocerás por separado el costo de desarrollo, el dominio y la cuota de operación y mantenimiento. <strong>Enviar este formulario no genera ningún cargo.</strong></p>
@@ -56,8 +70,9 @@
         <p class="nota">El mantenimiento no incluye nuevas funcionalidades, rediseños, actualizaciones masivas de contenido ni servicios de terceros. La renovación y sus condiciones se comunican antes del vencimiento; la continuidad se acuerda con el cliente.</p>
         </div>
     </details>
+    <h2 class="titulo-formulario-cotizacion">Solicita tu cotización</h2>
     <p class="introduccion">Elige el tipo de sitio que necesita tu negocio y las funciones que te gustaría incluir. Con esos datos podremos preparar una propuesta a la medida.</p>
-    <p class="caja aviso-cotizacion">Completa el formulario y registra tu solicitud directamente. Recibirás un folio de seguimiento; no es necesario enviarla por WhatsApp.</p>
+    <p class="nota aviso-cotizacion-breve">Recibirás un folio de seguimiento. Enviar tu solicitud no genera ningún cargo.</p>
     <form id="form-web" class="caja web" hidden>
       <fieldset>
         <legend>Paquete de interés</legend>

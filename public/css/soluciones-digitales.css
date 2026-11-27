@@ -53,3 +53,18 @@
 #condiciones-paquetes summary:focus-visible{outline:2px solid var(--titulo);outline-offset:5px;border-radius:4px}
 #condiciones-paquetes[open] .contenido-condiciones{padding-top:14px}
 #condiciones-paquetes .contenido-condiciones > :last-child{margin-bottom:0}
+
+/* Comparación compacta y visible antes del formulario. */
+#precios-paquetes{scroll-margin-top:24px;margin:16px 0}
+#precios-paquetes h2{margin:0 0 14px}
+.tabla-precios-cotizacion{width:100%;border-collapse:collapse;table-layout:fixed;color:var(--texto);font-size:clamp(.8rem,2.4vw,1rem)}
+.tabla-precios-cotizacion th,.tabla-precios-cotizacion td{padding:12px 6px;border-bottom:1px solid var(--borde);text-align:left;vertical-align:middle;overflow-wrap:anywhere}
+.tabla-precios-cotizacion thead th{font-size:.82rem;color:var(--suave);font-weight:600}
+.tabla-precios-cotizacion th:first-child{width:40%}
+.tabla-precios-cotizacion td strong{font-size:clamp(1rem,3.5vw,1.35rem);color:var(--titulo);white-space:nowrap}
+.tabla-precios-cotizacion .precio-desde,.tabla-precios-cotizacion .precio-periodo{display:block;font-size:.77rem;color:var(--suave)}
+#precios-paquetes .nota{margin:12px 0 0}
+#condiciones-paquetes.condiciones-desplegables{margin:12px 0 22px}
+.titulo-formulario-cotizacion{margin:24px 0 8px}
+.aviso-cotizacion-breve{margin:0 0 14px}
+@media(max-width:420px){.tabla-precios-cotizacion th,.tabla-precios-cotizacion td{padding:10px 4px}.tabla-precios-cotizacion thead th{font-size:.72rem}}

@@ -272,7 +272,7 @@ if (Object.hasOwn(tiposPorGiro, giroCatalogo) && !formularioWeb.querySelector('[
 actualizarFunciones();
 actualizarDominio();
 formularioWeb.hidden = false;
-// El panel de condiciones está fuera del formulario y abierto inicialmente.
+// El panel está cerrado inicialmente; el enlace directo a condiciones lo abre.
 function abrirCondicionesDesdeEnlace() {
   if (location.hash !== "#condiciones-paquetes") return;
   const destino = document.getElementById("condiciones-paquetes");
