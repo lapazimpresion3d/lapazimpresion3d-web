@@ -45,3 +45,11 @@
 #paginas-web .plan-precios dd,#fichas-paquetes .ficha-precios dd{overflow-wrap:anywhere}
 
 #condiciones-paquetes{scroll-margin-top:24px}
+
+/* Condiciones antes del formulario: panel nativo, accesible por teclado y sin JS. */
+#condiciones-paquetes.condiciones-desplegables{margin-top:16px;margin-bottom:22px}
+#condiciones-paquetes summary{cursor:pointer;color:var(--titulo);padding:4px 0;line-height:1.4}
+#condiciones-paquetes summary h2{display:inline;margin:0;font-size:clamp(1.14rem,3vw,1.35rem)}
+#condiciones-paquetes summary:focus-visible{outline:2px solid var(--titulo);outline-offset:5px;border-radius:4px}
+#condiciones-paquetes[open] .contenido-condiciones{padding-top:14px}
+#condiciones-paquetes .contenido-condiciones > :last-child{margin-bottom:0}
