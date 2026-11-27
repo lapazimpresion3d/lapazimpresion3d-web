@@ -110,9 +110,7 @@ const tablaPaquetes = document.getElementById('precios-paquetes');
 const radiosPaquete = Array.from(tablaPaquetes.querySelectorAll('input[name="paquete"]'));
 let ultimoPaquete = null;
 let incluidas = new Set();
-let automaticas = new Set();
-// Los módulos específicos de menú, inventario, pedidos o agenda no se presuponen.
-const comunes = new Set(["Página comercial personalizada","Información de contacto y horarios","Panel privado"]);
+// Al cambiar de paquete se carga su selección completa, sin extras heredados.
 function actualizarFunciones() {
   const clave = radiosPaquete.find(r => r.checked)?.value || 'a-medida';
   for (const radio of radiosPaquete) radio.closest('tr').classList.toggle('paquete-seleccionado',radio.checked);
@@ -120,16 +118,10 @@ function actualizarFunciones() {
   const cambio = ultimoPaquete !== clave;
   const nuevasIncluidas = new Set(plan?.funciones || []);
   if (cambio) {
+    // Aplicar todas las casillas antes de evaluar sus dependencias (carrito, etc.).
     for (const opcion of opcionesWeb) {
       const campo = opcion.querySelector('input');
-      if (automaticas.has(campo.value) && !nuevasIncluidas.has(campo.value)) {
-        campo.checked = false;
-        automaticas.delete(campo.value);
-      }
-      if (comunes.has(campo.value) && nuevasIncluidas.has(campo.value) && !incluidas.has(campo.value) && !campo.checked) {
-        campo.checked = true;
-        automaticas.add(campo.value);
-      }
+      campo.checked = nuevasIncluidas.has(campo.value);
     }
   }
   let hayExtra = false;
@@ -140,11 +132,12 @@ function actualizarFunciones() {
     if (opcion.parentElement !== destino) destino.append(opcion);
     opcion.hidden = false;
     campo.disabled = Boolean(requiere && !document.getElementById(requiere).checked);
-    if (campo.disabled) {campo.checked = false; automaticas.delete(campo.value);}
+    if (campo.disabled) campo.checked = false;
+    opcion.classList.toggle('funcion-seleccionada', campo.checked);
     if (destino === bloqueExtra) hayExtra = true;
   }
-  // No ocultar una elección manual al cambiar de paquete.
-  if (cambio) contenedorExtra.open = Array.from(bloqueExtra.querySelectorAll('input')).some(c=>c.checked);
+  // No arrastrar adicionales de otra cotización al cambiar de paquete.
+  if (cambio) contenedorExtra.open = false;
   ultimoPaquete = clave;
   incluidas = nuevasIncluidas;
   resumenPaquete.hidden = !plan;
@@ -160,19 +153,16 @@ function actualizarFunciones() {
   tituloFunciones.hidden = !plan;
   tituloFunciones.textContent = plan ? 'Funciones de ' + plan.nombre : 'Funciones del proyecto';
   conteoFunciones.hidden = !plan;
-  conteoFunciones.textContent = plan ? nuevasIncluidas.size + ' funciones disponibles para solicitar en este paquete, según el giro y la disponibilidad.' : '';
+  const marcadasPlan = Array.from(opcionesWeb).filter(o=>o.parentElement===bloquePlan && o.querySelector('input').checked).length;
+  conteoFunciones.textContent = plan ? marcadasPlan + ' de ' + nuevasIncluidas.size + ' funciones seleccionadas. Puedes desmarcar las que no necesites; el alcance y la disponibilidad se confirman en la propuesta.' : '';
   const extrasSeleccionadas = opcionesWeb.length && Array.from(opcionesWeb).filter(o=>o.parentElement===bloqueExtra && o.querySelector('input').checked).length;
-  document.getElementById('estado-paquete-web').textContent = plan ? plan.nombre + ' seleccionado · ' + nuevasIncluidas.size + ' funciones del paquete. Revisa sus características debajo.' : 'Proyecto a medida seleccionado · elige las funciones que necesitas.';
+  document.getElementById('estado-paquete-web').textContent = plan ? plan.nombre + ' seleccionado · ' + marcadasPlan + ' de ' + nuevasIncluidas.size + ' funciones marcadas. Revisa sus características debajo.' : 'Proyecto a medida seleccionado · elige las funciones que necesitas.';
   contenedorExtra.querySelector('summary').textContent = 'Funciones adicionales bajo cotización' + (extrasSeleccionadas ? ' (' + extrasSeleccionadas + ' seleccionadas)' : '');
   document.getElementById('orientacion-paquete-web').hidden = !plan;
   contenedorExtra.hidden = !hayExtra;
   ayudaPedidos.hidden = Boolean(plan && !nuevasIncluidas.has("Carrito y pedidos desde la página"));
   funcionesWeb.hidden = false;
 }
-formularioWeb.addEventListener('change', evento => {
-  if (evento.target?.name === 'funciones') automaticas.delete(evento.target.value);
-});
-
 formularioWeb.addEventListener('change', actualizarFunciones);
 // Los radios pertenecen al formulario mediante form=, pero sus eventos no suben por él.
 for (const radio of radiosPaquete) {

@@ -87,3 +87,7 @@
 #precios-paquetes .estado-paquete-web{margin:12px 0 0;padding:10px 12px;border-inline-start:3px solid var(--titulo);background:#edf2fc;color:var(--texto);font-size:.9rem;font-weight:700}
 #precios-paquetes .estado-paquete-web:empty{display:none}
 #form-web #conteo-funciones-plan{margin:4px 0 12px}
+
+/* Resaltar las funciones realmente marcadas, además de la casilla nativa. */
+#form-web #funciones-web .opcion.funcion-seleccionada{background:#edf2fc;border-color:#b7c9ef}
+#form-web #funciones-web input[type=checkbox]{accent-color:var(--titulo)}
