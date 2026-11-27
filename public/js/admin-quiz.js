@@ -236,9 +236,9 @@ async function cargarPropuestas(){
      for(const [k,v] of [["Presupuesto",etiquetasPresupuesto[x.ficha.presupuesto]||"Sin indicar"],["Fecha deseada",x.ficha.fecha_deseada||"Sin indicar"],["Tipo de solicitud",etiquetasContexto[x.ficha.contexto]||"Sin indicar"],...(x.ficha.contexto==="academico"?[["Trabajo académico",tiposAcademicos[x.ficha.tipo_trabajo_academico]||"Sin indicar"],["Institución",x.ficha.institucion_academica||"Sin indicar"],["Descuento académico","5% sugerido, sujeto a revisión y comprobación; no aplicado automáticamente"]]:[])])dl.append(elem("dt",null,k),elem("dd",null,v));
      box.append(dl);
    } else if(esWeb){
-     box.append(elem("p","resultado-etiqueta","COTIZACIÓN WEB · SOLICITUD DIRECTA"),elem("h3",null,x.ficha.tipo_pagina));
+     box.append(elem("p","resultado-etiqueta","COTIZACIÓN WEB · SOLICITUD DIRECTA"),elem("h3",null,x.ficha.paquete||x.ficha.tipo_pagina||"Proyecto a medida"));
      const detWeb=elem("dl");
-     for(const [t,v] of [["Paquete de interés",x.ficha.paquete||"Sin definir"],["Giro",x.ficha.giro],["Presupuesto",etiquetasPresupuesto[x.ficha.presupuesto]||"Sin indicar"],["Funciones solicitadas",(x.ficha.funciones||[]).join(" · ")||"Ninguna"],["Complementos",(x.ficha.complementos||[]).join(" · ")||"Ninguno"]]) detWeb.append(elem("dt",null,t),elem("dd",null,v));
+     for(const [t,v] of [["Paquete de interés",x.ficha.paquete||"Proyecto a medida"],...(x.ficha.tipo_pagina?[["Tipo de página (solicitud anterior)",x.ficha.tipo_pagina]]:[]),["Giro",x.ficha.giro],["Presupuesto",etiquetasPresupuesto[x.ficha.presupuesto]||"Sin indicar"],["Funciones solicitadas",(x.ficha.funciones||[]).join(" · ")||"Ninguna"],["Complementos",(x.ficha.complementos||[]).join(" · ")||"Ninguno"]]) detWeb.append(elem("dt",null,t),elem("dd",null,v));
      box.append(detWeb);
    } else {
      const rec=x.ficha?.recomendacion||{};

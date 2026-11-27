@@ -71,12 +71,12 @@
         </div>
     </details>
     <h2 class="titulo-formulario-cotizacion">Solicita tu cotización</h2>
-    <p class="introduccion">Elige el tipo de sitio que necesita tu negocio y las funciones que te gustaría incluir. Con esos datos podremos preparar una propuesta a la medida.</p>
+    <p class="introduccion">Elige el paquete y las funciones que necesita tu negocio. Con esos datos podremos preparar una propuesta a la medida.</p>
     <p class="nota aviso-cotizacion-breve">Recibirás un folio de seguimiento. Enviar tu solicitud no genera ningún cargo.</p>
     <form id="form-web" class="caja web" hidden>
       <fieldset>
         <legend>Paquete de interés</legend>
-        <label>Solución digital (opcional)
+        <label>Selecciona tu paquete
           <select name="paquete" id="paquete-web">
             <option value="">Proyecto a medida / sin definir</option>
             <option value="presencia-digital">Presencia digital</option>
@@ -89,94 +89,77 @@
           <h3 id="nombre-paquete-web"></h3><p id="precio-paquete-web"></p><p id="alcance-paquete-web"></p>
           <a id="ficha-paquete-web" href="paquetes-web.html">Ver ficha del paquete</a>
         </div>
-        <p class="nota">La selección permite consultar disponibilidad. Los paquetes nuevos están en desarrollo; no supone contratación ni confirma que las funciones estén disponibles.</p>
+        <p class="nota">Puedes elegir un paquete o solicitar un proyecto a medida. La propuesta confirma la disponibilidad y el alcance antes de contratar.</p>
       </fieldset>
-      <fieldset>
-        <legend>Tipo de página</legend>
-        <p class="ayuda-cotizacion">Elige según lo que quieres mostrar. Tanto el menú como el catálogo pueden incluir carrito, pedidos y pagos.</p>
-        <label class="opcion">
-          <input type="radio" name="tipo" value="Página de contacto digital" data-tipo="contacto" required>
-          <span>Página de contacto digital<small>Para compartir en una sola página tu WhatsApp, redes, ubicación y datos de contacto. Útil como tarjeta de presentación digital.</small></span>
-        </label>
-        <label class="opcion">
-          <input type="radio" name="tipo" value="Página web para mi negocio" data-tipo="negocio">
-          <span>Página web para mi negocio<small>Para presentar quién eres, qué servicios ofreces y cómo visitarte o contratarte. Incluye espacio para fotos, horarios, ubicación y contacto.</small></span>
-        </label>
-        <label class="opcion">
-          <input type="radio" name="tipo" value="Menú digital para restaurantes" data-tipo="menu">
-          <span>Menú digital para restaurantes<small>Para taquerías, cafeterías y otros negocios de comida. Organiza platillos y bebidas por categoría, con precios, fotos y extras. Puedes solicitar pedidos para recoger, a domicilio o desde las mesas.</small></span>
-        </label>
-        <label class="opcion">
-          <input type="radio" name="tipo" value="Catálogo de productos para comercios" data-tipo="catalogo">
-          <span>Catálogo de productos para comercios<small>Para mostrar artículos con fotos, precios y variantes como tallas, colores o modelos. Puedes usarlo como escaparate para consultas o agregar carrito y cobro para vender en línea.</small></span>
-        </label>
-      </fieldset>
-
       <fieldset id="funciones-web" hidden>
-        <legend>Funciones de tu proyecto</legend>
-        <p id="orientacion-paquete-web" class="ayuda-cotizacion" hidden>Las funciones previstas para este paquete se preseleccionan según el tipo de página. Puedes modificarlas y solicitar funciones adicionales, que se revisarán en tu propuesta.</p>
+        <legend>Características y funciones del proyecto</legend>
+        <p id="orientacion-paquete-web" class="ayuda-cotizacion" hidden>Selecciona las funciones del paquete que necesita tu negocio. Las opciones comunes se sugieren automáticamente; el menú, catálogo, pedidos y reservaciones se eligen según tus necesidades. Puedes modificar la selección.</p>
         <p id="ayuda-pedidos" class="ayuda-cotizacion" hidden>Para vender desde tu sitio, marca <strong>Carrito y pedidos desde la página</strong>. Eso habilita las opciones de cobro. Si prefieres atender los pedidos en el chat, selecciona <strong>Pedidos por WhatsApp</strong>.</p>
-        <h3 id="titulo-funciones-plan" hidden>Funciones previstas del paquete</h3>
+        <h3 id="titulo-funciones-plan" hidden>Características del paquete</h3>
         <div id="funciones-plan">
-        <label class="opcion" data-paginas="productos">
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Página comercial personalizada"><span>Página comercial personalizada<small>Presentación del negocio, identidad y servicios.</small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Información de contacto y horarios"><span>Información de contacto y horarios<small>WhatsApp, redes, ubicación y horarios.</small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Menú digital"><span>Menú digital<small>Platillos, bebidas, fotografías y precios por categoría.</small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Catálogo de productos"><span>Catálogo de productos<small>Artículos, fotografías, precios y variantes según el proyecto.</small></span></label>
+        <label class="opcion" data-funcion>
           <input type="checkbox" id="pedidos-web" name="funciones" value="Carrito y pedidos desde la página">
           <span>Carrito y pedidos desde la página<small>El cliente agrega artículos, elige cantidades y confirma su pedido en el sitio. El negocio recibe el pedido registrado.</small></span>
         </label>
-        <label class="opcion" data-paginas="productos">
+        <label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Pedidos por WhatsApp">
           <span>Pedidos por WhatsApp<small>El cliente abre el chat con su solicitud y el negocio confirma el pedido por WhatsApp. Puedes elegir esta opción por sí sola o junto al carrito.</small></span>
         </label>
-        <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
+        <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Efectivo y transferencias con registro manual">
           <span>Efectivo y transferencias<small>Muestra las instrucciones de pago. El encargado verifica las transferencias o registra el cobro en efectivo. Requiere carrito.</small></span>
         </label>
-        <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
+        <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Cotizar integración de pagos en línea con tarjeta">
           <span>Pagos en línea con tarjeta<small>Solicita cotización para integrar una plataforma de pagos. Requiere carrito y una cuenta del negocio con el proveedor de pagos.</small></span>
         </label>
-        <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
+        <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Pedidos para recoger o a domicilio">
           <span>Pedidos para recoger o a domicilio<small>Dirección y costo de envío. Requiere pedidos desde la página.</small></span>
         </label>
-        <label class="opcion" data-paginas="menu" data-requiere="pedidos-web">
+        <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Pedidos desde las mesas">
           <span>Pedidos desde las mesas<small>QR por mesa. Requiere pedidos desde la página.</small></span>
         </label>
-        <label class="opcion" data-paginas="negocio">
+        <label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Reservaciones y agenda">
           <span>Agenda y reservaciones de citas<small>Para dentistas, estilistas, barberías, consultorios y servicios profesionales. Los clientes pueden solicitar una fecha y hora; el negocio organiza la disponibilidad y confirma las citas.</small></span>
         </label>
-        <label class="opcion" data-paginas="negocio">
+        <label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Reservaciones de tours y pases turísticos">
           <span>Reservaciones de tours, actividades y pases turísticos<small>Para excursiones, paseos y experiencias. Permite solicitar fecha, horario y número de personas, consultar cupos y gestionar confirmaciones. La emisión de pases digitales y los pagos en línea se cotizan según el proyecto.</small></span>
         </label>
-        <label class="opcion" data-paginas="negocio">
+        <label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Panel privado">
           <span>Panel privado<small>Edita contenido, precios, horarios o disponibilidad según tu página.</small></span>
         </label>
-        <label class="opcion" data-paginas="menu" data-requiere="pedidos-web">
+        <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Pantalla de cocina y comandas">
           <span>Pantalla de cocina y comandas<small>Preparación y comandas imprimibles. Requiere pedidos desde la página.</small></span>
         </label>
-        <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
+        <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Seguimiento de pedidos">
           <span>Seguimiento de pedidos<small>Estado de preparación, entrega y pago por folio. Requiere pedidos desde la página.</small></span>
         </label>
-        <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
+        <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Reportes de pedidos y cobros">
           <span>Reportes de pedidos y cobros<small>Exportación en CSV. Requiere pedidos desde la página.</small></span>
         </label>
-        <label class="opcion" data-paginas="negocio"><input type="checkbox" name="funciones" value="Punto de venta y caja"><span>Punto de venta y caja<small>Registro de ventas y control de caja. · sujeto a disponibilidad.</small></span></label>
-        <label class="opcion" data-paginas="productos"><input type="checkbox" name="funciones" value="Inventario básico"><span>Inventario básico<small>Existencias de productos y movimientos básicos. · sujeto a disponibilidad.</small></span></label>
-        <label class="opcion" data-paginas="negocio"><input type="checkbox" name="funciones" value="Tickets"><span>Tickets<small>Emisión de comprobantes internos de operación, no facturas fiscales. · sujeto a disponibilidad.</small></span></label>
-        <label class="opcion" data-paginas="productos"><input type="checkbox" name="funciones" value="Inventario avanzado"><span>Inventario avanzado<small>Control avanzado de existencias y movimientos. · sujeto a disponibilidad.</small></span></label>
-        <label class="opcion" data-paginas="negocio"><input type="checkbox" name="funciones" value="Costos y proveedores"><span>Costos y proveedores<small>Organización de costos y proveedores. · sujeto a disponibilidad.</small></span></label>
-        <label class="opcion" data-paginas="negocio"><input type="checkbox" name="funciones" value="Fidelización"><span>Fidelización<small>Herramientas para atención y fidelización de clientes. · sujeto a disponibilidad.</small></span></label>
-        <label class="opcion" data-paginas="negocio"><input type="checkbox" name="funciones" value="Administración avanzada"><span>Administración avanzada<small>Herramientas adicionales de administración según el giro. · sujeto a disponibilidad.</small></span></label>
-        <label class="opcion" data-paginas="negocio"><input type="checkbox" name="funciones" value="Automatizaciones"><span>Automatizaciones<small>Automatización de tareas según el alcance acordado. · sujeto a disponibilidad.</small></span></label>
-        <label class="opcion" data-paginas="negocio"><input type="checkbox" name="funciones" value="Reportes avanzados"><span>Reportes avanzados<small>Indicadores y reportes de operación según el giro. · sujeto a disponibilidad.</small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Punto de venta y caja"><span>Punto de venta y caja<small>Registro de ventas y control de caja. · sujeto a disponibilidad.</small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Inventario básico"><span>Inventario básico<small>Existencias de productos y movimientos básicos. · sujeto a disponibilidad.</small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Tickets"><span>Tickets<small>Emisión de comprobantes internos de operación, no facturas fiscales. · sujeto a disponibilidad.</small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Inventario avanzado"><span>Inventario avanzado<small>Control avanzado de existencias y movimientos. · sujeto a disponibilidad.</small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Costos y proveedores"><span>Costos y proveedores<small>Organización de costos y proveedores. · sujeto a disponibilidad.</small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Fidelización"><span>Fidelización<small>Herramientas para atención y fidelización de clientes. · sujeto a disponibilidad.</small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Administración avanzada"><span>Administración avanzada<small>Herramientas adicionales de administración según el giro. · sujeto a disponibilidad.</small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Automatizaciones"><span>Automatizaciones<small>Automatización de tareas según el alcance acordado. · sujeto a disponibilidad.</small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Reportes avanzados"><span>Reportes avanzados<small>Indicadores y reportes de operación según el giro. · sujeto a disponibilidad.</small></span></label>
         </div>
-        <div id="funciones-adicionales" hidden><h3>Funciones adicionales bajo cotización</h3><p class="nota">No se consideran incluidas en la mensualidad prevista del paquete.</p><div id="funciones-extra"></div></div>
+        <details id="funciones-adicionales" hidden><summary>Funciones adicionales bajo cotización</summary><p class="nota">No están incluidas en la mensualidad estándar. Se revisan por separado en tu propuesta.</p><div id="funciones-extra"></div></details>
       </fieldset>
 
       <fieldset>
@@ -200,7 +183,7 @@
         </label>
         <label class="opcion">
           <input type="checkbox" name="complementos" value="Capacitación para administrar la página">
-          <span>Capacitación para administrar la página<small>Sesión práctica o guía paso a paso para que tú o tu encargado aprendan a actualizar precios, textos u horarios y a usar el panel, según las funciones contratadas.</small></span>
+          <span>Capacitación adicional para administrar la página<small>Sesión práctica o guía paso a paso para que tú o tu encargado aprendan a actualizar precios, textos u horarios y a usar el panel, según las funciones contratadas.</small></span>
         </label>
       </fieldset>
 
@@ -231,7 +214,7 @@
         <legend>Datos de tu negocio</legend>
         <label>Tu nombre <input name="nombre" autocomplete="name" maxlength="100" required></label>
         <label>Nombre del negocio <input name="negocio" autocomplete="organization" maxlength="100" required></label>
-        <label>Giro <input name="giro" maxlength="80" placeholder="Ej. cafetería" required></label>
+        <label>Giro comercial <input name="giro" maxlength="80" placeholder="Ej. cafetería" required></label>
         <label>WhatsApp de contacto <input type="tel" name="telefono" autocomplete="tel" maxlength="25" pattern="\+?[0-9](?:[0-9\s.\(\)\-]*[0-9])?" aria-describedby="ayuda-telefono" required></label>
         <small id="ayuda-telefono">Escribe tu número de México a 10 dígitos; puedes anteponer +52.</small>
         <label>Presupuesto estimado (opcional)

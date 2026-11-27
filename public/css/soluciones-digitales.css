@@ -68,3 +68,7 @@
 .titulo-formulario-cotizacion{margin:24px 0 8px}
 .aviso-cotizacion-breve{margin:0 0 14px}
 @media(max-width:420px){.tabla-precios-cotizacion th,.tabla-precios-cotizacion td{padding:10px 4px}.tabla-precios-cotizacion thead th{font-size:.72rem}}
+
+#form-web #funciones-adicionales summary{font-weight:700;color:var(--titulo);cursor:pointer;padding:8px 0}
+#form-web #funciones-adicionales summary:focus-visible{outline:2px solid var(--titulo);outline-offset:3px}
+#form-web #funciones-adicionales[open] .nota{margin:8px 0 12px}

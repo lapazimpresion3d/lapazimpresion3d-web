@@ -1,6 +1,6 @@
 const formularioWeb = document.querySelector('#form-web');
 const funcionesWeb = document.querySelector('#funciones-web');
-const opcionesWeb = funcionesWeb.querySelectorAll('[data-paginas]');
+const opcionesWeb = funcionesWeb.querySelectorAll('[data-funcion]');
 const ayudaPedidos = document.querySelector('#ayuda-pedidos');
 const revisionWeb = document.querySelector('#revision-web');
 const mensajeWeb = document.querySelector('#mensaje-web');
@@ -19,6 +19,10 @@ const planesCotizacion = {
     "precio": "Implementación desde $750 MXN · $149 MXN al mes + IVA",
     "alcance": "Página comercial con identidad, horarios, ubicación y contacto. Menú o catálogo básico, según el tipo de negocio. Acceso desde QR/NFC y consultas por WhatsApp.",
     "funciones": [
+      "Página comercial personalizada",
+      "Información de contacto y horarios",
+      "Menú digital",
+      "Catálogo de productos",
       "Pedidos por WhatsApp"
     ]
   },
@@ -27,6 +31,10 @@ const planesCotizacion = {
     "precio": "Implementación desde $1,500 MXN · $299 MXN al mes + IVA",
     "alcance": "Funciones de presencia digital. Carrito, pedidos y seguimiento para menús o catálogos. Agenda o reservaciones según el giro. Panel privado; cocina básica y pedidos de mesa cuando corresponda.",
     "funciones": [
+      "Página comercial personalizada",
+      "Información de contacto y horarios",
+      "Menú digital",
+      "Catálogo de productos",
       "Pedidos por WhatsApp",
       "Carrito y pedidos desde la página",
       "Pedidos para recoger o a domicilio",
@@ -43,6 +51,10 @@ const planesCotizacion = {
     "precio": "Implementación desde $2,500 MXN · $449 MXN al mes + IVA",
     "alcance": "Funciones de Negocio interactivo, según el giro. Punto de venta, caja y registro de cobros. Inventario básico para productos; comandas o atención de servicios. Tickets y reportes de pedidos y cobros.",
     "funciones": [
+      "Página comercial personalizada",
+      "Información de contacto y horarios",
+      "Menú digital",
+      "Catálogo de productos",
       "Pedidos por WhatsApp",
       "Carrito y pedidos desde la página",
       "Pedidos para recoger o a domicilio",
@@ -64,6 +76,10 @@ const planesCotizacion = {
     "precio": "Implementación desde $3,500 MXN · $649 MXN al mes + IVA",
     "alcance": "Funciones de Gestión comercial, según el giro. Inventario avanzado, costos y proveedores. Fidelización y administración avanzada. Automatizaciones y reportes avanzados.",
     "funciones": [
+      "Página comercial personalizada",
+      "Información de contacto y horarios",
+      "Menú digital",
+      "Catálogo de productos",
       "Pedidos por WhatsApp",
       "Carrito y pedidos desde la página",
       "Pedidos para recoger o a domicilio",
@@ -90,63 +106,44 @@ const bloquePlan = document.getElementById('funciones-plan');
 const bloqueExtra = document.getElementById('funciones-extra');
 const contenedorExtra = document.getElementById('funciones-adicionales');
 const resumenPaquete = document.getElementById('resumen-paquete-web');
-let ultimaConfiguracion = null;
-let sugeridasAntes = new Set();
+let ultimoPaquete = null;
+let incluidas = new Set();
+let automaticas = new Set();
+// Los módulos específicos de menú, inventario, pedidos o agenda no se presuponen.
+const comunes = new Set(["Página comercial personalizada","Información de contacto y horarios","Panel privado"]);
 function actualizarFunciones() {
-  const tipo = formularioWeb.querySelector('[name="tipo"]:checked')?.dataset.tipo;
-  const disponibles = {
-    productos: tipo === 'menu' || tipo === 'catalogo',
-    menu: tipo === 'menu',
-    negocio: Boolean(tipo && tipo !== 'contacto')
-  };
   const clave = formularioWeb.elements.paquete.value;
   const plan = Object.hasOwn(planesCotizacion, clave) ? planesCotizacion[clave] : null;
-  const giro = formularioWeb.elements.giro.value.trim().toLowerCase();
-  const esTurismo = /turismo|tour|excursi/.test(giro);
-  const esCitas = /barber|est[ée]tica|consultor|dent|servicios profesionales/.test(giro);
-  const configuracion = clave + '/' + (tipo || '') + '/' + (esTurismo ? 'turismo' : esCitas ? 'citas' : 'general');
-  const cambio = ultimaConfiguracion !== configuracion;
-  const sugeridas = new Set();
-  function aplica(opcion) {
-    const valor = opcion.querySelector('input').value;
-    // En negocios turísticos se sugiere el módulo de tours, y para servicios la agenda.
-    if (valor === 'Reservaciones de tours y pases turísticos') return esTurismo;
-    if (valor === 'Reservaciones y agenda') return !esTurismo && (esCitas || tipo === 'negocio');
-    return true;
-  }
-  if (plan) {
+  const cambio = ultimoPaquete !== clave;
+  const nuevasIncluidas = new Set(plan?.funciones || []);
+  if (cambio) {
     for (const opcion of opcionesWeb) {
       const campo = opcion.querySelector('input');
-      if (disponibles[opcion.dataset.paginas] && plan.funciones.includes(campo.value) && aplica(opcion)) sugeridas.add(campo.value);
+      if (automaticas.has(campo.value) && !nuevasIncluidas.has(campo.value)) {
+        campo.checked = false;
+        automaticas.delete(campo.value);
+      }
+      if (comunes.has(campo.value) && nuevasIncluidas.has(campo.value) && !incluidas.has(campo.value) && !campo.checked) {
+        campo.checked = true;
+        automaticas.add(campo.value);
+      }
     }
   }
-  // Quitar únicamente las preselecciones anteriores que ya no pertenecen al nuevo paquete.
-  if (cambio && ultimaConfiguracion !== null) for (const opcion of opcionesWeb) {
-    const campo = opcion.querySelector('input');
-    if (sugeridasAntes.has(campo.value) && !sugeridas.has(campo.value)) campo.checked = false;
-  }
-  // Primero el carrito, para satisfacer las dependencias de las demás casillas.
-  if (cambio) for (const opcion of opcionesWeb) {
-    const campo = opcion.querySelector('input');
-    if (sugeridas.has(campo.value) && !sugeridasAntes.has(campo.value)) campo.checked = true;
-  }
-  let hayFunciones = false, hayPlan = false, hayExtra = false;
+  let hayExtra = false;
   for (const opcion of opcionesWeb) {
     const campo = opcion.querySelector('input');
     const requiere = opcion.dataset.requiere;
-    const incluida = Boolean(plan && plan.funciones.includes(campo.value) && aplica(opcion));
-    const destino = !plan || incluida ? bloquePlan : bloqueExtra;
+    const destino = !plan || nuevasIncluidas.has(campo.value) ? bloquePlan : bloqueExtra;
     if (opcion.parentElement !== destino) destino.append(opcion);
-    opcion.hidden = !disponibles[opcion.dataset.paginas];
-    campo.disabled = opcion.hidden || Boolean(requiere && !document.getElementById(requiere).checked);
-    if (campo.disabled) campo.checked = false;
-    hayFunciones ||= !opcion.hidden;
-    if (!opcion.hidden) {
-      if (destino === bloqueExtra) hayExtra = true; else hayPlan = true;
-    }
+    opcion.hidden = false;
+    campo.disabled = Boolean(requiere && !document.getElementById(requiere).checked);
+    if (campo.disabled) {campo.checked = false; automaticas.delete(campo.value);}
+    if (destino === bloqueExtra) hayExtra = true;
   }
-  ultimaConfiguracion = configuracion;
-  sugeridasAntes = sugeridas;
+  // No ocultar una elección manual al cambiar de paquete.
+  if (cambio) contenedorExtra.open = Array.from(bloqueExtra.querySelectorAll('input')).some(c=>c.checked);
+  ultimoPaquete = clave;
+  incluidas = nuevasIncluidas;
   resumenPaquete.hidden = !plan;
   if (plan) {
     document.getElementById('nombre-paquete-web').textContent = plan.nombre;
@@ -154,12 +151,15 @@ function actualizarFunciones() {
     document.getElementById('alcance-paquete-web').textContent = plan.alcance;
     document.getElementById('ficha-paquete-web').href = 'paquetes-web.html#' + clave;
   }
-  document.getElementById('titulo-funciones-plan').hidden = !plan || !hayPlan;
-  document.getElementById('orientacion-paquete-web').hidden = !plan || !hayFunciones;
+  document.getElementById('titulo-funciones-plan').hidden = !plan;
+  document.getElementById('orientacion-paquete-web').hidden = !plan;
   contenedorExtra.hidden = !hayExtra;
-  ayudaPedidos.hidden = !disponibles.productos;
-  funcionesWeb.hidden = !hayFunciones;
+  ayudaPedidos.hidden = Boolean(plan && !nuevasIncluidas.has("Carrito y pedidos desde la página"));
+  funcionesWeb.hidden = false;
 }
+formularioWeb.addEventListener('change', evento => {
+  if (evento.target?.name === 'funciones') automaticas.delete(evento.target.value);
+});
 
 formularioWeb.addEventListener('change', actualizarFunciones);
 window.addEventListener('pageshow', actualizarFunciones);
@@ -190,7 +190,6 @@ formularioWeb.addEventListener('submit', (evento) => {
     giro: String(f.get('giro') || '').trim(),
     paquete: formularioWeb.elements.paquete.selectedOptions[0]?.value ? formularioWeb.elements.paquete.selectedOptions[0].textContent.trim() : '',
     telefono,
-    tipo_pagina: String(f.get('tipo') || ''),
     funciones: f.getAll('funciones').map(String),
     complementos: f.getAll('complementos').map(String),
     detalles: String(f.get('detalles') || '').trim(),
@@ -205,9 +204,8 @@ formularioWeb.addEventListener('submit', (evento) => {
     `Giro: ${datosPendientes.giro}`,
     `Paquete de interés: ${datosPendientes.paquete || "Proyecto a medida / sin definir"}`,
     `WhatsApp: ${datosPendientes.telefono}`,
-    `Tipo de página: ${datosPendientes.tipo_pagina}`,
     `Funciones: ${datosPendientes.funciones.join('; ') || 'Ninguna'}`,
-    ...(datosPendientes.paquete ? [`Funciones adicionales bajo revisión: ${datosPendientes.funciones.filter(x => !sugeridasAntes.has(x)).join('; ') || 'Ninguna'}`] : []),
+    ...(datosPendientes.paquete ? [`Funciones adicionales bajo revisión: ${datosPendientes.funciones.filter(x => !incluidas.has(x)).join('; ') || 'Ninguna'}`] : []),
     `Complementos: ${datosPendientes.complementos.join('; ') || 'Ninguno'}`,
     `Presupuesto: ${datosPendientes.presupuesto || "No indicado"}`,
     `Modalidad de dirección: ${({subdominio:"Subdominio incluido",necesito_dominio:"Dominio .com nuevo",tengo_dominio:"Dominio existente",orientacion:"Necesita orientación"})[datosPendientes.situacion_dominio] || datosPendientes.situacion_dominio}`,
@@ -227,7 +225,7 @@ document.querySelector('#editar-cotizacion').addEventListener('click', () => {
   if (botonEnviar.disabled) return;
   revisionWeb.hidden = true;
   formularioWeb.hidden = false;
-  formularioWeb.querySelector('[name="tipo"]:checked')?.focus();
+  formularioWeb.elements.paquete.focus();
 });
 
 botonEnviar.addEventListener('click', async () => {
@@ -264,11 +262,6 @@ if (Array.from(selectorPaquete.options).some(o => o.value === paqueteCatalogo)) 
 const girosCatalogo = new Map([["restaurante","Restaurante / taquería"],["cafeteria","Cafetería"],["barberia","Barbería / estética"],["mascotas","Tienda de mascotas"],["comercio","Comercio / tienda"],["servicios","Servicios profesionales"],["turismo","Turismo y actividades"],["otro","Otro giro"]]);
 const giroCatalogo = parametrosCatalogo.get('giro');
 if (!formularioWeb.elements.giro.value && girosCatalogo.has(giroCatalogo)) formularioWeb.elements.giro.value = girosCatalogo.get(giroCatalogo);
-const tiposPorGiro = {restaurante:'menu',cafeteria:'menu',mascotas:'catalogo',comercio:'catalogo',barberia:'negocio',servicios:'negocio',turismo:'negocio'};
-if (Object.hasOwn(tiposPorGiro, giroCatalogo) && !formularioWeb.querySelector('[name="tipo"]:checked')) {
-  const sugerido = formularioWeb.querySelector('[name="tipo"][data-tipo="' + tiposPorGiro[giroCatalogo] + '"]');
-  if (sugerido) sugerido.checked = true;
-}
 actualizarFunciones();
 actualizarDominio();
 formularioWeb.hidden = false;
