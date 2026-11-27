@@ -19,10 +19,5 @@
   "vars": {
     "EMAIL_FROM": "Lapazimpresion3d <notificaciones@lapazimpresion3d.com>",
     "NOTIFY_EMAIL": "lapazimpresion3d@gmail.com"
-  },
-  "previews": {
-    "vars": {
-      "MODO_VISTA_PREVIA": "visual"
-    }
   }
 }

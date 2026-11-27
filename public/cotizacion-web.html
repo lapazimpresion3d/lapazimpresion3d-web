@@ -9,7 +9,8 @@
   <link rel="stylesheet" href="css/cabecera-fotografica.css">
   <link rel="stylesheet" href="css/inicio.css">
   <link rel="stylesheet" href="css/cotizacion-web.css">
-  <script src="js/cotizacion-web.js" defer></script>
+  <link rel="stylesheet" href="css/soluciones-digitales.css?v=20261127-5">
+  <script src="js/cotizacion-web.js?v=20261127-6" defer></script>
 </head>
 <body class="pagina-cotizacion">
   <header class="cabecera cabecera-fotografica cabecera-cotizacion">
@@ -29,94 +30,102 @@
   <main class="envoltura envoltura-cotizacion">
     <a class="regreso" href="index.html#paginas-web">← Servicios digitales</a>
   <section id="cotizacion-web" aria-labelledby="titulo-cotizacion">
-    <p class="introduccion">Elige el tipo de sitio que necesita tu negocio y las funciones que te gustaría incluir. Con esos datos podremos preparar una propuesta a la medida.</p>
-    <p class="caja aviso-cotizacion">Completa el formulario y registra tu solicitud directamente. Recibirás un folio de seguimiento; no es necesario enviarla por WhatsApp.</p>
+    <section id="precios-paquetes" class="caja comparativa-cotizacion" aria-labelledby="titulo-precios-paquetes">
+      <h2 id="titulo-precios-paquetes">Paquete de interés</h2>
+      <p id="ayuda-seleccion-paquete" class="nota">Selecciona un paquete como punto de partida. Al agregar o retirar funciones, el paquete y su precio se ajustan automáticamente.</p>
+      <table class="tabla-precios-cotizacion">
+        <thead><tr><th scope="col">Paquete</th><th scope="col">Implementación</th><th scope="col">Mensualidad</th></tr></thead>
+        <tbody>
+          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="presencia-digital" required aria-describedby="precio-presencia-digital mensual-presencia-digital"><span>Presencia digital</span></label></th><td id="precio-presencia-digital"><span class="precio-desde">Desde</span> <strong>$750</strong></td><td id="mensual-presencia-digital"><strong>$149</strong><span class="precio-periodo"> / mes</span></td></tr>
+          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="negocio-interactivo" required aria-describedby="precio-negocio-interactivo mensual-negocio-interactivo"><span>Negocio interactivo</span></label></th><td id="precio-negocio-interactivo"><span class="precio-desde">Desde</span> <strong>$1,500</strong></td><td id="mensual-negocio-interactivo"><strong>$249</strong><span class="precio-periodo"> / mes</span></td></tr>
+          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="gestion-comercial" required aria-describedby="precio-gestion-comercial mensual-gestion-comercial"><span>Gestión comercial</span></label></th><td id="precio-gestion-comercial"><span class="precio-desde">Desde</span> <strong>$2,500</strong></td><td id="mensual-gestion-comercial"><strong>$349</strong><span class="precio-periodo"> / mes</span></td></tr>
+          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="gestion-profesional" required aria-describedby="precio-gestion-profesional mensual-gestion-profesional"><span>Gestión profesional</span></label></th><td id="precio-gestion-profesional"><span class="precio-desde">Desde</span> <strong>$3,500</strong></td><td id="mensual-gestion-profesional"><strong>$499</strong><span class="precio-periodo"> / mes</span></td></tr>
+          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="a-medida" required checked><span>Proyecto a medida</span></label></th><td colspan="2">Bajo cotización</td></tr>
+        </tbody>
+      </table>
+      <p id="estado-paquete-web" class="estado-paquete-web" role="status" aria-live="polite"></p>
+      <p class="nota">MXN + IVA. La implementación depende del alcance; las mensualidades corresponden al paquete estándar. La disponibilidad se confirma en la propuesta.</p>
+      <p class="nota"><a href="paquetes-web.html#fichas-paquetes">Ver características y alcance de cada paquete</a>.</p>
+    </section>
+    <h2 class="titulo-formulario-cotizacion">Solicita tu cotización</h2>
+    <p class="introduccion">Elige el paquete y las funciones que necesita tu negocio. Con esos datos podremos preparar una propuesta a la medida.</p>
+    <p class="nota aviso-cotizacion-breve">Recibirás un folio de seguimiento. Enviar tu solicitud no genera ningún cargo.</p>
     <form id="form-web" class="caja web" hidden>
-      <fieldset>
-        <legend>Paquete de interés</legend>
-        <label>Solución digital (opcional)
-          <select name="paquete" id="paquete-web">
-            <option value="">Proyecto a medida / sin definir</option>
-            <option value="presencia-digital">Presencia digital</option>
-<option value="negocio-interactivo">Negocio interactivo</option>
-<option value="gestion-comercial">Gestión comercial</option>
-<option value="gestion-profesional">Gestión profesional</option>
-          </select>
-        </label>
-        <p class="nota">La selección permite consultar disponibilidad. Los paquetes nuevos están en desarrollo; no supone contratación ni confirma que las funciones estén disponibles.</p>
-      </fieldset>
-      <fieldset>
-        <legend>Tipo de página</legend>
-        <p class="ayuda-cotizacion">Elige según lo que quieres mostrar. Tanto el menú como el catálogo pueden incluir carrito, pedidos y pagos.</p>
-        <label class="opcion">
-          <input type="radio" name="tipo" value="Página de contacto digital" data-tipo="contacto" required>
-          <span>Página de contacto digital<small>Para compartir en una sola página tu WhatsApp, redes, ubicación y datos de contacto. Útil como tarjeta de presentación digital.</small></span>
-        </label>
-        <label class="opcion">
-          <input type="radio" name="tipo" value="Página web para mi negocio" data-tipo="negocio">
-          <span>Página web para mi negocio<small>Para presentar quién eres, qué servicios ofreces y cómo visitarte o contratarte. Incluye espacio para fotos, horarios, ubicación y contacto.</small></span>
-        </label>
-        <label class="opcion">
-          <input type="radio" name="tipo" value="Menú digital para restaurantes" data-tipo="menu">
-          <span>Menú digital para restaurantes<small>Para taquerías, cafeterías y otros negocios de comida. Organiza platillos y bebidas por categoría, con precios, fotos y extras. Puedes solicitar pedidos para recoger, a domicilio o desde las mesas.</small></span>
-        </label>
-        <label class="opcion">
-          <input type="radio" name="tipo" value="Catálogo de productos para comercios" data-tipo="catalogo">
-          <span>Catálogo de productos para comercios<small>Para mostrar artículos con fotos, precios y variantes como tallas, colores o modelos. Puedes usarlo como escaparate para consultas o agregar carrito y cobro para vender en línea.</small></span>
-        </label>
-      </fieldset>
-
+        <div id="resumen-paquete-web" class="resumen-paquete-web" hidden aria-live="polite">
+          <h3 id="nombre-paquete-web"></h3><p id="precio-paquete-web"></p><p id="alcance-paquete-web"></p>
+          <a id="ficha-paquete-web" href="paquetes-web.html">Ver ficha del paquete</a>
+        </div>
       <fieldset id="funciones-web" hidden>
-        <legend>Funciones opcionales</legend>
-        <p id="ayuda-pedidos" class="ayuda-cotizacion" hidden>Para vender desde tu sitio, marca <strong>Carrito y pedidos desde la página</strong>. Eso habilita las opciones de cobro. Si prefieres atender los pedidos en el chat, selecciona <strong>Pedidos por WhatsApp</strong>.</p>
-        <label class="opcion" data-paginas="productos">
+        <legend id="leyenda-funciones-web">Características y funciones del proyecto</legend>
+        <p id="orientacion-paquete-web" class="ayuda-cotizacion" hidden>Todas las funciones están disponibles para seleccionar. Al marcar o desmarcar opciones se ajusta el paquete al que cubre tus necesidades, sin marcar otras funciones automáticamente. Si eliges otro paquete directamente en la tabla, se carga su selección inicial. Proyecto a medida conserva la cotización personalizada.</p>
+        <p id="ayuda-pedidos" class="ayuda-cotizacion" hidden>Las funciones que requieren carrito lo seleccionan automáticamente. Si desmarcas el carrito, se desmarcan también sus funciones dependientes.</p>
+        <h3 id="titulo-funciones-plan" hidden>Funciones del paquete</h3>
+        <p id="conteo-funciones-plan" class="nota" hidden></p>
+        <p id="aviso-ajuste-paquete" class="aviso-ajuste-paquete" role="status" aria-live="polite" hidden></p>
+        <div id="funciones-plan">
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Página comercial personalizada"><span>Página comercial personalizada<small>Presentación del negocio, identidad y servicios.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Información de contacto y horarios"><span>Información de contacto y horarios<small>WhatsApp, redes, ubicación y horarios.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Menú digital"><span>Menú digital<small>Platillos, bebidas, fotografías y precios por categoría.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Catálogo de productos"><span>Catálogo de productos<small>Artículos, fotografías, precios y variantes según el proyecto.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion>
           <input type="checkbox" id="pedidos-web" name="funciones" value="Carrito y pedidos desde la página">
-          <span>Carrito y pedidos desde la página<small>El cliente agrega artículos, elige cantidades y confirma su pedido en el sitio. El negocio recibe el pedido registrado.</small></span>
+          <span>Carrito y pedidos desde la página<small>El cliente agrega artículos, elige cantidades y confirma su pedido en el sitio. El negocio recibe el pedido registrado.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-paginas="productos">
+        <label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Pedidos por WhatsApp">
-          <span>Pedidos por WhatsApp<small>El cliente abre el chat con su solicitud y el negocio confirma el pedido por WhatsApp. Puedes elegir esta opción por sí sola o junto al carrito.</small></span>
+          <span>Pedidos por WhatsApp<small>El cliente abre el chat con su solicitud y el negocio confirma el pedido por WhatsApp. Puedes elegir esta opción por sí sola o junto al carrito.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
+        <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Efectivo y transferencias con registro manual">
-          <span>Efectivo y transferencias<small>Muestra las instrucciones de pago. El encargado verifica las transferencias o registra el cobro en efectivo. Requiere carrito.</small></span>
+          <span>Efectivo y transferencias<small>Muestra las instrucciones de pago. El encargado verifica las transferencias o registra el cobro en efectivo. Requiere carrito.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
+        <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Cotizar integración de pagos en línea con tarjeta">
-          <span>Pagos en línea con tarjeta<small>Solicita cotización para integrar una plataforma de pagos. Requiere carrito y una cuenta del negocio con el proveedor de pagos.</small></span>
+          <span>Pagos en línea con tarjeta<small>Solicita cotización para integrar una plataforma de pagos. Requiere carrito y una cuenta del negocio con el proveedor de pagos.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
+        <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Pedidos para recoger o a domicilio">
-          <span>Pedidos para recoger o a domicilio<small>Dirección y costo de envío. Requiere pedidos desde la página.</small></span>
+          <span>Pedidos para recoger o a domicilio<small>Dirección y costo de envío. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-paginas="menu" data-requiere="pedidos-web">
+        <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Pedidos desde las mesas">
-          <span>Pedidos desde las mesas<small>QR por mesa. Requiere pedidos desde la página.</small></span>
+          <span>Pedidos desde las mesas<small>QR por mesa. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-paginas="negocio">
+        <label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Reservaciones y agenda">
-          <span>Agenda y reservaciones de citas<small>Para dentistas, estilistas, barberías, consultorios y servicios profesionales. Los clientes pueden solicitar una fecha y hora; el negocio organiza la disponibilidad y confirma las citas.</small></span>
+          <span>Agenda y reservaciones de citas<small>Para dentistas, estilistas, barberías, consultorios y servicios profesionales. Los clientes pueden solicitar una fecha y hora; el negocio organiza la disponibilidad y confirma las citas.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-paginas="negocio">
+        <label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Reservaciones de tours y pases turísticos">
-          <span>Reservaciones de tours, actividades y pases turísticos<small>Para excursiones, paseos y experiencias. Permite solicitar fecha, horario y número de personas, consultar cupos y gestionar confirmaciones. La emisión de pases digitales y los pagos en línea se cotizan según el proyecto.</small></span>
+          <span>Reservaciones de tours, actividades y pases turísticos<small>Para excursiones, paseos y experiencias. Permite solicitar fecha, horario y número de personas, consultar cupos y gestionar confirmaciones. La emisión de pases digitales y los pagos en línea se cotizan según el proyecto.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-paginas="negocio">
+        <label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Panel privado">
-          <span>Panel privado<small>Edita contenido, precios, horarios o disponibilidad según tu página.</small></span>
+          <span>Panel privado<small>Edita contenido, precios, horarios o disponibilidad según tu página.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-paginas="menu" data-requiere="pedidos-web">
+        <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Pantalla de cocina y comandas">
-          <span>Pantalla de cocina y comandas<small>Preparación y comandas imprimibles. Requiere pedidos desde la página.</small></span>
+          <span>Pantalla de cocina y comandas<small>Preparación y comandas imprimibles. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
+        <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Seguimiento de pedidos">
-          <span>Seguimiento de pedidos<small>Estado de preparación, entrega y pago por folio. Requiere pedidos desde la página.</small></span>
+          <span>Seguimiento de pedidos<small>Estado de preparación, entrega y pago por folio. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-paginas="productos" data-requiere="pedidos-web">
+        <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Reportes de pedidos y cobros">
-          <span>Reportes de pedidos y cobros<small>Exportación en CSV. Requiere pedidos desde la página.</small></span>
+          <span>Reportes de pedidos y cobros<small>Exportación en CSV. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
         </label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Punto de venta y caja"><span>Punto de venta y caja<small>Registro de ventas y control de caja.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Inventario básico"><span>Inventario básico<small>Existencias de productos y movimientos básicos.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Tickets"><span>Tickets<small>Emisión de comprobantes internos de operación, no facturas fiscales.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Inventario avanzado"><span>Inventario avanzado<small>Control avanzado de existencias y movimientos.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Costos y proveedores"><span>Costos y proveedores<small>Organización de costos y proveedores.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Fidelización"><span>Fidelización<small>Herramientas para atención y fidelización de clientes.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Administración avanzada"><span>Administración avanzada<small>Herramientas adicionales de administración según el giro.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Automatizaciones"><span>Automatizaciones<small>Automatización de tareas según el alcance acordado.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Reportes avanzados"><span>Reportes avanzados<small>Indicadores y reportes de operación según el giro.</small><small class="nivel-funcion" hidden></small></span></label>
+        </div>
+        <p class="nota">Las funcionalidades se adaptan a las necesidades de tu negocio. El alcance definitivo se confirma en la propuesta antes de contratar, de acuerdo con la disponibilidad de los módulos.</p>
       </fieldset>
 
       <fieldset>
@@ -140,7 +149,7 @@
         </label>
         <label class="opcion">
           <input type="checkbox" name="complementos" value="Capacitación para administrar la página">
-          <span>Capacitación para administrar la página<small>Sesión práctica o guía paso a paso para que tú o tu encargado aprendan a actualizar precios, textos u horarios y a usar el panel, según las funciones contratadas.</small></span>
+          <span>Capacitación adicional para administrar la página<small>Sesión práctica o guía paso a paso para que tú o tu encargado aprendan a actualizar precios, textos u horarios y a usar el panel, según las funciones contratadas.</small></span>
         </label>
       </fieldset>
 
@@ -167,31 +176,11 @@
         </div>
       </fieldset>
 
-      <section class="condiciones-comerciales" aria-labelledby="titulo-condiciones-web">
-        <h2 id="titulo-condiciones-web">¿Qué sucede después de entregar tu página?</h2>
-        <p>Antes de contratar, conocerás por separado el costo de desarrollo, el dominio y la cuota de operación y mantenimiento. <strong>Enviar este formulario no genera ningún cargo.</strong></p>
-
-        <h3>Operación, mantenimiento y dominio</h3>
-        <p>Los paquetes del catálogo están en desarrollo y sus mensualidades son referencias previstas. En proyectos a medida, la cuota y la periodicidad de operación se acuerdan en la propuesta. El dominio propio se cobra por separado cuando corresponda; un dominio .com gestionado tiene una referencia de $700 MXN al año, antes de IVA cuando corresponda. Un subdominio incluido no requiere pagar ese registro.</p>
-
-        <h3>¿Qué cubre el mantenimiento?</h3>
-        <p>Supervisión técnica básica del funcionamiento, revisión de errores, seguridad y respaldos cuando corresponda al tipo de página. En sistemas de pedidos, el plan básico contempla <strong>hasta dos horas al mes de atención de incidencias técnicas ordinarias</strong>, no acumulables, en horario de atención acordado. No incluye atención inmediata 24/7.</p>
-        <p>Cuando tu sitio tenga un panel de administración, podrás gestionar los productos, precios y contenidos habilitados sin solicitar cambios técnicos.</p>
-
-        <h3>Garantía y cambios posteriores</h3>
-        <ul class="condiciones-lista">
-          <li><strong>Garantía de 60 días:</strong> corregimos sin costo errores atribuibles al desarrollo originalmente contratado, conforme al alcance aprobado.</li>
-          <li><strong>Modificaciones adicionales:</strong> cambios de diseño, textos, fotografías, secciones, formularios o funciones nuevas se cotizan por separado, salvo que la propuesta indique expresamente que están incluidos.</li>
-          <li><strong>Sin cambios sorpresa:</strong> te informamos el alcance y costo de cada modificación y solo la realizamos después de tu autorización.</li>
-        </ul>
-        <p class="nota">El mantenimiento no incluye nuevas funcionalidades, rediseños, actualizaciones masivas de contenido ni servicios de terceros. La renovación y sus condiciones se comunican antes del vencimiento; la continuidad se acuerda con el cliente.</p>
-      </section>
-
       <fieldset class="datos">
         <legend>Datos de tu negocio</legend>
         <label>Tu nombre <input name="nombre" autocomplete="name" maxlength="100" required></label>
         <label>Nombre del negocio <input name="negocio" autocomplete="organization" maxlength="100" required></label>
-        <label>Giro <input name="giro" maxlength="80" placeholder="Ej. cafetería" required></label>
+        <label>Giro comercial <input name="giro" maxlength="80" placeholder="Ej. cafetería" required></label>
         <label>WhatsApp de contacto <input type="tel" name="telefono" autocomplete="tel" maxlength="25" pattern="\+?[0-9](?:[0-9\s.\(\)\-]*[0-9])?" aria-describedby="ayuda-telefono" required></label>
         <small id="ayuda-telefono">Escribe tu número de México a 10 dígitos; puedes anteponer +52.</small>
         <label>Presupuesto estimado (opcional)
@@ -209,6 +198,33 @@
         </label>
         <label>Cuéntanos qué necesitas <textarea name="detalles" rows="4" maxlength="500" placeholder="Ej. Quiero mostrar mi menú con fotos y recibir pedidos para recoger." required></textarea></label>
       </fieldset>
+
+      <details id="condiciones-paquetes" class="condiciones-comerciales condiciones-desplegables">
+        <summary><h2 id="titulo-condiciones-web">Condiciones generales del servicio</h2></summary>
+        <div class="contenido-condiciones">
+        <p>Consulta las <a href="paquetes-web.html#fichas-paquetes">características, precios y alcance de los cuatro paquetes</a>. A continuación te explicamos las condiciones de implementación y mantenimiento.</p>
+        <p>Antes de contratar, conocerás por separado el costo de desarrollo, el dominio y la cuota de operación y mantenimiento. <strong>Enviar este formulario no genera ningún cargo.</strong></p>
+
+        <h3>Operación, mantenimiento y dominio</h3>
+        <p>La implementación de los paquetes parte del precio publicado; la mensualidad corresponde al alcance estándar contratado e incluye alojamiento, mantenimiento técnico, actualizaciones de seguridad y corrección de errores. Cada suscripción corresponde a un establecimiento. En proyectos a medida o sucursales adicionales, el alcance y la cuota se acuerdan en la propuesta. El dominio propio se cobra por separado cuando corresponda; un dominio .com gestionado tiene una referencia de $700 MXN al año, antes de IVA cuando corresponda. Un subdominio incluido no requiere pagar ese registro.</p>
+
+        <h3>¿Qué cubre el mantenimiento?</h3>
+        <p>Supervisión técnica básica del funcionamiento, revisión de errores, seguridad y respaldos cuando corresponda al tipo de página. En sistemas de pedidos, el plan básico contempla <strong>hasta dos horas al mes de atención de incidencias técnicas ordinarias</strong>, no acumulables, en horario de atención acordado. No incluye atención inmediata 24/7.</p>
+        <p>Cuando tu sitio tenga un panel de administración, podrás gestionar los productos, precios y contenidos habilitados sin solicitar cambios técnicos.</p>
+
+        <h3>Capacitación y servicios adicionales</h3>
+        <p>Incluimos orientación inicial para utilizar las funciones contratadas y soporte técnico remoto según el alcance y horario acordados. Las nuevas funciones, personalizaciones especiales, capacitación adicional, visitas presenciales adicionales, comisiones de pago, servicios de terceros y productos físicos (soportes QR, llaveros NFC, impresoras de tickets y accesorios) se cotizan por separado. No se incluye soporte ilimitado.</p>
+        <p class="nota">Todos los precios son en MXN + IVA. Consulta las <a href="paquetes-web.html#condiciones-servicio">condiciones generales de los paquetes</a>. La propuesta individual confirma el alcance, la disponibilidad y los costos antes de contratar.</p>
+
+        <h3>Garantía y cambios posteriores</h3>
+        <ul class="condiciones-lista">
+          <li><strong>Garantía de 60 días:</strong> corregimos sin costo errores atribuibles al desarrollo originalmente contratado, conforme al alcance aprobado.</li>
+          <li><strong>Modificaciones adicionales:</strong> cambios de diseño, textos, fotografías, secciones, formularios o funciones nuevas se cotizan por separado, salvo que la propuesta indique expresamente que están incluidos.</li>
+          <li><strong>Sin cambios sorpresa:</strong> te informamos el alcance y costo de cada modificación y solo la realizamos después de tu autorización.</li>
+        </ul>
+        <p class="nota">El mantenimiento no incluye nuevas funcionalidades, rediseños, actualizaciones masivas de contenido ni servicios de terceros. La renovación y sus condiciones se comunican antes del vencimiento; la continuidad se acuerda con el cliente.</p>
+        </div>
+    </details>
 
       <label class="privacidad-web"><input type="checkbox" name="privacidad" required> Leí y acepto el <a href="aviso-privacidad.html" target="_blank" rel="noopener noreferrer">aviso de privacidad</a> para el tratamiento de mis datos y atención de esta solicitud.</label>
       <button type="submit" class="accion">Revisar solicitud <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#flecha"/></svg></button>

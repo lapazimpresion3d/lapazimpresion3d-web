@@ -1,6 +1,6 @@
 const formularioWeb = document.querySelector('#form-web');
 const funcionesWeb = document.querySelector('#funciones-web');
-const opcionesWeb = funcionesWeb.querySelectorAll('[data-paginas]');
+const opcionesWeb = funcionesWeb.querySelectorAll('[data-funcion]');
 const ayudaPedidos = document.querySelector('#ayuda-pedidos');
 const revisionWeb = document.querySelector('#revision-web');
 const mensajeWeb = document.querySelector('#mensaje-web');
@@ -13,29 +13,189 @@ function actualizarDominio() {
 formularioWeb.addEventListener('change', actualizarDominio);
 
 
+const planesCotizacion = {
+  "presencia-digital": {
+    "nombre": "Presencia digital",
+    "precio": "Implementación desde $750 MXN · $149 MXN al mes + IVA",
+    "alcance": "Página comercial con identidad, horarios, ubicación y contacto. Menú o catálogo básico, según el tipo de negocio. Acceso desde QR/NFC y consultas por WhatsApp.",
+    "funciones": [
+      "Página comercial personalizada",
+      "Información de contacto y horarios",
+      "Menú digital",
+      "Catálogo de productos",
+      "Pedidos por WhatsApp"
+    ]
+  },
+  "negocio-interactivo": {
+    "nombre": "Negocio interactivo",
+    "precio": "Implementación desde $1,500 MXN · $249 MXN al mes + IVA",
+    "alcance": "Funciones de presencia digital. Carrito, pedidos y seguimiento para menús o catálogos. Agenda o reservaciones según el giro. Panel privado; cocina básica y pedidos de mesa cuando corresponda.",
+    "funciones": [
+      "Página comercial personalizada",
+      "Información de contacto y horarios",
+      "Menú digital",
+      "Catálogo de productos",
+      "Pedidos por WhatsApp",
+      "Carrito y pedidos desde la página",
+      "Pedidos para recoger o a domicilio",
+      "Pedidos desde las mesas",
+      "Reservaciones y agenda",
+      "Reservaciones de tours y pases turísticos",
+      "Panel privado",
+      "Pantalla de cocina y comandas",
+      "Seguimiento de pedidos"
+    ]
+  },
+  "gestion-comercial": {
+    "nombre": "Gestión comercial",
+    "precio": "Implementación desde $2,500 MXN · $349 MXN al mes + IVA",
+    "alcance": "Funciones de Negocio interactivo, según el giro. Punto de venta, caja y registro de cobros. Inventario básico para productos; comandas o atención de servicios. Tickets y reportes de pedidos y cobros.",
+    "funciones": [
+      "Página comercial personalizada",
+      "Información de contacto y horarios",
+      "Menú digital",
+      "Catálogo de productos",
+      "Pedidos por WhatsApp",
+      "Carrito y pedidos desde la página",
+      "Pedidos para recoger o a domicilio",
+      "Pedidos desde las mesas",
+      "Reservaciones y agenda",
+      "Reservaciones de tours y pases turísticos",
+      "Panel privado",
+      "Pantalla de cocina y comandas",
+      "Seguimiento de pedidos",
+      "Efectivo y transferencias con registro manual",
+      "Reportes de pedidos y cobros",
+      "Punto de venta y caja",
+      "Inventario básico",
+      "Tickets"
+    ]
+  },
+  "gestion-profesional": {
+    "nombre": "Gestión profesional",
+    "precio": "Implementación desde $3,500 MXN · $499 MXN al mes + IVA",
+    "alcance": "Funciones de Gestión comercial, según el giro. Inventario avanzado, costos y proveedores. Fidelización y administración avanzada. Automatizaciones y reportes avanzados.",
+    "funciones": [
+      "Página comercial personalizada",
+      "Información de contacto y horarios",
+      "Menú digital",
+      "Catálogo de productos",
+      "Pedidos por WhatsApp",
+      "Carrito y pedidos desde la página",
+      "Pedidos para recoger o a domicilio",
+      "Pedidos desde las mesas",
+      "Reservaciones y agenda",
+      "Reservaciones de tours y pases turísticos",
+      "Panel privado",
+      "Pantalla de cocina y comandas",
+      "Seguimiento de pedidos",
+      "Efectivo y transferencias con registro manual",
+      "Reportes de pedidos y cobros",
+      "Punto de venta y caja",
+      "Tickets",
+      "Inventario avanzado",
+      "Costos y proveedores",
+      "Fidelización",
+      "Administración avanzada",
+      "Automatizaciones",
+      "Reportes avanzados"
+    ]
+  }
+};
+const resumenPaquete = document.getElementById('resumen-paquete-web');
+const tablaPaquetes = document.getElementById('precios-paquetes');
+const radiosPaquete = Array.from(tablaPaquetes.querySelectorAll('input[name="paquete"]'));
+const ordenPaquetes = Object.keys(planesCotizacion);
+const coberturas = new Map(ordenPaquetes.map(clave=>[clave,new Set(planesCotizacion[clave].funciones)]));
+// El inventario avanzado cubre el básico, aunque no se premarquen dos módulos de inventario.
+coberturas.get('gestion-profesional').add('Inventario básico');
+const funcionesCatalogo = new Set(Array.from(coberturas.values()).flatMap(s=>Array.from(s)));
+let claveActiva = 'a-medida';
+let modoMedida = false;
+let incluidas = new Set();
+let avisoAjuste = '';
+function camposSeleccionados() {
+  return Array.from(opcionesWeb).map(o=>o.querySelector('input')).filter(c=>c.checked).map(c=>c.value);
+}
+function recomendarPaquete(seleccionadas) {
+  const estandar = seleccionadas.filter(v=>funcionesCatalogo.has(v));
+  if (!estandar.length) return 'a-medida';
+  return ordenPaquetes.find(clave=>estandar.every(v=>coberturas.get(clave).has(v))) || 'a-medida';
+}
+function seleccionarPaquete(clave) {
+  claveActiva = ordenPaquetes.includes(clave) ? clave : 'a-medida';
+  modoMedida = claveActiva === 'a-medida';
+  avisoAjuste = '';
+  const funciones = new Set(planesCotizacion[claveActiva]?.funciones || []);
+  for (const opcion of opcionesWeb) opcion.querySelector('input').checked = funciones.has(opcion.querySelector('input').value);
+  actualizarFunciones();
+}
 function actualizarFunciones() {
-  const tipo = formularioWeb.querySelector('[name="tipo"]:checked')?.dataset.tipo;
-  const disponibles = {
-    productos: tipo === 'menu' || tipo === 'catalogo',
-    menu: tipo === 'menu',
-    negocio: Boolean(tipo && tipo !== 'contacto')
-  };
-  let hayFunciones = false;
-
+  const plan = planesCotizacion[claveActiva];
+  incluidas = coberturas.get(claveActiva) || new Set();
+  for (const radio of radiosPaquete) {
+    radio.checked = radio.value === claveActiva;
+    radio.closest('tr').classList.toggle('paquete-seleccionado',radio.checked);
+  }
+  const seleccionadas = camposSeleccionados();
   for (const opcion of opcionesWeb) {
     const campo = opcion.querySelector('input');
-    const requiere = opcion.dataset.requiere;
-    opcion.hidden = !disponibles[opcion.dataset.paginas];
-    campo.disabled = opcion.hidden || Boolean(requiere && !document.getElementById(requiere).checked);
-    if (campo.disabled) campo.checked = false;
-    hayFunciones ||= !opcion.hidden;
+    // Todas las casillas son seleccionables; las dependencias se resuelven al editarlas.
+    opcion.hidden = false;
+    campo.disabled = false;
+    opcion.classList.toggle('funcion-seleccionada',campo.checked);
+    const minimo = ordenPaquetes.find(clave=>coberturas.get(clave).has(campo.value));
+    const etiqueta = opcion.querySelector('.nivel-funcion');
+    etiqueta.textContent = !minimo ? 'Integración bajo cotización' : plan && !incluidas.has(campo.value) ? 'Desde ' + planesCotizacion[minimo].nombre : '';
+    etiqueta.hidden = !etiqueta.textContent;
   }
-
-  ayudaPedidos.hidden = !disponibles.productos;
-  funcionesWeb.hidden = !hayFunciones;
+  resumenPaquete.hidden = !plan;
+  if (plan) {
+    document.getElementById('nombre-paquete-web').textContent = plan.nombre;
+    document.getElementById('precio-paquete-web').textContent = plan.precio;
+    document.getElementById('alcance-paquete-web').textContent = plan.alcance;
+    document.getElementById('ficha-paquete-web').href = 'paquetes-web.html#' + claveActiva;
+  }
+  document.getElementById('leyenda-funciones-web').textContent = 'Características y funciones del proyecto';
+  document.getElementById('titulo-funciones-plan').hidden = false;
+  document.getElementById('titulo-funciones-plan').textContent = plan ? 'Funciones de ' + plan.nombre : 'Funciones del proyecto a medida';
+  const conteo = document.getElementById('conteo-funciones-plan');
+  conteo.hidden = false;
+  const extras = seleccionadas.filter(v=>!funcionesCatalogo.has(v));
+  conteo.textContent = seleccionadas.length + ' de ' + opcionesWeb.length + ' funciones seleccionadas.' + (extras.length ? ' ' + extras.length + ' integración adicional bajo cotización.' : '');
+  document.getElementById('estado-paquete-web').textContent = (plan ? plan.nombre + ' · ' + plan.precio : 'Proyecto a medida · bajo cotización') + (extras.length ? ' · incluye una integración por cotizar por separado' : '');
+  const aviso = document.getElementById('aviso-ajuste-paquete');
+  aviso.textContent = avisoAjuste;
+  aviso.hidden = !avisoAjuste;
+  document.getElementById('orientacion-paquete-web').hidden = false;
+  ayudaPedidos.hidden = false;
+  funcionesWeb.hidden = false;
 }
-
-formularioWeb.addEventListener('change', actualizarFunciones);
+function editarFuncion(campo) {
+  const opcion = campo.closest('[data-funcion]');
+  if (!opcion) return;
+  // Elegir una función dependiente activa su requisito; quitar el requisito retira sus dependientes.
+  if (campo.checked && opcion.dataset.requiere) document.getElementById(opcion.dataset.requiere).checked = true;
+  if (!campo.checked && campo.id) {
+    for (const otra of opcionesWeb) if (otra.dataset.requiere === campo.id) otra.querySelector('input').checked = false;
+  }
+  if (!modoMedida) {
+    const anterior = claveActiva;
+    claveActiva = recomendarPaquete(camposSeleccionados());
+    if (anterior !== claveActiva) avisoAjuste = 'Paquete ajustado automáticamente a ' + (planesCotizacion[claveActiva]?.nombre || 'Proyecto a medida') + ' según tus funciones. Se conservaron tus selecciones.';
+  }
+  actualizarFunciones();
+}
+formularioWeb.addEventListener('change', evento => {
+  if (evento.target?.name === 'funciones') editarFuncion(evento.target);
+});
+for (const radio of radiosPaquete) {
+  radio.addEventListener('change',()=>seleccionarPaquete(radio.value));
+  radio.closest('tr').addEventListener('click', evento => {
+    if (evento.target.closest('label, input')) return;
+    if (!radio.checked) seleccionarPaquete(radio.value);
+  });
+}
 window.addEventListener('pageshow', actualizarFunciones);
 
 const telefonoWeb = formularioWeb.elements.telefono;
@@ -62,9 +222,8 @@ formularioWeb.addEventListener('submit', (evento) => {
     nombre: String(f.get('nombre') || '').trim(),
     negocio: String(f.get('negocio') || '').trim(),
     giro: String(f.get('giro') || '').trim(),
-    paquete: formularioWeb.elements.paquete.selectedOptions[0]?.value ? formularioWeb.elements.paquete.selectedOptions[0].textContent.trim() : '',
+    paquete: Object.hasOwn(planesCotizacion, f.get('paquete')) ? planesCotizacion[f.get('paquete')].nombre : '',
     telefono,
-    tipo_pagina: String(f.get('tipo') || ''),
     funciones: f.getAll('funciones').map(String),
     complementos: f.getAll('complementos').map(String),
     detalles: String(f.get('detalles') || '').trim(),
@@ -79,8 +238,8 @@ formularioWeb.addEventListener('submit', (evento) => {
     `Giro: ${datosPendientes.giro}`,
     `Paquete de interés: ${datosPendientes.paquete || "Proyecto a medida / sin definir"}`,
     `WhatsApp: ${datosPendientes.telefono}`,
-    `Tipo de página: ${datosPendientes.tipo_pagina}`,
     `Funciones: ${datosPendientes.funciones.join('; ') || 'Ninguna'}`,
+    ...(datosPendientes.paquete ? [`Funciones adicionales bajo revisión: ${datosPendientes.funciones.filter(x => !incluidas.has(x)).join('; ') || 'Ninguna'}`] : []),
     `Complementos: ${datosPendientes.complementos.join('; ') || 'Ninguno'}`,
     `Presupuesto: ${datosPendientes.presupuesto || "No indicado"}`,
     `Modalidad de dirección: ${({subdominio:"Subdominio incluido",necesito_dominio:"Dominio .com nuevo",tengo_dominio:"Dominio existente",orientacion:"Necesita orientación"})[datosPendientes.situacion_dominio] || datosPendientes.situacion_dominio}`,
@@ -90,6 +249,7 @@ formularioWeb.addEventListener('submit', (evento) => {
   resumenWeb.textContent = lineas.join('\n');
   errorWeb.hidden = true;
   formularioWeb.hidden = true;
+  tablaPaquetes.hidden = true;
   revisionWeb.hidden = false;
   document.querySelector('#titulo-revision').focus();
 });
@@ -100,7 +260,8 @@ document.querySelector('#editar-cotizacion').addEventListener('click', () => {
   if (botonEnviar.disabled) return;
   revisionWeb.hidden = true;
   formularioWeb.hidden = false;
-  formularioWeb.querySelector('[name="tipo"]:checked')?.focus();
+  tablaPaquetes.hidden = false;
+  radiosPaquete.find(r => r.checked)?.focus();
 });
 
 botonEnviar.addEventListener('click', async () => {
@@ -131,12 +292,25 @@ botonEnviar.addEventListener('click', async () => {
 
 // Solo valores conocidos: no insertar parámetros de URL como HTML ni cambiar selecciones en pageshow.
 const parametrosCatalogo = new URLSearchParams(location.search);
-const selectorPaquete = formularioWeb.elements.paquete;
 const paqueteCatalogo = parametrosCatalogo.get('paquete');
-if (Array.from(selectorPaquete.options).some(o => o.value === paqueteCatalogo)) selectorPaquete.value = paqueteCatalogo;
+const radioInicial = radiosPaquete.find(r => r.value === paqueteCatalogo);
+seleccionarPaquete(radioInicial?.value || radiosPaquete.find(r=>r.checked)?.value || 'a-medida');
 const girosCatalogo = new Map([["restaurante","Restaurante / taquería"],["cafeteria","Cafetería"],["barberia","Barbería / estética"],["mascotas","Tienda de mascotas"],["comercio","Comercio / tienda"],["servicios","Servicios profesionales"],["turismo","Turismo y actividades"],["otro","Otro giro"]]);
 const giroCatalogo = parametrosCatalogo.get('giro');
 if (!formularioWeb.elements.giro.value && girosCatalogo.has(giroCatalogo)) formularioWeb.elements.giro.value = girosCatalogo.get(giroCatalogo);
-actualizarFunciones();
 actualizarDominio();
 formularioWeb.hidden = false;
+// El panel está cerrado inicialmente; el enlace directo a condiciones lo abre.
+function abrirCondicionesDesdeEnlace() {
+  if (location.hash !== "#condiciones-paquetes") return;
+  const destino = document.getElementById("condiciones-paquetes");
+  if (!destino) return;
+  destino.open = true;
+  requestAnimationFrame(() => {
+    if (location.hash !== "#condiciones-paquetes") return;
+    destino.querySelector("summary")?.focus({preventScroll:true});
+    destino.scrollIntoView({block:"start"});
+  });
+}
+abrirCondicionesDesdeEnlace();
+window.addEventListener("hashchange", abrirCondicionesDesdeEnlace);
