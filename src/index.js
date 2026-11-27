@@ -130,13 +130,17 @@ async function hashTokenCliente(token) {
   return Array.from(new Uint8Array(buffer),b=>b.toString(16).padStart(2,"0")).join("");
 }
 const SECCIONES_CLIENTE=["datos_negocio","servicios_productos","horarios_contacto","indicaciones"];
+const ESTADOS_REVISION_MATERIAL = new Set(["recibido","requiere_correccion","aprobado"]);
+function revisionMaterialValida(data,esTexto) {
+  return !!data && ESTADOS_REVISION_MATERIAL.has(data.estado) && (!esTexto || (typeof data.version==="string" && data.version.length<=35 && Number.isFinite(Date.parse(data.version))));
+}
 async function proyectoDeCliente(request,env,tokenExplicito) {
   const cookie=(request.headers.get("Cookie")||"").split(";").map(x=>x.trim()).find(x=>x.startsWith("lp3d_cliente="));
   const token=tokenExplicito||cookie?.slice("lp3d_cliente=".length);
   if(!token || !/^[A-Za-z0-9_-]{43}$/.test(token))return null;
   const hash=await hashTokenCliente(token);
   return await env.QUIZ_DB.prepare(
-    "SELECT p.id,p.estado,p.propuesta_id,q.folio,q.nombre,q.proyecto,q.servicio_id,q.ficha_json FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.acceso_token_hash=?1 AND p.acceso_revocado=0 AND p.acceso_expira>?2 AND p.estado<>'cancelado'"
+    "SELECT p.id,p.estado,p.propuesta_id,p.instrucciones,q.folio,q.nombre,q.proyecto,q.servicio_id,q.ficha_json FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.acceso_token_hash=?1 AND p.acceso_revocado=0 AND p.acceso_expira>?2 AND p.estado<>'cancelado'"
   ).bind(hash,new Date().toISOString()).first();
 }
 async function leerJson(request, max=6000) {
@@ -447,7 +451,7 @@ async function api(request,env,ctx) {
     if(path==="/api/cliente/materiales" && request.method==="GET") {
       const secciones=await env.QUIZ_DB.prepare("SELECT clave,contenido,estado,fecha_actualizacion FROM proyecto_secciones WHERE proyecto_id=?1")
         .bind(p.id).all();
-      const archivos=await env.QUIZ_DB.prepare("SELECT id,categoria,nombre_original,tipo_mime,tamano_bytes,fecha_subida FROM proyecto_archivos WHERE proyecto_id=?1 ORDER BY fecha_subida DESC").bind(p.id).all();
+      const archivos=await env.QUIZ_DB.prepare("SELECT id,categoria,nombre_original,tipo_mime,tamano_bytes,fecha_subida,estado FROM proyecto_archivos WHERE proyecto_id=?1 ORDER BY fecha_subida DESC").bind(p.id).all();
       let ficha={};try{ficha=JSON.parse(p.ficha_json||"{}");}catch{}
       let categoria=ficha.servicio||"web";
       if(ficha.tipo_documento==="ficha_quiz"){
@@ -457,7 +461,7 @@ async function api(request,env,ctx) {
       const cotizacion=ficha.tipo_documento==="solicitud_servicio"
         ?{campos:ficha.campos&&typeof ficha.campos==="object"?ficha.campos:{},fecha_deseada:ficha.fecha_deseada||"",detalles:ficha.detalles||"",contexto:ficha.contexto||"",fecha_prioritaria:ficha.fecha_prioritaria||""}
         :null;
-      return json({proyecto:{folio:p.folio,nombre:p.nombre,proyecto:p.proyecto,estado:p.estado,categoria},cotizacion,secciones:secciones.results,archivos:archivos.results});
+      return json({proyecto:{folio:p.folio,nombre:p.nombre,proyecto:p.proyecto,estado:p.estado,categoria,instrucciones:p.instrucciones||""},cotizacion,secciones:secciones.results,archivos:archivos.results});
     }
     const archivoCliente=path.match(/^\/api\/cliente\/archivos\/([0-9a-f-]{36})$/i);
     if(archivoCliente && request.method==="GET"){
@@ -490,7 +494,7 @@ async function api(request,env,ctx) {
           .bind(id,p.id,f.name.slice(0,120),clave,f.type,f.size,ahora).run();
       }catch(e){await env.COTIZACIONES_R2.delete(clave);throw e;}
       await env.QUIZ_DB.prepare("UPDATE proyectos_cliente SET fecha_actualizacion=?1 WHERE id=?2").bind(ahora,p.id).run();
-      return json({ok:true,archivo:{id,nombre_original:f.name.slice(0,120),tipo_mime:f.type,tamano_bytes:f.size,fecha_subida:ahora}},201);
+      return json({ok:true,archivo:{id,nombre_original:f.name.slice(0,120),tipo_mime:f.type,tamano_bytes:f.size,fecha_subida:ahora,estado:"recibido"}},201);
     }
     if(archivoCliente && request.method==="DELETE"){
       if(!sameOrigin(request))return error("Origen no autorizado",403);
@@ -524,11 +528,33 @@ async function api(request,env,ctx) {
     // Consulta administrativa de materiales recibidos sin exponer R2 públicamente.
     const materialesAdmin=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/materiales$/i);
     if(materialesAdmin && request.method==="GET"){
-      const p=await env.QUIZ_DB.prepare("SELECT p.id,q.folio FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.id=?1").bind(materialesAdmin[1]).first();
+      const p=await env.QUIZ_DB.prepare("SELECT p.id,p.instrucciones,q.folio FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.id=?1").bind(materialesAdmin[1]).first();
       if(!p)return error("Proyecto no encontrado",404);
       const sec=await env.QUIZ_DB.prepare("SELECT clave,contenido,estado,fecha_actualizacion FROM proyecto_secciones WHERE proyecto_id=?1").bind(p.id).all();
-      const archivos=await env.QUIZ_DB.prepare("SELECT id,nombre_original,tipo_mime,tamano_bytes,fecha_subida FROM proyecto_archivos WHERE proyecto_id=?1 ORDER BY fecha_subida DESC").bind(p.id).all();
-      return json({folio:p.folio,secciones:sec.results,archivos:archivos.results});
+      const archivos=await env.QUIZ_DB.prepare("SELECT id,nombre_original,tipo_mime,tamano_bytes,fecha_subida,estado FROM proyecto_archivos WHERE proyecto_id=?1 ORDER BY fecha_subida DESC").bind(p.id).all();
+      return json({folio:p.folio,instrucciones:p.instrucciones||"",secciones:sec.results,archivos:archivos.results});
+    }
+    // Revisión de entregas: sesión administrativa, origen y ámbito del proyecto.
+    const revisionTexto=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/materiales\/secciones\/(datos_negocio|servicios_productos|horarios_contacto|indicaciones)$/i);
+    const revisionArchivo=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/materiales\/archivos\/([0-9a-f-]{36})$/i);
+    if((revisionTexto||revisionArchivo) && request.method==="PATCH"){
+      if(!sameOrigin(request))return error("Origen no autorizado",403);
+      const data=await leerJson(request,300);
+      if(!revisionMaterialValida(data,!!revisionTexto))return error("Revisión inválida",400);
+      const id=(revisionTexto||revisionArchivo)[1],clave=(revisionTexto||revisionArchivo)[2],ahora=new Date().toISOString();
+      const result=revisionTexto
+        ?await env.QUIZ_DB.prepare("UPDATE proyecto_secciones SET estado=?1,fecha_actualizacion=?2 WHERE proyecto_id=?3 AND clave=?4 AND fecha_actualizacion=?5 AND EXISTS (SELECT 1 FROM proyectos_cliente WHERE id=?3 AND estado NOT IN ('finalizado','cancelado'))").bind(data.estado,ahora,id,clave,data.version).run()
+        :await env.QUIZ_DB.prepare("UPDATE proyecto_archivos SET estado=?1 WHERE proyecto_id=?2 AND id=?3 AND EXISTS (SELECT 1 FROM proyectos_cliente WHERE id=?2 AND estado NOT IN ('finalizado','cancelado'))").bind(data.estado,id,clave).run();
+      if(!result.meta.changes)return error("Material actualizado, no encontrado o proyecto cerrado. Vuelve a cargar los materiales.",409);
+      await env.QUIZ_DB.prepare("UPDATE proyectos_cliente SET fecha_actualizacion=?1 WHERE id=?2").bind(ahora,id).run();
+      return json({ok:true,estado:data.estado,fecha_actualizacion:ahora});
+    }
+    if(materialesAdmin && request.method==="PATCH"){
+      if(!sameOrigin(request))return error("Origen no autorizado",403);
+      const data=await leerJson(request,18000);
+      if(typeof data?.instrucciones!=="string"||data.instrucciones.length>2000)return error("Las indicaciones deben tener máximo 2,000 caracteres",400);
+      const result=await env.QUIZ_DB.prepare("UPDATE proyectos_cliente SET instrucciones=?1,fecha_actualizacion=?2 WHERE id=?3 AND estado NOT IN ('finalizado','cancelado')").bind(data.instrucciones.trim(),new Date().toISOString(),materialesAdmin[1]).run();
+      return result.meta.changes?json({ok:true,instrucciones:data.instrucciones.trim()}):error("Proyecto no encontrado o cerrado",409);
     }
     const imagenAdmin=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/archivos\/([0-9a-f-]{36})$/i);
     if(imagenAdmin && request.method==="GET"){

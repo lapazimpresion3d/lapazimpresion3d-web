@@ -41,3 +41,6 @@ npx wrangler d1 migrations apply lapazimpresion3d-quiz --remote
 ```
 
 Antes de ejecutar, comprobar qué migraciones aparecen pendientes. No crear enlaces de clientes hasta publicar y verificar las etapas 2 y 3.
+
+## Revisión de materiales — etapa 4 parcial
+Implementada revisión de textos e imágenes: recibido, requiere corrección o aprobado, desde el panel autenticado. El administrador guarda indicaciones generales visibles exclusivamente al cliente de ese proyecto. Revisiones de texto verifican la versión por fecha para evitar aprobar un texto modificado desde que se abrió el panel. Los cambios del cliente vuelven el texto a recibido. No se permite revisar ni editar indicaciones en proyectos finalizados/cancelados. Se reutilizan las columnas estado e instrucciones de migración 0004, sin nueva migración. Los adjuntos siguen siendo imágenes privadas JPG/PNG/WebP, no documentos ni modelos 3D. Sin envío automático de notificaciones. Verificar en entorno de prueba con D1 y R2 antes de uso con clientes reales.

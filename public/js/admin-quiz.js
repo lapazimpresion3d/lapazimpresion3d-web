@@ -110,6 +110,26 @@ req("/api/admin/sesion").then(()=>{acceso.hidden=true;panel.hidden=false;return 
 
 const listaProyectos=document.querySelector("#lista-proyectos"),estadoProyectos=document.querySelector("#estado-proyectos");
 const estadosProyecto={preparacion:"Preparación",recabando_materiales:"Recabando materiales",en_desarrollo:"En desarrollo",en_revision:"En revisión",finalizado:"Finalizado",cancelado:"Cancelado"};
+const estadosMaterial={pendiente:"Pendiente",recibido:"Recibido · por revisar",requiere_correccion:"Requiere corrección",aprobado:"Aprobado"};
+function controlRevisionMaterial(p,a,tipo){
+ const fila=elem("div","revision-material"),label=elem("label",null,"Estado de revisión "),sel=elem("select"),msg=elem("span","metadatos","");
+ msg.setAttribute("role","status");
+ for(const [k,v] of Object.entries(estadosMaterial)){if(k==="pendiente"&&a.estado!=="pendiente")continue;const o=elem("option",null,v);o.value=k;sel.append(o);}
+ sel.value=a.estado||"recibido";
+ sel.disabled=["finalizado","cancelado"].includes(p.estado);
+ label.append(sel);fila.append(label,msg);
+ sel.addEventListener("change",async()=>{
+   if(sel.value==="pendiente"){sel.value=a.estado;return;}
+   sel.disabled=true;msg.textContent="Guardando…";
+   const clave=tipo==="secciones"?a.clave:a.id;
+   try{
+     const d=await req("/api/admin/proyectos/"+encodeURIComponent(p.id)+"/materiales/"+tipo+"/"+encodeURIComponent(clave),{method:"PATCH",body:JSON.stringify({estado:sel.value,...(tipo==="secciones"?{version:a.fecha_actualizacion}:{})})});
+     a.estado=d.estado;if(tipo==="secciones")a.fecha_actualizacion=d.fecha_actualizacion;
+     msg.textContent="Estado guardado.";
+   }catch(e){sel.value=a.estado;msg.textContent=e.message;}finally{sel.disabled=false;}
+ });
+ return fila;
+}
 async function cargarProyectos(){
  estadoProyectos.textContent="Cargando proyectos…";
  try {
@@ -165,11 +185,21 @@ async function cargarProyectos(){
        art.querySelector(".materiales-administracion")?.remove();
        const caja=elem("section","materiales-administracion");
        caja.append(elem("h4",null,"Materiales del proyecto"));
-       const secciones={datos_negocio:"Primer apartado",servicios_productos:"Segundo apartado",horarios_contacto:"Tercer apartado",indicaciones:"Indicaciones adicionales"};
+       const secciones={datos_negocio:"Datos, descripción o diseño",servicios_productos:"Productos, servicios, cantidad o medidas",horarios_contacto:"Contacto, uso o entrega",indicaciones:"Indicaciones adicionales"};
+       const nota=elem("div","apartado-recibido"),labelNota=elem("label",null,"Indicaciones para el cliente (visibles en su portal)"),txt=elem("textarea");
+       txt.rows=4;txt.maxLength=2000;txt.value=d.instrucciones||"";labelNota.append(txt);
+       const guardar=elem("button","secundario","Guardar indicaciones");guardar.type="button";
+       const mensaje=elem("p","metadatos","");mensaje.setAttribute("role","status");
+       guardar.disabled=txt.disabled=["finalizado","cancelado"].includes(p.estado);
+       guardar.addEventListener("click",async()=>{guardar.disabled=true;mensaje.textContent="Guardando…";try{const r=await req("/api/admin/proyectos/"+encodeURIComponent(p.id)+"/materiales",{method:"PATCH",body:JSON.stringify({instrucciones:txt.value})});txt.value=r.instrucciones;mensaje.textContent="Indicaciones guardadas. El cliente podrá leerlas al abrir o actualizar su portal."; }catch(e){mensaje.textContent=e.message;}finally{guardar.disabled=false;}});
+       nota.append(labelNota,guardar,mensaje);caja.append(nota);
+       const pendientes=d.secciones.filter(a=>a.estado==="requiere_correccion").length+d.archivos.filter(a=>a.estado==="requiere_correccion").length;
+       caja.append(elem("p","metadatos",pendientes+" material(es) requieren corrección al abrir esta revisión."));
        if(!d.secciones.length)caja.append(elem("p",null,"El cliente aún no ha entregado textos."));
        for(const a of d.secciones){
          const bloque=elem("div","apartado-recibido");
          bloque.append(elem("strong",null,secciones[a.clave]||a.clave),elem("p",null,a.contenido||"(Sin texto)"));
+         bloque.append(controlRevisionMaterial(p,a,"secciones"));
          caja.append(bloque);
        }
        caja.append(elem("h4",null,"Imágenes recibidas ("+d.archivos.length+")"));
@@ -177,7 +207,7 @@ async function cargarProyectos(){
        for(const a of d.archivos){
          const link=elem("a","boton-enlace",a.nombre_original||"Ver imagen");
          link.href="/api/admin/proyectos/"+encodeURIComponent(p.id)+"/archivos/"+encodeURIComponent(a.id);
-         link.target="_blank";link.rel="noopener noreferrer";caja.append(link);
+         link.target="_blank";link.rel="noopener noreferrer";const bloque=elem("div","apartado-recibido");bloque.append(link,controlRevisionMaterial(p,a,"archivos"));caja.append(bloque);
        }
        art.append(caja);
      }catch(e){estadoProyectos.textContent=e.message;}finally{revisar.disabled=false;}

@@ -74,6 +74,8 @@ function resumenCotizacionLlaveros(cotizacion){
 }
 const mensaje=document.querySelector("#mensaje-acceso"),panel=document.querySelector("#proyecto"),contenedor=document.querySelector("#secciones"),imagenes=document.querySelector("#imagenes-proyecto"),lista=document.querySelector("#lista-archivos"),estadoFotos=document.querySelector("#estado-archivos");
 let estadoProyecto="",archivos=[];
+const estadosMaterial={pendiente:"Pendiente",recibido:"Recibido · por revisar",requiere_correccion:"Requiere corrección",aprobado:"Aprobado"};
+function pintarEstado(el,estado){el.textContent=estadosMaterial[estado]||estadosMaterial.pendiente;el.dataset.revision=estado||"pendiente";}
 async function api(path,method="GET",data){
  const r=await fetch(path,{method,credentials:"same-origin",headers:data?{"Content-Type":"application/json"}:undefined,body:data?JSON.stringify(data):undefined,cache:"no-store"});
  const value=await r.json().catch(()=>({}));
@@ -87,7 +89,8 @@ function pintarArchivos(){
   const fila=document.createElement("li");fila.className="archivo";
   const nombre=document.createElement("span");nombre.textContent=a.nombre_original+" · "+(a.tamano_bytes/1024/1024).toFixed(2)+" MB";
   const ver=document.createElement("a");ver.textContent="Ver imagen";ver.href="/api/cliente/archivos/"+encodeURIComponent(a.id);ver.target="_blank";ver.rel="noopener noreferrer";
-  fila.append(nombre,ver);
+  const estado=document.createElement("span");estado.className="estado-material";pintarEstado(estado,a.estado||"recibido");
+  fila.append(nombre,estado,ver);
   if(!["finalizado","cancelado"].includes(estadoProyecto)){
    const borrar=document.createElement("button");borrar.type="button";borrar.className="secundario";borrar.textContent="Eliminar";
    borrar.addEventListener("click",async()=>{
@@ -107,6 +110,7 @@ async function iniciar(){
   if(token){history.replaceState(null,"",location.pathname+location.search);await api("/api/cliente/iniciar","POST",{token});}
   const data=await api("/api/cliente/materiales"),p=data.proyecto;
   estadoProyecto=p.estado;
+  const indicaciones=document.querySelector("#indicaciones-revision");indicaciones.hidden=!p.instrucciones;document.querySelector("#texto-indicaciones").textContent=p.instrucciones||"";
   const config=configuraciones[p.categoria]||configuraciones.web;
   document.querySelector("#folio").textContent=p.folio;
   document.querySelector("#nombre-proyecto").textContent=p.proyecto||"Proyecto de "+p.nombre;
@@ -120,7 +124,7 @@ async function iniciar(){
   for(const [clave,titulo,ayuda] of config.secciones){
    const registro=data.secciones.find(s=>s.clave===clave);
    const pendientes=llaveros?(previo.faltantes[clave]||[]):[];
-   const esOpcional=llaveros&&pendientes.length===0&&!registro?.contenido?.trim();
+   const esOpcional=llaveros&&pendientes.length===0&&!registro?.contenido?.trim()&&registro?.estado!=="requiere_correccion";
    const area=document.createElement("section");area.className="bloque";
    const encabezado=document.createElement("h2");encabezado.textContent=llaveros&&clave!=="indicaciones"?(pendientes.length?"Información por completar: "+titulo:"Aclaraciones: "+titulo):titulo;
    const descripcion=document.createElement("p");descripcion.className="mensaje";
@@ -131,10 +135,10 @@ async function iniciar(){
    const input=document.createElement("textarea");input.id=id;input.maxLength=10000;input.value=registro?.contenido||"";input.placeholder=llaveros?(pendientes.join("\n")||"Solo si deseas aclarar algo de lo cotizado"):ayuda;
    const controls=document.createElement("div");controls.className="controles";
    const button=document.createElement("button");button.type="button";button.textContent="Guardar apartado";
-   const estado=document.createElement("span");estado.className="mensaje";estado.setAttribute("role","status");estado.textContent=registro?"Información recibida":"Pendiente";
+   const estado=document.createElement("span");estado.className="mensaje";estado.setAttribute("role","status");estado.classList.add("estado-material");pintarEstado(estado,registro?.estado||"pendiente");
    button.addEventListener("click",async()=>{
     button.disabled=true;estado.classList.remove("error");estado.textContent="Guardando…";
-    try{await api("/api/cliente/secciones/"+clave,"PUT",{contenido:input.value});estado.textContent="Guardado correctamente";}
+    try{await api("/api/cliente/secciones/"+clave,"PUT",{contenido:input.value});pintarEstado(estado,"recibido");}
     catch(e){estado.textContent=e.message;estado.classList.add("error");}
     finally{button.disabled=false;}
    });

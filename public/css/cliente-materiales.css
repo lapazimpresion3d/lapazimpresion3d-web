@@ -17,3 +17,5 @@
 #secciones details>summary{padding:12px 16px;color:var(--azul);font-weight:700;cursor:pointer}
 #secciones details>.bloque{margin-top:0}
 @media(max-width:550px){.resumen-cotizacion{grid-template-columns:1fr;gap:3px}.resumen-cotizacion dd{margin-bottom:10px}}
+
+.indicaciones-revision{border-left:4px solid var(--amarillo)}#texto-indicaciones{white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:0}.estado-material{display:inline-block;font-size:.88rem;font-weight:700;color:#435578;overflow-wrap:anywhere}.estado-material[data-revision=aprobado]{color:#166534}.estado-material[data-revision=requiere_correccion]{color:#a01b2e}.lista-archivos .archivo .estado-material{flex:0 1 auto;min-width:0}
