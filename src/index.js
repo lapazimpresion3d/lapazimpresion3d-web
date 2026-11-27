@@ -645,6 +645,11 @@ async function api(request,env,ctx) {
 export default { async fetch(request,env,ctx) {
   const path=new URL(request.url).pathname;
   try {
+    // Las vistas previas visuales no acceden a D1, R2, correo ni paneles privados.
+    // En la configuración Preview no se enlazan recursos de producción.
+    if(env.MODO_VISTA_PREVIA==="visual" && (path.startsWith("/api/") || path==="/admin" || path.startsWith("/admin/") || path==="/cliente" || path.startsWith("/cliente/"))) {
+      return error("Vista previa visual: funciones de registro y administración desactivadas.",503);
+    }
     if(path.startsWith("/api/")) return await api(request,env,ctx);
     const resp=await env.ASSETS.fetch(request);
     if(path==="/cliente" || path.startsWith("/cliente/") || path==="/admin" || path.startsWith("/admin/")) {

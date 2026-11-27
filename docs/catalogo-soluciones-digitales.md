@@ -16,3 +16,6 @@ Los precios son referencias en MXN + IVA, no oferta de contratación. No fusiona
 - Verificar navegación, galería, cotizaciones de llaveros, QR, resina y piezas a medida, cuestionario, redes y guía NFC.
 - Verificar los enlaces históricos de El Comal desde navegador; no activar nuevas demos sin prueba funcional.
 - Verificar que el despliegue previo no apunte a D1 o correo de producción. No fusionar sin autorización.
+
+## Vista previa visual en Cloudflare
+El bloque `previews` de Wrangler permite generar una vista previa con `npx wrangler preview` sin enlazar D1 ni correo de producción. El Worker bloquea las rutas privadas y API en modo visual; se puede navegar, elegir paquetes y revisar el formulario, pero no registrar solicitudes. Para probar el registro completo hay que configurar recursos de pruebas independientes y ajustar ese modo. Verificar que el comando de despliegue de ramas sea `npx wrangler preview`, no `wrangler deploy` ni la URL de versión heredada que comparte recursos de producción. No fusionar sin autorización.
