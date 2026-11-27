@@ -110,3 +110,23 @@ html:has(.whatsapp-flotante){scroll-padding-bottom:calc(84px + env(safe-area-ins
  .inicio-catalogo .servicio-titulo{font-size:1.35rem}
  .inicio-catalogo #paginas-web .plan-informacion h3{font-size:1.55rem}
 }
+
+/* Refinamiento móvil: comparativa legible y controles plegables coherentes. */
+.inicio-catalogo #navegacion .nav-guia-nfc{background:#c9def8;color:#174ab8;border:1px solid #8aadd9;border-radius:10px;font-weight:800;padding:0 12px;justify-content:center}
+.inicio-catalogo #navegacion .nav-guia-nfc:hover{background:#b5d0f2;color:#123b94}
+.inicio-catalogo .comparativa-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-width:auto}
+.inicio-catalogo .comparativa-scroll:focus-visible{outline:2px solid var(--azul);outline-offset:-2px}
+.inicio-catalogo .comparativa-publica table{min-width:520px;font-size:.9rem}
+.inicio-catalogo .comparativa-publica th,.inicio-catalogo .comparativa-publica td{padding:10px 7px}
+.inicio-catalogo .comparativa-publica thead th{background:#edf2fc;color:#174ab8}
+.inicio-catalogo .comparativa-publica td{white-space:nowrap;text-align:center}
+.inicio-catalogo .comparativa-publica thead th:not(:first-child){text-align:center}
+.inicio-catalogo .comparativa-publica tbody tr:nth-child(even){background:#f7f9fd}
+.inicio-catalogo .comparativa-aviso{display:none}
+.inicio-catalogo .ventajas-resumen{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;list-style:none;min-height:44px}
+.inicio-catalogo .ventajas-resumen::-webkit-details-marker{display:none}
+.inicio-catalogo .ventajas-resumen::marker{content:""}
+.inicio-catalogo .ventajas-resumen h3{margin:0;min-width:0}
+.inicio-catalogo .ventajas-resumen .servicio-indicador{flex:none}
+.inicio-catalogo .ventajas-suscripcion[open]>.ventajas-resumen .servicio-indicador::after{transform:rotate(225deg);margin-top:4px}
+@media(max-width:650px){.inicio-catalogo .comparativa-aviso{display:block;margin:0 0 8px;font-size:.82rem;color:var(--suave)}}
