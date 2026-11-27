@@ -245,13 +245,13 @@
       </div>
       
       
-      <section class="caja explorar-demos destacar-selector" id="selector-demos" aria-labelledby="titulo-selector-demos">
-        <div class="selector-cabecera">
-          <p class="sobrelinea-demo">PRUEBA INTERACTIVA · 20 COMBINACIONES</p>
-          <h3 id="titulo-selector-demos">Explora una demo para tu negocio</h3>
-          <p class="selector-intro">Selecciona tu giro y el paquete que te interesa. Descubre cómo podría funcionar una página web adaptada a tu negocio, tanto para tus clientes como para ti.</p>
-        </div>
+      <details class="caja explorar-demos destacar-selector" id="selector-demos" aria-labelledby="titulo-selector-demos">
+        <summary class="selector-cabecera" style="cursor:pointer;display:list-item;list-style-position:inside">
+          <h3 id="titulo-selector-demos" style="display:inline;margin:0">Explora una demo para tu negocio</h3>
+          <p class="sobrelinea-demo" style="margin:8px 0 0">PRUEBA INTERACTIVA · 20 COMBINACIONES</p>
+        </summary>
         <div class="selector-contenido">
+          <p class="selector-intro" style="color:var(--texto);margin:0 0 18px">Selecciona tu giro y el paquete que te interesa. Descubre cómo podría funcionar una página web adaptada a tu negocio, tanto para tus clientes como para ti.</p>
           <div class="demo-selectores"><label for="demo-giro"><span><b class="selector-numero" aria-hidden="true">1</b> Elige tu giro comercial</span><select id="demo-giro"><option value="cafe-mirador">Cafetería · Café Mirador</option><option value="barberia-elite">Barberías y estéticas · Barbería Elite</option><option value="mundo-mascotas">Tiendas y comercios · Mundo Mascotas</option><option value="auto-servicio-bahia">Talleres y servicios · Auto Servicio Bahía</option><option value="taqueria-el-comal">Restaurantes y taquerías · Taquería El Comal</option></select></label><label for="demo-paquete"><span><b class="selector-numero" aria-hidden="true">2</b> Elige tu paquete</span><select id="demo-paquete"><option value="p1">P1 — Presencia digital</option><option value="p2">P2 — Negocio interactivo</option><option value="p3">P3 — Gestión comercial</option><option value="p4">P4 — Gestión profesional</option></select></label></div>
           <div class="selector-eleccion" aria-live="polite" aria-atomic="true">
             <p class="selector-eleccion-titulo">Tu demostración seleccionada</p>
@@ -263,16 +263,16 @@
           <p class="selector-beneficio">Cambia el giro o el paquete cuantas veces quieras. Puedes probar las funciones disponibles sin generar pedidos, citas ni cobros reales.</p>
           <noscript><p class="nota">Abre cualquiera de los ejemplos desde las fichas de arriba.</p></noscript>
         </div>
-      </section>
-      <div class="ventajas-suscripcion" aria-labelledby="titulo-sin-permanencia">
-        <h3 id="titulo-sin-permanencia">Sin plazos forzosos de permanencia</h3>
-        <p>Paga una implementación inicial y una mensualidad accesible por el uso, alojamiento, seguridad y mantenimiento de tu sistema. Tú decides cuánto tiempo continuar con el servicio.</p>
+      </details>
+      <details class="ventajas-suscripcion" aria-labelledby="titulo-sin-permanencia">
+        <summary style="cursor:pointer;display:list-item;list-style-position:inside"><h3 id="titulo-sin-permanencia" style="display:inline;margin:0">Sin plazos forzosos de permanencia</h3></summary>
+        <p style="margin-top:14px">Paga una implementación inicial y una mensualidad accesible por el uso, alojamiento, seguridad y mantenimiento de tu sistema. Tú decides cuánto tiempo continuar con el servicio.</p>
         <ul class="ventajas-suscripcion-lista">
           <li><strong>Sin plazos forzosos</strong><span>Libertad para continuar o cancelar futuras mensualidades sin penalización por permanencia.</span></li>
           <li><strong>Desde $149 MXN al mes + IVA</strong><span>Una inversión accesible para digitalizar tu negocio.</span></li>
           <li><strong>Alojamiento y mantenimiento incluidos</strong><span>Nos encargamos de la operación técnica según el alcance contratado.</span></li>
         </ul>
-      </div>
+      </details>
       <p class="nota"><a href="cotizacion-web.html#condiciones-paquetes">Ver detalles y condiciones de los paquetes</a>.</p>
       <details id="asistente-paquetes" class="caja asistente-paquetes" aria-labelledby="titulo-asistente-paquetes">
         <summary class="asistente-cabecera">
