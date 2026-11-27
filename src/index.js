@@ -196,6 +196,76 @@ function entregaFinalValida(d,q,hoy){
 }
 function garantiaEntrega(fecha){const d=new Date(fecha+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+60);return d.toISOString().slice(0,10);}
 
+// Alertas calculadas, no obligaciones ni cobros. Los umbrales son orientativos.
+function desplazarDiaAlerta(fecha,n){const d=new Date(fecha+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
+const TIPOS_ALERTA=Object.freeze({
+ nueva:["Nueva solicitud","alta","solicitudes"],
+ seguimiento:["Solicitud por dar seguimiento","normal","solicitudes"],
+ cotizacion:["Cotización pendiente de respuesta","normal","solicitudes"],
+ materiales:["Materiales aún no recibidos","normal","proyectos"],
+ revisar_materiales:["Materiales recibidos por revisar","normal","proyectos"],
+ corregir_materiales:["Materiales requieren corrección","normal","proyectos"],
+ aprobar:["Revisión pendiente de aprobación","normal","proyectos"],
+ cambios:["Cliente solicita cambios","alta","proyectos"],
+ entrega:["Revisión aprobada, entrega por registrar","normal","proyectos"],
+ inicio:["Servicio entregado, inicio mensual por registrar","normal","mensualidades"],
+ primer_pago:["Primer periodo pendiente","alta","mensualidades"],
+ renovacion:["Renovación pendiente","alta","mensualidades"],
+ vence:["Renovación en los próximos 7 días","normal","mensualidades"],
+ garantia:["Garantía de desarrollo termina en los próximos 7 días","normal","proyectos"]
+});
+async function alertasComerciales(env,hoy=hoyMensualidad()){
+ const db=env.QUIZ_DB,items=[],avisos=[];
+ const pronto=desplazarDiaAlerta(hoy,7),seguimiento=desplazarDiaAlerta(hoy,-3);
+ // Consultas separadas para que una migración pendiente no inutilice todo el panel.
+ const grupos=[
+ ["Solicitudes",[
+ ["nueva","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.fecha AS fecha FROM quiz_propuestas q WHERE q.estado='nueva' ORDER BY q.fecha ASC LIMIT 101",[]],
+ ["seguimiento","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.fecha AS fecha FROM quiz_propuestas q WHERE q.estado IN ('en_revision','contactado') AND substr(q.fecha,1,10)<=?1 AND NOT EXISTS(SELECT 1 FROM proyectos_cliente p WHERE p.propuesta_id=q.id) ORDER BY q.fecha ASC LIMIT 101",[seguimiento]]
+ ]],
+ ["Cotizaciones",[
+ ["cotizacion","SELECT q.folio,q.nombre,q.proyecto,q.telefono,COALESCE(e.fecha_actualizacion,q.fecha) AS fecha FROM quiz_propuestas q LEFT JOIN propuestas_economicas e ON e.propuesta_id=q.id WHERE q.estado='cotizado' AND e.fecha_aceptacion IS NULL AND NOT EXISTS(SELECT 1 FROM proyectos_cliente p WHERE p.propuesta_id=q.id) ORDER BY fecha ASC LIMIT 101",[]]
+ ]],
+ ["Materiales",[
+ ["materiales","SELECT q.folio,q.nombre,q.proyecto,q.telefono,p.fecha_creacion AS fecha FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado='recabando_materiales' AND NOT EXISTS(SELECT 1 FROM proyecto_secciones s WHERE s.proyecto_id=p.id AND trim(s.contenido)<>'') AND NOT EXISTS(SELECT 1 FROM proyecto_archivos a WHERE a.proyecto_id=p.id) ORDER BY fecha ASC LIMIT 101",[]],
+ ["revisar_materiales","SELECT q.folio,q.nombre,q.proyecto,q.telefono,p.fecha_actualizacion AS fecha FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado NOT IN ('finalizado','cancelado') AND (EXISTS(SELECT 1 FROM proyecto_secciones s WHERE s.proyecto_id=p.id AND s.estado='recibido' AND trim(s.contenido)<>'') OR EXISTS(SELECT 1 FROM proyecto_archivos a WHERE a.proyecto_id=p.id AND a.estado='recibido')) ORDER BY fecha ASC LIMIT 101",[]],
+ ["corregir_materiales","SELECT q.folio,q.nombre,q.proyecto,q.telefono,p.fecha_actualizacion AS fecha FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado NOT IN ('finalizado','cancelado') AND (EXISTS(SELECT 1 FROM proyecto_secciones s WHERE s.proyecto_id=p.id AND s.estado='requiere_correccion') OR EXISTS(SELECT 1 FROM proyecto_archivos a WHERE a.proyecto_id=p.id AND a.estado='requiere_correccion')) ORDER BY fecha ASC LIMIT 101",[]]
+ ]],
+ ["Entregas",[
+ ["aprobar","SELECT q.folio,q.nombre,q.proyecto,q.telefono,e.fecha_actualizacion AS fecha FROM proyecto_entregas e JOIN proyectos_cliente p ON p.id=e.proyecto_id JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado NOT IN ('finalizado','cancelado') AND e.decision='pendiente' AND e.fecha_entrega IS NULL ORDER BY fecha ASC LIMIT 101",[]],
+ ["cambios","SELECT q.folio,q.nombre,q.proyecto,q.telefono,e.fecha_decision AS fecha FROM proyecto_entregas e JOIN proyectos_cliente p ON p.id=e.proyecto_id JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado NOT IN ('finalizado','cancelado') AND e.decision='requiere_cambios' AND e.fecha_entrega IS NULL ORDER BY fecha ASC LIMIT 101",[]],
+ ["entrega","SELECT q.folio,q.nombre,q.proyecto,q.telefono,e.fecha_decision AS fecha FROM proyecto_entregas e JOIN proyectos_cliente p ON p.id=e.proyecto_id JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado NOT IN ('finalizado','cancelado') AND e.decision='aprobado' AND e.fecha_entrega IS NULL ORDER BY fecha ASC LIMIT 101",[]],
+ ["garantia","SELECT q.folio,q.nombre,q.proyecto,q.telefono,e.garantia_hasta AS fecha FROM proyecto_entregas e JOIN proyectos_cliente p ON p.id=e.proyecto_id JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado<>'cancelado' AND e.garantia_hasta BETWEEN ?1 AND ?2 ORDER BY fecha ASC LIMIT 101",[hoy,pronto]]
+ ]],
+ ["Mensualidades",[
+ ["inicio","SELECT q.folio,q.nombre,q.proyecto,q.telefono,d.fecha_entrega AS fecha FROM proyecto_entregas d JOIN proyectos_cliente p ON p.id=d.proyecto_id JOIN quiz_propuestas q ON q.id=p.propuesta_id JOIN propuestas_economicas e ON e.propuesta_id=q.id WHERE p.estado<>'cancelado' AND d.fecha_entrega IS NOT NULL AND e.fecha_aceptacion IS NOT NULL AND e.mensualidad>0 AND e.paquete<>'solo_fisico' AND NOT EXISTS(SELECT 1 FROM suscripciones_cliente s WHERE s.propuesta_id=q.id) ORDER BY fecha ASC LIMIT 101",[]],
+ ["primer_pago","SELECT q.folio,q.nombre,q.proyecto,q.telefono,s.inicio AS fecha FROM suscripciones_cliente s JOIN quiz_propuestas q ON q.id=s.propuesta_id WHERE s.estado='activo' AND s.inicio<=?1 AND NOT EXISTS(SELECT 1 FROM pagos_mensualidad m WHERE m.propuesta_id=q.id) ORDER BY fecha ASC LIMIT 101",[hoy]],
+ ["renovacion","SELECT q.folio,q.nombre,q.proyecto,q.telefono,MAX(m.fin) AS fecha FROM suscripciones_cliente s JOIN quiz_propuestas q ON q.id=s.propuesta_id JOIN pagos_mensualidad m ON m.propuesta_id=q.id WHERE s.estado='activo' GROUP BY q.id HAVING MAX(m.fin)<=?1 ORDER BY fecha ASC LIMIT 101",[hoy]],
+ ["vence","SELECT q.folio,q.nombre,q.proyecto,q.telefono,MAX(m.fin) AS fecha FROM suscripciones_cliente s JOIN quiz_propuestas q ON q.id=s.propuesta_id JOIN pagos_mensualidad m ON m.propuesta_id=q.id WHERE s.estado='activo' GROUP BY q.id HAVING MAX(m.fin)>?1 AND MAX(m.fin)<=?2 ORDER BY fecha ASC LIMIT 101",[hoy,pronto]]
+ ]]
+ ];
+ for(const [grupo,consultas] of grupos){
+  for(const [tipo,sql,args] of consultas){
+   try{let st=db.prepare(sql);if(args.length)st=st.bind(...args);const d=await st.all();
+    if(d.results.length>100)avisos.push("Más de 100 alertas de "+TIPOS_ALERTA[tipo][0]+". Se muestran las primeras 100.");
+    for(const q of d.results.slice(0,100)){const [titulo,prioridad,seccion]=TIPOS_ALERTA[tipo];items.push({...q,tipo,titulo,prioridad,seccion,fecha:String(q.fecha||"").slice(0,10)});}
+   }catch{avisos.push(grupo+": no se pudo consultar "+TIPOS_ALERTA[tipo][0]+". Comprueba las migraciones y D1.");}
+  }
+ }
+ items.sort((a,b)=>(a.prioridad==="alta"?0:1)-(b.prioridad==="alta"?0:1)||a.fecha.localeCompare(b.fecha)||a.folio.localeCompare(b.folio));
+ return {hoy,items,avisos};
+}
+function resumenAlertas(d){
+ const lineas=["Pendientes comerciales · "+d.hoy,"Total de alertas mostradas: "+d.items.length,""];
+ for(const [tipo,[titulo]] of Object.entries(TIPOS_ALERTA)){
+  const filas=d.items.filter(x=>x.tipo===tipo);if(!filas.length)continue;
+  lineas.push(titulo+" ("+filas.length+")",...filas.slice(0,20).map(x=>x.folio+" · "+x.fecha),...(filas.length>20?["Consulta el resto en el panel."]:[]),"");
+ }
+ if(d.avisos.length)lineas.push("Consulta parcial:",...d.avisos,"");
+ lineas.push("https://lapazimpresion3d.com/admin/#titulo-alertas","Resumen administrativo. No es un aviso de deuda ni genera cargos.");
+ return lineas.join("\n");
+}
+
 const ESTADOS_REVISION_MATERIAL = new Set(["recibido","requiere_correccion","aprobado"]);
 function revisionMaterialValida(data,esTexto) {
   return !!data && ESTADOS_REVISION_MATERIAL.has(data.estado) && (!esTexto || (typeof data.version==="string" && data.version.length<=35 && Number.isFinite(Date.parse(data.version))));
@@ -603,6 +673,20 @@ async function api(request,env,ctx) {
     if(path==="/api/admin/sesion" && request.method==="GET") return json({ok:true});
     if(path==="/api/admin/salir" && request.method==="POST") return json({ok:true},200,{"set-cookie":"lp3d_session=; Path=/api/admin; Max-Age=0; HttpOnly; Secure; SameSite=Strict"});
     // Consulta administrativa de materiales recibidos sin exponer R2 públicamente.
+    if(path==="/api/admin/alertas"&&request.method==="GET")return json(await alertasComerciales(env));
+    if(path==="/api/admin/alertas/resumen"&&request.method==="POST"){
+      if(!sameOrigin(request))return error("Origen no autorizado",403);
+      const d=await leerJson(request,128);
+      if(d?.confirmar!==true)return error("Confirma el envío del resumen administrativo",400);
+      if(!env.RESEND_API_KEY||!env.NOTIFY_EMAIL||!env.EMAIL_FROM)return error("El correo administrativo no está configurado",503);
+      const alertas=await alertasComerciales(env);
+      if(!alertas.items.length)return error("No hay alertas para enviar",409);
+      const body={from:env.EMAIL_FROM,to:[env.NOTIFY_EMAIL],subject:"Pendientes comerciales · "+alertas.hoy,text:resumenAlertas(alertas)};
+      // Una solicitud por fecha; no se envía automáticamente a clientes.
+      const res=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json","Idempotency-Key":"alertas-comerciales-"+alertas.hoy},body:JSON.stringify(body)});
+      if(!res.ok)return error("El proveedor de correo no confirmó el envío. Si ya solicitaste un resumen hoy, consulta el panel.",502);
+      return json({ok:true,hoy:alertas.hoy,total:alertas.items.length});
+    }
     const entregaAdmin=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/entrega(?:\/(decision|finalizar|cambios))?$/i);
     if(entregaAdmin){
       const id=entregaAdmin[1],accion=entregaAdmin[2],db=env.QUIZ_DB,hoy=hoyMensualidad(),ahora=new Date().toISOString();

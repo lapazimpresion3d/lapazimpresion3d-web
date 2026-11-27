@@ -98,7 +98,7 @@ async function cargar(){estado.textContent="Cargando diagnósticos...";try{const
     const sep=params?"&":"?";
     const d=await req(`/api/admin/diagnosticos${params}${ref?sep+"referencia="+encodeURIComponent(ref):""}`);
     ultimosItems=d.items;filtrarBusqueda();}catch(e){estado.textContent=e.message;if(e.message==="Acceso restringido"){panel.hidden=true;acceso.hidden=false;}}}
-acceso.addEventListener("submit",async(e)=>{e.preventDefault();error.textContent="";try{await req("/api/admin/login",{method:"POST",body:JSON.stringify({password:document.querySelector("#password").value})});document.querySelector("#password").value="";acceso.hidden=true;panel.hidden=false;await Promise.all([cargar(),cargarPropuestas(),cargarProyectos()]);}catch(e){error.textContent=e.message;}});
+acceso.addEventListener("submit",async(e)=>{e.preventDefault();error.textContent="";try{await req("/api/admin/login",{method:"POST",body:JSON.stringify({password:document.querySelector("#password").value})});document.querySelector("#password").value="";acceso.hidden=true;panel.hidden=false;await Promise.all([cargar(),cargarPropuestas(),cargarProyectos(),globalThis.LP_ADMIN_ALERTAS?.cargar()]);}catch(e){error.textContent=e.message;}});
 document.querySelector("#actualizar").addEventListener("click",cargar);filtro.addEventListener("change",cargar);let ultimaConsulta="";
 busqueda.addEventListener("input",()=>{
   const texto=busqueda.value.trim();
@@ -106,7 +106,7 @@ busqueda.addEventListener("input",()=>{
   if(esReferencia || (ultimaConsulta && !esReferencia)) { ultimaConsulta=esReferencia?texto:""; cargar(); }
   else filtrarBusqueda();
 });document.querySelector("#salir").addEventListener("click",async()=>{await req("/api/admin/salir",{method:"POST",body:"{}"}).catch(()=>{});panel.hidden=true;acceso.hidden=false;lista.replaceChildren();listaPropuestas.replaceChildren();listaProyectos.replaceChildren();propuestasVisibles=[];});
-req("/api/admin/sesion").then(()=>{acceso.hidden=true;panel.hidden=false;return Promise.all([cargar(),cargarPropuestas(),cargarProyectos()]);}).catch(()=>{});
+req("/api/admin/sesion").then(()=>{acceso.hidden=true;panel.hidden=false;return Promise.all([cargar(),cargarPropuestas(),cargarProyectos(),globalThis.LP_ADMIN_ALERTAS?.cargar()]);}).catch(()=>{});
 
 const listaProyectos=document.querySelector("#lista-proyectos"),estadoProyectos=document.querySelector("#estado-proyectos");
 const estadosProyecto={preparacion:"Preparación",recabando_materiales:"Recabando materiales",en_desarrollo:"En desarrollo",en_revision:"En revisión",finalizado:"Finalizado",cancelado:"Cancelado"};

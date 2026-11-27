@@ -13,3 +13,5 @@
 #lista-mensualidades .economica-panel h4{margin:12px 0 8px}#lista-mensualidades .economica-form{margin:12px 0}#lista-mensualidades .registro>p{overflow-wrap:anywhere}
 
 .economica-panel>p{overflow-wrap:anywhere;white-space:pre-wrap}.economica-panel>form{margin:12px 0}.economica-panel>.boton-enlace{margin:5px 0}
+
+.alertas-panel{border-bottom:1px solid var(--borde);padding-bottom:24px;margin-bottom:24px;scroll-margin-top:16px}.alerta-registro{padding:14px 16px;border-left:4px solid #8b97ab}.alerta-registro[data-prioridad=alta]{border-left-color:#b75d19}.alerta-registro h3{font-size:1.05rem;margin:0 0 6px}.alerta-registro p{margin:4px 0;overflow-wrap:anywhere}#avisos-alertas p{color:#87501b}#titulo-solicitudes,#titulo-proyectos,#titulo-mensualidades{scroll-margin-top:16px}
