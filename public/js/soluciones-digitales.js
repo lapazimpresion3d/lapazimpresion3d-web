@@ -16,8 +16,8 @@ for(const card of document.querySelectorAll('.tarjeta-demo[data-negocio]')){
 
 }
 
-enlace($('demo-galeria'),c.general('galeria'),accesoPractica||c.generalesVerificadas.galeria);
-enlace($('demo-comparador'),c.general('comparador'),accesoPractica||c.generalesVerificadas.comparador);
+
+
 function actualizar(){const n=giro.value,p=paquete.value,activa=publico(p)&&(accesoPractica||c.verificada(n,p));const cot=$('demo-cotizar'),destino=publico(p)?c.cotizacion(p,n):null;cot.hidden=!destino;if(destino)cot.href=destino;else cot.removeAttribute('href');enlace($('demo-seleccionada'),c.url(n,p),activa);enlace($('demo-panel'),c.url(n,p,'panel'),activa);const combinado=$('demo-combinacion');if(combinado)combinado.textContent=destino?giro.selectedOptions[0].textContent+' — '+paquete.selectedOptions[0].textContent:'Selecciona un giro y un paquete válidos.';$('demo-resultado').textContent=destino?'Selección lista.':'Selecciona una combinación válida.';}
 giro.addEventListener('change',actualizar);paquete.addEventListener('change',actualizar);window.addEventListener('pageshow',actualizar);actualizar();
 })();
