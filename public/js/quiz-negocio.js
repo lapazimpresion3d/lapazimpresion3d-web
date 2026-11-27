@@ -155,7 +155,7 @@
   const TIPO_FICHA_QUIZ = "ficha_quiz";
   const WHATSAPP_COMERCIAL = "526121992396"; // Mismo número que los CTA existentes del sitio.
   // URL ya utilizada en el botón de demostración de la página principal.
-  const DEMO_RESTAURANTE = "https://desarrollo-taqueria-el-comal.lapazimpresion3d.workers.dev/";
+  const DEMO_RESTAURANTE = "https://desarrollo-taqueria-el-comal.lapazimpresion3d.workers.dev/demostraciones/negocio/?negocio=taqueria-el-comal&plan=p2";
   const RECOMENDACIONES_CON_DEMO = new Set(["R3", "R4"]);
 
   function crearFichaDiagnostico(r) {
