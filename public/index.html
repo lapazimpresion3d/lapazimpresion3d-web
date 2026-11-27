@@ -8,7 +8,7 @@
   <link rel="icon" href="favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="css/cabecera-fotografica.css">
   <link rel="stylesheet" href="css/inicio.css?v=20261127-3">
-  <link rel="stylesheet" href="css/catalogo-colapsable.css?v=4">
+  <link rel="stylesheet" href="css/catalogo-colapsable.css?v=5">
   <script src="js/catalogo-colapsable.js?v=1" defer></script>
   <script src="js/navegacion.js" defer></script>
   <script src="js/orientacion-web.js?v=2" defer></script>
@@ -17,6 +17,8 @@
   <script src="js/demos-config.js?v=3" defer></script>
   <script src="js/soluciones-digitales.js?v=6" defer></script>
   <script src="js/asistente-web.js?v=1" defer></script>
+  <link rel="canonical" href="https://lapazimpresion3d.com/">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"LocalBusiness","@id":"https://lapazimpresion3d.com/#negocio","name":"Lapazimpresion3d","url":"https://lapazimpresion3d.com/","image":"https://lapazimpresion3d.com/images/logo.png","telephone":"+52 612 199 2396","areaServed":{"@type":"City","name":"La Paz","containedInPlace":{"@type":"State","name":"Baja California Sur"}},"sameAs":["https://www.instagram.com/lapazimpresion3d/","https://www.facebook.com/profile.php?id=61587977253393"],"description":"Impresión 3D personalizada, llaveros, soportes QR y NFC, resina y páginas web para negocios en La Paz, Baja California Sur."}</script>
 </head>
 <body class="inicio-catalogo">
   <header class="cabecera cabecera-fotografica cabecera-inicio">
@@ -42,15 +44,13 @@
         <a href="#impresion-resina">Resina 3D</a>
         <a href="#piezas-a-medida">Piezas a medida</a>
         <a href="#redes">Contacto y redes</a>
-        <a href="#reprogramar-nfc">Guía NFC</a>
       </nav>
     </div>
   </header>
 
   <main class="envoltura">
-    <div class="presentacion" aria-label="Presentación de nuestros servicios">
-      <p class="introduccion">En La Paz, BCS, fabricamos <strong><a href="#piezas-a-medida">todo tipo de piezas y accesorios mediante impresión 3D</a></strong>, desde llaveros personalizados y soportes QR hasta figuras y mobiliario a escala en resina de alta precisión.</p>
-      <p class="introduccion">También podemos conectar tus piezas impresas con <strong>páginas web, catálogos y menús digitales</strong> creados a la medida de tu negocio. Mediante un código QR o chip NFC integrado, tus clientes pueden acceder directamente desde su teléfono.</p>
+    <div class="presentacion" aria-label="Presentación de nuestros servicios"><h1>Tu marca, a la vista todos los días</h1>
+      <p class="introduccion">Haz que tus clientes recuerden tu negocio con llaveros personalizados, soportes QR y páginas web que conectan tu marca con sus teléfonos. Fabricamos también miniaturas en resina y piezas 3D a medida en La Paz, BCS.</p><nav class="accesos-servicios" aria-label="Elige un servicio"><a href="llaveros-personalizados.html"><img src="images/ejemplo_cafe.webp" width="160" height="120" alt="" loading="lazy"><strong>Llaveros</strong></a><a href="soportes-qr.html"><img src="images/ejemplo-soporte-qr.svg" width="160" height="120" alt="" loading="lazy"><strong>Soportes QR</strong></a><a href="paginas-web.html"><img src="images/demos/cafe-mirador-portada.webp" width="160" height="120" alt="" loading="lazy"><strong>Páginas web</strong></a><a href="impresion-resina.html"><img src="images/resina-maquetas-480.webp" width="160" height="120" alt="" loading="lazy"><strong>Resina 3D</strong></a><a href="impresion-3d-a-medida.html"><img src="images/ejemplo-pieza-ajedrez.svg" width="160" height="120" alt="" loading="lazy"><strong>Impresión a medida</strong></a></nav>
     </div>
 
     <!-- Quiz comercial: las respuestas se registran al enviar la solicitud con consentimiento. -->
@@ -82,9 +82,9 @@
     <section id="llaveros" class="servicio-colapsable" aria-labelledby="titulo-llaveros">
       <details class="servicio-desplegable">
         <summary class="servicio-resumen">
-          <h1 id="titulo-llaveros" tabindex="-1"><span class="servicio-miniatura" aria-hidden="true"><img src="images/ejemplo_cafe.webp" alt="" width="160" height="120" loading="lazy" decoding="async"></span><span class="servicio-identidad"><span class="servicio-titulo">Llaveros personalizados en 3D</span><span class="servicio-descripcion">Diseñamos y personalizamos tu llavero a partir de un logo, una foto o un dibujo. Ofrecemos entrega local.</span></span><span class="servicio-indicador" aria-hidden="true"></span></h1>
+          <h2 id="titulo-llaveros" tabindex="-1"><span class="servicio-miniatura" aria-hidden="true"><img src="images/ejemplo_cafe.webp" alt="" width="160" height="120" loading="lazy" decoding="async"></span><span class="servicio-identidad"><span class="servicio-titulo">Llaveros personalizados en 3D</span><span class="servicio-descripcion">Diseñamos y personalizamos tu llavero a partir de un logo, una foto o un dibujo. Ofrecemos entrega local.</span></span><span class="servicio-indicador" aria-hidden="true"></span></h2>
         </summary>
-        <div class="servicio-contenido">
+        <div class="servicio-contenido"><p class="servicio-enlace"><a href="llaveros-personalizados.html">Ver llaveros personalizados · Página del servicio</a></p>
 
       
       
@@ -136,7 +136,7 @@
         <summary class="servicio-resumen">
           <h2 id="titulo-qr" tabindex="-1"><span class="servicio-miniatura" aria-hidden="true"><img src="images/ejemplo-soporte-qr.svg" alt="" width="160" height="120" loading="lazy" decoding="async"></span><span class="servicio-identidad"><span class="servicio-titulo">Soportes QR personalizados</span><span class="servicio-descripcion">Soportes personalizados para menús, catálogos, WhatsApp y reseñas, con QR o NFC.</span></span><span class="servicio-indicador" aria-hidden="true"></span></h2>
         </summary>
-        <div class="servicio-contenido">
+        <div class="servicio-contenido"><p class="servicio-enlace"><a href="soportes-qr.html">Ver soportes QR · Página del servicio</a></p>
 
       
       <figure class="servicio-ejemplo"><img src="images/ejemplo-soporte-qr.svg" alt="Ilustración de un soporte de mesa con un frente para código QR" width="640" height="480" loading="lazy" decoding="async"><figcaption>Ejemplo ilustrativo de soporte QR personalizado. El código funcional de prueba está abajo.</figcaption></figure>
@@ -164,7 +164,7 @@
         <summary class="servicio-resumen">
           <h2 id="titulo-web" tabindex="-1"><span class="servicio-miniatura" aria-hidden="true"><img src="images/demos/taqueria-el-comal-portada.webp" alt="" width="160" height="120" loading="lazy" decoding="async"></span><span class="servicio-identidad"><span class="servicio-titulo">Soluciones digitales para tu negocio</span><span class="servicio-descripcion">Desde una página de contacto hasta herramientas para organizar pedidos, citas y operaciones. Compara nuestros dos paquetes y prueba sus demostraciones para conocer qué solución se adapta a tu negocio.</span></span><span class="servicio-indicador" aria-hidden="true"></span></h2>
         </summary>
-        <div class="servicio-contenido">
+        <div class="servicio-contenido"><p class="servicio-enlace"><a href="paginas-web.html">Ver páginas web · Página del servicio</a></p>
 
       
       
@@ -285,7 +285,7 @@
         <summary class="servicio-resumen">
           <h2 id="titulo-resina" tabindex="-1"><span class="servicio-miniatura" aria-hidden="true"><img src="images/resina-maquetas-480.webp" alt="" width="160" height="120" loading="lazy" decoding="async"></span><span class="servicio-identidad"><span class="servicio-titulo">Impresión en resina 3D de alta precisión</span><span class="servicio-descripcion">Figuras, miniaturas y mobiliario a escala para maquetas, con alto nivel de detalle.</span></span><span class="servicio-indicador" aria-hidden="true"></span></h2>
         </summary>
-        <div class="servicio-contenido">
+        <div class="servicio-contenido"><p class="servicio-enlace"><a href="impresion-resina.html">Ver impresión en resina · Página del servicio</a></p>
 
       
       <div class="resina-presentacion">
@@ -337,7 +337,7 @@
         <div>
           <dt>Escala 1:20</dt>
           <dd>Mobiliario detallado y figuras de 9 cm, de pie o sentadas.</dd>
-          <dd class="resina-desde"><strong>Desde $50 MXN por pieza</strong><br>En lote de 8.</dd>
+          <dd class="resina-desde"><strong>Desde $50 MXN por pieza</strong><br>Precio unitario de referencia para un lote de 8 piezas (desde $400 MXN por lote). Otras cantidades se cotizan según el pedido.</dd>
         </div>
       </dl>
 
@@ -355,7 +355,7 @@
         <summary class="servicio-resumen">
           <h2 id="titulo-piezas" tabindex="-1"><span class="servicio-miniatura" aria-hidden="true"><img src="images/ejemplo-pieza-ajedrez.svg" alt="" width="160" height="120" loading="lazy" decoding="async"></span><span class="servicio-identidad"><span class="servicio-titulo">Impresión 3D a medida</span><span class="servicio-descripcion">Piezas funcionales, prototipos, soportes y repuestos fabricados a medida.</span></span><span class="servicio-indicador" aria-hidden="true"></span></h2>
         </summary>
-        <div class="servicio-contenido">
+        <div class="servicio-contenido"><p class="servicio-enlace"><a href="impresion-3d-a-medida.html">Ver impresión a medida · Página del servicio</a></p>
 
       
       <p class="introduccion">Fabricamos piezas funcionales, prototipos, soportes y repuestos difíciles de conseguir. Por ejemplo, un peine a medida para un equipo de laboratorio. Si tienes un material en mente, como PETG, indícalo junto con el uso que tendrá la pieza.</p>
@@ -387,33 +387,10 @@
       </div>
     </section>
 
-  <section id="reprogramar-nfc" class="servicio-colapsable" aria-labelledby="titulo-reprogramar-nfc">
-      <details class="servicio-desplegable">
-        <summary class="servicio-resumen">
-          <h2 id="titulo-reprogramar-nfc" tabindex="-1"><span class="servicio-miniatura" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true" focusable="false"><rect x="7" y="4" width="23" height="40" rx="5"/><path d="M14 10h9m-6 28h3M34 16q8 8 0 16m4-21q13 13 0 26"/><path d="M15 18v12l10-12v12" stroke-linejoin="round"/></svg></span><span class="servicio-identidad"><span class="servicio-titulo">Cómo reprogramar tu llavero NFC</span><span class="servicio-descripcion">Aprende a cambiar el enlace de tu llavero con un teléfono compatible.</span></span><span class="servicio-indicador" aria-hidden="true"></span></h2>
-        </summary>
-        <div class="servicio-contenido">
-
-    
-    <div class="caja guia">
-      <p>Usa un teléfono compatible con escritura NFC para cambiar el enlace de tu llavero. Ten a la mano la dirección completa que quieres grabar, por ejemplo, la de tu menú, perfil o página de contacto.</p>
-      <div class="acciones">
-        <a class="accion secundaria" href="https://play.google.com/store/apps/details?id=com.wakdev.wdnfc">NFC Tools para Android <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#externo"/></svg></a>
-        <a class="accion secundaria" href="https://apps.apple.com/mx/app/nfc-tools/id1252962749">NFC Tools para iPhone <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#externo"/></svg></a>
-      </div>
-      <ol class="pasos">
-        <li><span>Abre <strong>NFC Tools</strong>. Si usas Android, activa el NFC en los ajustes del teléfono.</span></li>
-        <li><span>Entra a <strong>Escribir → Añadir un registro → URL/URI</strong>. Pega tu enlace completo, incluido <strong>https://</strong>, y confirma el registro.</span></li>
-        <li><span>Pulsa <strong>Escribir</strong> y acerca el llavero al teléfono. Mantenlo quieto hasta que la app confirme la escritura.</span></li>
-        <li><span>Retira el llavero y vuelve a acercarlo. Comprueba que abra el enlace nuevo.</span></li>
-      </ol>
-      <p class="nota">Al grabar se reemplaza el contenido anterior del chip. Guarda el enlace anterior si quieres conservarlo. Para poder cambiarlo otra vez, deja el chip en modo regrabable.</p>
-    </div>
-        </div>
-      </details>
-    </section>
+  
 
   </main>
-  <footer>© 2026 Lapazimpresion3d</footer>
+  <footer class="pie-comercial"><strong>Lapazimpresion3d · La Paz, Baja California Sur</strong><p>Entregas locales en La Paz, BCS, según el pedido. Atención y entregas con horario acordado por WhatsApp.</p><nav aria-label="Información y soporte"><a href="aviso-privacidad.html">Aviso de privacidad</a><a id="reprogramar-nfc" href="guia-nfc.html">Guía de uso NFC</a><a href="https://wa.me/526121992396">Contacto por WhatsApp</a></nav><p>© 2026 Lapazimpresion3d</p></footer>
+<a class="whatsapp-flotante" href="https://wa.me/526121992396" aria-label="Contactar a Lapazimpresion3d por WhatsApp" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20.5 11.8a8.5 8.5 0 0 1-12.6 7.5L4 20l.8-3.8A8.5 8.5 0 1 1 20.5 11.8Z"/><path stroke-linecap="round" d="M9 8c-2 1 0 4 1.7 5.5S15 16 16 14l-2-1.5-1.2 1c-1.6-.8-2.5-1.8-3-3.3L10.5 9 9 8Z"/></svg><span>WhatsApp</span></a>
 </body>
 </html>

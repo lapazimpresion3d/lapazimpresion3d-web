@@ -53,3 +53,12 @@ main > #llaveros.servicio-colapsable{margin-top:clamp(24px,4vw,44px)}
 .servicio-ejemplo figcaption{font-size:.85rem;color:var(--suave);margin-top:6px;line-height:1.45}
 
 .comparativa-publica{margin:0 0 18px;min-width:0}.comparativa-publica table{width:100%;border-collapse:collapse;font-size:.9rem;table-layout:fixed}.comparativa-publica th,.comparativa-publica td{padding:9px 5px;border-bottom:1px solid var(--borde);text-align:left;overflow-wrap:anywhere}.comparativa-publica th:first-child{width:52%}.comparativa-publica .nota{margin-bottom:0}
+
+.accesos-servicios{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:20px 0}
+.accesos-servicios a{display:flex;flex-direction:column;min-width:0;background:var(--tarjeta);border:1px solid var(--borde);border-radius:12px;overflow:hidden;text-decoration:none;color:var(--titulo)}
+.accesos-servicios a:hover{border-color:var(--azul)}.accesos-servicios img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;height:auto}.accesos-servicios strong{padding:10px;text-align:center;overflow-wrap:anywhere}
+.servicio-enlace{font-size:.93rem;margin:0 0 16px;color:var(--titulo)}
+.whatsapp-flotante{position:fixed;z-index:30;right:max(14px,env(safe-area-inset-right));bottom:calc(14px + env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:center;gap:7px;min-height:50px;border-radius:999px;padding:12px 16px;background:#087f5b;color:#fff;text-decoration:none;font-size:.92rem;font-weight:750;box-shadow:0 4px 15px #0004;border:1px solid #fff5}
+.whatsapp-flotante:hover{background:#096b4e}.pie-comercial{padding:20px 16px 76px;color:var(--suave);line-height:1.6}.pie-comercial nav{display:flex;flex-wrap:wrap;gap:10px 18px;justify-content:center}.pie-comercial p{margin:8px 0}
+.pagina-servicio .servicio-colapsable{margin-top:22px}.pagina-servicio .servicio-resumen{cursor:default}.pagina-servicio .servicio-indicador{display:none}.pagina-servicio .servicio-resumen h1,.pagina-servicio .servicio-resumen h2{grid-template-columns:112px minmax(0,1fr)}.pagina-servicio .regreso{color:var(--titulo)}
+@media(max-width:700px){.accesos-servicios{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.accesos-servicios img{aspect-ratio:16/9}.pagina-servicio .servicio-resumen h1,.pagina-servicio .servicio-resumen h2{grid-template-columns:64px minmax(0,1fr)}.whatsapp-flotante{width:54px;height:54px;padding:0}.whatsapp-flotante span{display:none}}

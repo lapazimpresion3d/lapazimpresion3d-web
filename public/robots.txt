@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /cliente/
+Disallow: /api/
+Sitemap: https://lapazimpresion3d.com/sitemap.xml
