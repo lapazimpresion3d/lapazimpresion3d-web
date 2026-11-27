@@ -20,7 +20,7 @@ const radiosPaquete = Array.from(tablaPaquetes.querySelectorAll('input[name="paq
 const ordenPaquetes = Object.keys(planesCotizacion);
 const coberturas = new Map(ordenPaquetes.map(clave=>[clave,new Set(planesCotizacion[clave].funciones)]));
 // El inventario avanzado cubre el básico, aunque no se premarquen dos módulos de inventario.
-coberturas.get('gestion-profesional').add('Inventario básico');
+
 const funcionesCatalogo = new Set(Array.from(coberturas.values()).flatMap(s=>Array.from(s)));
 let claveActiva = 'a-medida';
 let modoMedida = false;

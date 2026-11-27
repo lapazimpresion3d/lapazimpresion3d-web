@@ -28,7 +28,6 @@ const planes = {
       "Pedidos para recoger o a domicilio",
       "Pedidos desde las mesas",
       "Reservaciones y agenda",
-      "Reservaciones de tours y pases turísticos",
       "Panel privado",
       "Pantalla de cocina y comandas",
       "Seguimiento de pedidos"
@@ -92,9 +91,11 @@ const planes = {
 };
 const giros=Object.freeze({"restaurante":"Restaurante / taquería","cafeteria":"Cafetería","barberia":"Barbería / estética","mascotas":"Tienda de mascotas","comercio":"Comercio / tienda","servicios":"Servicios profesionales","taller":"Taller / servicios automotrices","turismo":"Turismo y actividades","otro":"Otro giro"});
 const objetivos=Object.freeze([{"id":"catalogo","label":"Mostrar mi menú, productos o servicios","funciones":["$catalogo"]},{"id":"whatsapp","label":"Recibir consultas o pedidos por WhatsApp","funciones":["Pedidos por WhatsApp"]},{"id":"pedidos","label":"Recibir y dar seguimiento a pedidos en la página","funciones":["$catalogo","Carrito y pedidos desde la página","Seguimiento de pedidos","Panel privado"]},{"id":"entregas","label":"Organizar pedidos para recoger o a domicilio","funciones":["$catalogo","Pedidos para recoger o a domicilio","Panel privado"]},{"id":"mesas","label":"Recibir pedidos desde las mesas y organizar cocina","funciones":["Menú digital","Pedidos desde las mesas","Pantalla de cocina y comandas","Panel privado"]},{"id":"agenda","label":"Organizar citas o reservaciones","funciones":["Reservaciones y agenda","Panel privado"]},{"id":"turismo","label":"Gestionar reservaciones de tours o actividades","funciones":["Reservaciones de tours y pases turísticos","Panel privado"]},{"id":"pos","label":"Registrar ventas, caja y tickets","funciones":["Punto de venta y caja","Tickets","Panel privado"]},{"id":"inventario","label":"Controlar existencias de productos","funciones":["Inventario básico","Panel privado"]},{"id":"costos","label":"Controlar inventario avanzado, costos y proveedores","funciones":["Inventario avanzado","Costos y proveedores","Panel privado"]},{"id":"automatizar","label":"Automatizar tareas o consultar reportes avanzados","funciones":["Automatizaciones","Reportes avanzados","Panel privado"]},{"id":"tarjeta","label":"Integrar pagos en línea con tarjeta (cotización adicional)","funciones":["Cotizar integración de pagos en línea con tarjeta","Panel privado"]}]);
-const orden=Object.keys(planes);
+const orden=['presencia-digital','negocio-interactivo'];
+const planesPublicos=Object.freeze(Object.fromEntries(orden.map(k=>[k,planes[k]])));
+const objetivosPublicos=Object.freeze(objetivos.filter(x=>['catalogo','whatsapp','pedidos','entregas','mesas','agenda'].includes(x.id)));
 const coberturas=new Map(orden.map(k=>[k,new Set(planes[k].funciones)]));
-coberturas.get('gestion-profesional').add('Inventario básico');
+
 const catalogo=new Set([...coberturas.values()].flatMap(s=>[...s]));
 const adicionales=new Set(['Cotizar integración de pagos en línea con tarjeta']);
 const requiereCarrito=new Set(['Efectivo y transferencias con registro manual','Cotizar integración de pagos en línea con tarjeta','Pedidos para recoger o a domicilio','Pedidos desde las mesas','Pantalla de cocina y comandas','Seguimiento de pedidos','Reportes de pedidos y cobros']);
@@ -103,11 +104,11 @@ function recomendar(funciones){
  return estandar.length?orden.find(k=>estandar.every(v=>coberturas.get(k).has(v)))||'a-medida':'a-medida';
 }
 function orientar(giro,ids){
- if(!Object.hasOwn(giros,giro)||!Array.isArray(ids)||ids.length>objetivos.length||ids.some(id=>!objetivos.some(o=>o.id===id)))return null;
+ if(!Object.hasOwn(giros,giro)||!Array.isArray(ids)||ids.length>objetivosPublicos.length||ids.some(id=>!objetivosPublicos.some(o=>o.id===id)))return null;
  const necesidades=[...new Set(ids)];
  const funciones=new Set(['Página comercial personalizada','Información de contacto y horarios']);
  const tipoCatalogo=['restaurante','cafeteria'].includes(giro)?'Menú digital':'Catálogo de productos';
- for(const o of objetivos)if(necesidades.includes(o.id))for(const v of o.funciones)funciones.add(v==='$catalogo'?tipoCatalogo:v);
+ for(const o of objetivosPublicos)if(necesidades.includes(o.id))for(const v of o.funciones)funciones.add(v==='$catalogo'?tipoCatalogo:v);
  if([...funciones].some(v=>requiereCarrito.has(v)))funciones.add('Carrito y pedidos desde la página');
  if(funciones.has('Inventario avanzado'))funciones.delete('Inventario básico');
  const lista=[...funciones];
@@ -123,6 +124,6 @@ function leer(parametros){
  if(parametros.get('orientacion')!=='1')return null;
  return orientar(parametros.get('giro'),parametros.getAll('necesidad'));
 }
-const api=Object.freeze({planes,giros,objetivos,recomendar,orientar,url,leer});
+const api=Object.freeze({planes:planesPublicos,giros,objetivos:objetivosPublicos,recomendar,orientar,url,leer});
 if(typeof module==='object'&&module.exports)module.exports=api;else root.LP_ORIENTACION_WEB=api;
 })(globalThis);

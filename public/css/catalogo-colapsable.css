@@ -51,3 +51,5 @@ main > #llaveros.servicio-colapsable{margin-top:clamp(24px,4vw,44px)}
 .servicio-ejemplo{margin:0 0 18px;max-width:420px}
 .servicio-ejemplo img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--borde)}
 .servicio-ejemplo figcaption{font-size:.85rem;color:var(--suave);margin-top:6px;line-height:1.45}
+
+.comparativa-publica{margin:0 0 18px;min-width:0}.comparativa-publica table{width:100%;border-collapse:collapse;font-size:.9rem;table-layout:fixed}.comparativa-publica th,.comparativa-publica td{padding:9px 5px;border-bottom:1px solid var(--borde);text-align:left;overflow-wrap:anywhere}.comparativa-publica th:first-child{width:52%}.comparativa-publica .nota{margin-bottom:0}

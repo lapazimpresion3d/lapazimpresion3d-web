@@ -10,8 +10,8 @@
   <link rel="stylesheet" href="css/inicio.css">
   <link rel="stylesheet" href="css/cotizacion-web.css">
   <link rel="stylesheet" href="css/soluciones-digitales.css?v=9">
-  <script src="js/orientacion-web.js?v=1" defer></script>
-  <script src="js/cotizacion-web.js?v=20261127-10" defer></script>
+  <script src="js/orientacion-web.js?v=2" defer></script>
+  <script src="js/cotizacion-web.js?v=20261127-11" defer></script>
 </head>
 <body class="pagina-cotizacion">
   <header class="cabecera cabecera-fotografica cabecera-cotizacion">
@@ -39,8 +39,8 @@
         <tbody>
           <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="presencia-digital" required aria-describedby="precio-presencia-digital mensual-presencia-digital"><span>Presencia digital</span></label></th><td id="precio-presencia-digital"><span class="precio-desde">Desde</span> <strong>$750</strong></td><td id="mensual-presencia-digital"><strong>$149</strong><span class="precio-periodo"> / mes</span></td></tr>
           <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="negocio-interactivo" required aria-describedby="precio-negocio-interactivo mensual-negocio-interactivo"><span>Negocio interactivo</span></label></th><td id="precio-negocio-interactivo"><span class="precio-desde">Desde</span> <strong>$1,500</strong></td><td id="mensual-negocio-interactivo"><strong>$249</strong><span class="precio-periodo"> / mes</span></td></tr>
-          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="gestion-comercial" required aria-describedby="precio-gestion-comercial mensual-gestion-comercial"><span>Gestión comercial</span></label></th><td id="precio-gestion-comercial"><span class="precio-desde">Desde</span> <strong>$2,500</strong></td><td id="mensual-gestion-comercial"><strong>$349</strong><span class="precio-periodo"> / mes</span></td></tr>
-          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="gestion-profesional" required aria-describedby="precio-gestion-profesional mensual-gestion-profesional"><span>Gestión profesional</span></label></th><td id="precio-gestion-profesional"><span class="precio-desde">Desde</span> <strong>$3,500</strong></td><td id="mensual-gestion-profesional"><strong>$499</strong><span class="precio-periodo"> / mes</span></td></tr>
+          
+          
           <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="a-medida" required checked><span>Proyecto a medida</span></label></th><td colspan="2">Bajo cotización</td></tr>
         </tbody>
       </table>
@@ -58,7 +58,7 @@
         </div>
       <fieldset id="funciones-web" hidden>
         <legend id="leyenda-funciones-web">Características y funciones del proyecto</legend>
-        <p id="orientacion-paquete-web" class="ayuda-cotizacion" hidden>Todas las funciones están disponibles para seleccionar. Al marcar o desmarcar opciones se ajusta el paquete al que cubre tus necesidades, sin marcar otras funciones automáticamente. Si eliges otro paquete directamente en la tabla, se carga su selección inicial. Proyecto a medida conserva la cotización personalizada.</p>
+        <p id="orientacion-paquete-web" class="ayuda-cotizacion" hidden>Selecciona las funciones que necesita tu negocio. Al marcar o desmarcar opciones se ajusta el paquete al que cubre tus necesidades, sin marcar otras funciones automáticamente. Si eliges otro paquete directamente en la tabla, se carga su selección inicial. Proyecto a medida conserva la cotización personalizada.</p>
         <p id="ayuda-pedidos" class="ayuda-cotizacion" hidden>Las funciones que requieren carrito lo seleccionan automáticamente. Si desmarcas el carrito, se desmarcan también sus funciones dependientes.</p>
         <h3 id="titulo-funciones-plan" hidden>Funciones del paquete</h3>
         <p id="conteo-funciones-plan" class="nota" hidden></p>
@@ -76,14 +76,8 @@
           <input type="checkbox" name="funciones" value="Pedidos por WhatsApp">
           <span>Pedidos por WhatsApp<small>El cliente abre el chat con su solicitud y el negocio confirma el pedido por WhatsApp. Puedes elegir esta opción por sí sola o junto al carrito.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-funcion data-requiere="pedidos-web">
-          <input type="checkbox" name="funciones" value="Efectivo y transferencias con registro manual">
-          <span>Efectivo y transferencias<small>Muestra las instrucciones de pago. El encargado verifica las transferencias o registra el cobro en efectivo. Requiere carrito.</small><small class="nivel-funcion" hidden></small></span>
-        </label>
-        <label class="opcion" data-funcion data-requiere="pedidos-web">
-          <input type="checkbox" name="funciones" value="Cotizar integración de pagos en línea con tarjeta">
-          <span>Pagos en línea con tarjeta<small>Solicita cotización para integrar una plataforma de pagos. Requiere carrito y una cuenta del negocio con el proveedor de pagos.</small><small class="nivel-funcion" hidden></small></span>
-        </label>
+        
+        
         <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Pedidos para recoger o a domicilio">
           <span>Pedidos para recoger o a domicilio<small>Dirección y costo de envío. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
@@ -96,10 +90,7 @@
           <input type="checkbox" name="funciones" value="Reservaciones y agenda">
           <span>Agenda y reservaciones de citas<small>Para dentistas, estilistas, barberías, consultorios y servicios profesionales. Los clientes pueden solicitar una fecha y hora; el negocio organiza la disponibilidad y confirma las citas.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-funcion>
-          <input type="checkbox" name="funciones" value="Reservaciones de tours y pases turísticos">
-          <span>Reservaciones de tours, actividades y pases turísticos<small>Para excursiones, paseos y experiencias. Permite solicitar fecha, horario y número de personas, consultar cupos y gestionar confirmaciones. La emisión de pases digitales y los pagos en línea se cotizan según el proyecto.</small><small class="nivel-funcion" hidden></small></span>
-        </label>
+        
         <label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Panel privado">
           <span>Panel privado<small>Edita contenido, precios, horarios o disponibilidad según tu página.</small><small class="nivel-funcion" hidden></small></span>
@@ -112,21 +103,18 @@
           <input type="checkbox" name="funciones" value="Seguimiento de pedidos">
           <span>Seguimiento de pedidos<small>Estado de preparación, entrega y pago por folio. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-funcion data-requiere="pedidos-web">
-          <input type="checkbox" name="funciones" value="Reportes de pedidos y cobros">
-          <span>Reportes de pedidos y cobros<small>Exportación en CSV. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
-        </label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Punto de venta y caja"><span>Punto de venta y caja<small>Registro de ventas y control de caja.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Inventario básico"><span>Inventario básico<small>Existencias de productos y movimientos básicos.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Tickets"><span>Tickets<small>Emisión de comprobantes internos de operación, no facturas fiscales.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Inventario avanzado"><span>Inventario avanzado<small>Control avanzado de existencias y movimientos.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Costos y proveedores"><span>Costos y proveedores<small>Organización de costos y proveedores.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Fidelización"><span>Fidelización<small>Herramientas para atención y fidelización de clientes.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Administración avanzada"><span>Administración avanzada<small>Herramientas adicionales de administración según el giro.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Automatizaciones"><span>Automatizaciones<small>Automatización de tareas según el alcance acordado.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Reportes avanzados"><span>Reportes avanzados<small>Indicadores y reportes de operación según el giro.</small><small class="nivel-funcion" hidden></small></span></label>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         </div>
-        <p class="nota">Las funcionalidades se adaptan a las necesidades de tu negocio. El alcance definitivo se confirma en la propuesta antes de contratar, de acuerdo con la disponibilidad de los módulos. POS, caja, inventarios, costos, automatizaciones y algunas integraciones financieras están en desarrollo; seleccionarlos expresa interés, no disponibilidad de contratación.</p>
+        <p class="nota">El alcance definitivo de las funciones y su precio se acuerdan en la propuesta, según el giro de tu negocio.</p>
       </fieldset>
 
       <fieldset>
@@ -201,7 +189,7 @@
       <details id="condiciones-paquetes" class="condiciones-comerciales condiciones-desplegables">
         <summary><h2 id="titulo-condiciones-web">Condiciones generales del servicio</h2></summary>
         <div class="contenido-condiciones">
-        <p>Consulta las <a href="paquetes-web.html#fichas-paquetes">características, precios y alcance de los cuatro paquetes</a>. A continuación te explicamos las condiciones de implementación y mantenimiento.</p>
+        <p>Consulta las <a href="paquetes-web.html#fichas-paquetes">características, precios y alcance de los dos paquetes</a>. A continuación te explicamos las condiciones de implementación y mantenimiento.</p>
         <p>Antes de contratar, conocerás por separado el costo de desarrollo, el dominio y la cuota de operación y mantenimiento. <strong>Enviar este formulario no genera ningún cargo.</strong></p>
 
         <h3>Operación, mantenimiento y dominio</h3>
@@ -210,6 +198,7 @@
         <h3>Sin plazos forzosos de permanencia</h3>
         <p>Puedes cancelar futuras mensualidades sin penalización por permanencia, comunicando tu decisión antes de la siguiente renovación. La implementación inicial es un pago independiente. La cancelación no elimina las obligaciones de pago previamente adquiridas por la implementación, los servicios prestados o los trabajos adicionales autorizados. El uso del sistema, alojamiento y mantenimiento dependen de mantener vigente la mensualidad; al finalizar el periodo contratado, se desactiva el servicio si no se renueva.</p>
 
+        <p><strong>Dominio y contenidos:</strong> si el dominio está registrado a tu nombre, conserva su titularidad. Antes de contratar, la propuesta debe especificar quién registra y administra el dominio, cómo se entregarán tus contenidos y datos al cancelar y qué elementos del sistema requieren licencia o servicio activo. No se presupone la entrega del código fuente.</p>
         <h3>¿Qué cubre el mantenimiento?</h3>
         <p>Supervisión técnica básica del funcionamiento, revisión de errores, seguridad y respaldos cuando corresponda al tipo de página. En sistemas de pedidos, el plan básico contempla <strong>hasta dos horas al mes de atención de incidencias técnicas ordinarias</strong>, no acumulables, en horario de atención acordado. No incluye atención inmediata 24/7.</p>
         <p>Cuando tu sitio tenga un panel de administración, podrás gestionar los productos, precios y contenidos habilitados sin solicitar cambios técnicos.</p>
