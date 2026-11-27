@@ -166,7 +166,20 @@
 #paginas-web .asistente-sobrelinea{font-size:.8rem;font-weight:800;letter-spacing:.05em;color:#174ab8;margin:0 0 8px}
 #paginas-web .asistente-cabecera .asistente-sobrelinea{color:#ffc82a}
 #paginas-web .asistente-cabecera h3{margin:0 0 10px;color:#fff;font-size:clamp(1.35rem,3vw,1.85rem);line-height:1.25}
-#paginas-web .asistente-cabecera>p:last-child{margin:0;color:#e0e8f7;line-height:1.6;font-size:1rem}
+#paginas-web .asistente-cabecera{display:block;cursor:pointer;list-style:none;position:relative}
+#paginas-web .asistente-cabecera::-webkit-details-marker{display:none}
+#paginas-web .asistente-cabecera::marker{content:""}
+#paginas-web .asistente-cabecera:focus-visible{outline:3px solid #ffc82a;outline-offset:-6px}
+#paginas-web .asistente-cabecera h3{margin:0;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 12px}
+#paginas-web .asistente-cabecera .asistente-sobrelinea{grid-column:1/-1;display:block;margin:0}
+#paginas-web .asistente-titulo{min-width:0;overflow-wrap:anywhere}
+#paginas-web .asistente-abrir{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:8px 12px;border:1px solid #ffc82a;border-radius:9px;font-size:.88rem;color:#ffc82a;white-space:normal}
+#paginas-web .asistente-abrir::after{content:"";display:block;width:9px;height:9px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-bottom:4px;flex:none}
+#paginas-web .asistente-cerrar-texto,#paginas-web .asistente-paquetes[open] .asistente-abrir-texto{display:none}
+#paginas-web .asistente-paquetes[open] .asistente-cerrar-texto{display:inline}
+#paginas-web .asistente-paquetes[open] .asistente-abrir::after{transform:rotate(225deg);margin-bottom:0;margin-top:4px}
+#paginas-web .asistente-intro{margin:0 0 18px;color:#16203a;line-height:1.6}
+@media(max-width:540px){#paginas-web .asistente-cabecera h3{grid-template-columns:minmax(0,1fr);gap:8px}#paginas-web .asistente-abrir{justify-self:start}}
 #paginas-web .asistente-contenido{padding:clamp(16px,3.5vw,28px);color:#16203a;min-width:0}
 #paginas-web .asistente-giro{display:grid;gap:8px;margin:0 0 22px;max-width:100%;min-width:0;color:#16203a}
 #paginas-web .asistente-giro strong,#paginas-web .asistente-objetivos legend{font-size:1rem;color:#0f2347;font-weight:800;line-height:1.5;white-space:normal}

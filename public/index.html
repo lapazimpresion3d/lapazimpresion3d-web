@@ -11,7 +11,7 @@
   <script src="js/navegacion.js" defer></script>
   <script src="js/orientacion-web.js?v=1" defer></script>
   <script src="js/quiz-negocio.js?v=20261127-4" defer></script>
-  <link rel="stylesheet" href="css/soluciones-digitales.css?v=10">
+  <link rel="stylesheet" href="css/soluciones-digitales.css?v=11">
   <script src="js/demos-config.js?v=3" defer></script>
   <script src="js/soluciones-digitales.js?v=5" defer></script>
   <script src="js/asistente-web.js?v=1" defer></script>
@@ -232,13 +232,12 @@
         </ul>
       </div>
       <p class="nota"><a href="cotizacion-web.html#condiciones-paquetes">Ver detalles y condiciones de los paquetes</a>.</p>
-      <section id="asistente-paquetes" class="caja asistente-paquetes" aria-labelledby="titulo-asistente-paquetes">
-        <header class="asistente-cabecera">
-          <p class="asistente-sobrelinea">ORIENTACIÓN SIN COMPROMISO</p>
-          <h3 id="titulo-asistente-paquetes">¿No sabes qué paquete elegir?</h3>
-          <p>Elige tu tipo de negocio y las funciones que necesitas. Te recomendamos el paquete de menor precio que las cubre.</p>
-        </header>
+      <details id="asistente-paquetes" class="caja asistente-paquetes" aria-labelledby="titulo-asistente-paquetes">
+        <summary class="asistente-cabecera">
+          <h3 id="titulo-asistente-paquetes"><span class="asistente-sobrelinea">ORIENTACIÓN SIN COMPROMISO</span><span class="asistente-titulo">¿No sabes qué paquete elegir?</span><span class="asistente-abrir" aria-hidden="true"><span class="asistente-abrir-texto">Abrir asistente</span><span class="asistente-cerrar-texto">Cerrar asistente</span></span></h3>
+        </summary>
         <div class="asistente-contenido">
+        <p class="asistente-intro">Elige tu tipo de negocio y las funciones que necesitas. Te recomendamos el paquete de menor precio que las cubre.</p>
         <div id="asistente-controles" hidden>
           <label class="asistente-giro" for="asistente-giro"><strong><span class="selector-numero" aria-hidden="true">1</span> Elige tu giro comercial</strong><select id="asistente-giro"><option value="">Selecciona tu giro</option><option value="restaurante">Restaurante / taquería</option><option value="cafeteria">Cafetería</option><option value="barberia">Barbería / estética</option><option value="mascotas">Tienda de mascotas</option><option value="comercio">Comercio / tienda</option><option value="servicios">Servicios profesionales</option><option value="taller">Taller / servicios automotrices</option><option value="turismo">Turismo y actividades</option><option value="otro">Otro giro</option></select></label>
           <fieldset class="asistente-objetivos"><legend><span class="selector-numero" aria-hidden="true">2</span> ¿Qué te gustaría hacer con tu página?</legend>
@@ -270,7 +269,7 @@
         </div>
         <noscript><p><a href="cotizacion-web.html">Configura tu paquete en la cotización</a>.</p></noscript>
         </div>
-      </section>
+      </details>
       <div class="caja cierre-cotizacion-web">
         <h3>¿Qué solución necesita tu negocio?</h3>
         <p>Cuéntanos qué necesitas y prepararemos una propuesta adaptada a tu negocio.</p>
