@@ -82,3 +82,31 @@ html:has(.whatsapp-flotante){scroll-padding-bottom:calc(84px + env(safe-area-ins
 /* Las cotizaciones tienen exactamente el mismo fondo en todos los servicios. */
 .accion.accion-cotizar,.quiz-accion-whatsapp{background:var(--amarillo);color:var(--texto-acento);border-color:transparent}
 .accion.accion-cotizar:hover,.quiz-accion-whatsapp:hover{background:var(--amarillo-hover)}
+
+/* Jerarquía de títulos comerciales, también en pantallas pequeñas. */
+.inicio-catalogo .servicio-titulo{font-size:clamp(1.65rem,3vw,2.15rem);font-weight:850;line-height:1.15;letter-spacing:-.025em;color:var(--titulo);overflow-wrap:break-word}
+.inicio-catalogo .servicio-identidad{gap:9px}
+.inicio-catalogo .servicio-resumen{border-inline-start:5px solid var(--titulo)}
+.inicio-catalogo .servicio-descripcion{font-size:.98rem;font-weight:500;letter-spacing:normal;line-height:1.5}
+.inicio-catalogo .servicio-contenido h3:not(.selector-cabecera h3):not(.asistente-cabecera h3):not(.ventajas-suscripcion h3){font-size:clamp(1.35rem,2.5vw,1.75rem);font-weight:800;color:var(--titulo);line-height:1.2}
+.inicio-catalogo #paginas-web #titulo-escaparate-demos{font-size:clamp(1.6rem,3vw,2.15rem);font-weight:850;margin-bottom:14px}
+.inicio-catalogo #paginas-web .plan-informacion h3{font-size:clamp(1.65rem,3.2vw,2.15rem);font-weight:850;line-height:1.15;color:var(--titulo);margin:0 0 16px;padding-bottom:11px;border-bottom:3px solid var(--amarillo);letter-spacing:-.025em;overflow-wrap:break-word}
+.inicio-catalogo #paginas-web .plan-demostraciones h4,.inicio-catalogo .comparativa-publica h4,.inicio-catalogo .resina-paquete h4{font-size:1.2rem;font-weight:800;color:var(--titulo);line-height:1.25}
+#fichas-paquetes .ficha-paquete h2{font-size:clamp(1.65rem,3.2vw,2.2rem);font-weight:850;line-height:1.15;padding-bottom:10px;border-bottom:3px solid var(--amarillo)}
+@media(max-width:650px){
+ .inicio-catalogo .servicio-resumen h1,.inicio-catalogo .servicio-resumen h2{grid-template-columns:64px minmax(0,1fr) 24px;gap:10px;align-items:start}
+ .inicio-catalogo .servicio-resumen .servicio-miniatura,.inicio-catalogo .servicio-resumen .servicio-indicador{align-self:center}
+ .inicio-catalogo .servicio-titulo{font-size:1.5rem;line-height:1.17}
+ .inicio-catalogo .servicio-descripcion{font-size:.88rem;line-height:1.45}
+ .inicio-catalogo.pagina-servicio .servicio-resumen h1,.inicio-catalogo.pagina-servicio .servicio-resumen h2{grid-template-columns:64px minmax(0,1fr)}
+ .inicio-catalogo #paginas-web .plan-informacion h3{font-size:1.7rem}
+ .inicio-catalogo #paginas-web #titulo-escaparate-demos{font-size:1.65rem}
+ .inicio-catalogo #paginas-web .plan-demostraciones h4,.inicio-catalogo .resina-paquete h4{font-size:1.2rem}
+}
+@media(max-width:360px){
+ .inicio-catalogo .servicio-resumen h1,.inicio-catalogo .servicio-resumen h2{grid-template-columns:48px minmax(0,1fr) 22px;gap:8px}
+ .inicio-catalogo.pagina-servicio .servicio-resumen h1,.inicio-catalogo.pagina-servicio .servicio-resumen h2{grid-template-columns:48px minmax(0,1fr)}
+ .inicio-catalogo .servicio-miniatura{width:48px;height:58px}
+ .inicio-catalogo .servicio-titulo{font-size:1.35rem}
+ .inicio-catalogo #paginas-web .plan-informacion h3{font-size:1.55rem}
+}
