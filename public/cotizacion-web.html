@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="css/cabecera-fotografica.css">
   <link rel="stylesheet" href="css/inicio.css">
   <link rel="stylesheet" href="css/cotizacion-web.css">
+  <link rel="stylesheet" href="css/soluciones-digitales.css">
   <script src="js/cotizacion-web.js" defer></script>
 </head>
 <body class="pagina-cotizacion">
@@ -43,6 +44,10 @@
 <option value="gestion-profesional">Gestión profesional</option>
           </select>
         </label>
+        <div id="resumen-paquete-web" class="resumen-paquete-web" hidden aria-live="polite">
+          <h3 id="nombre-paquete-web"></h3><p id="precio-paquete-web"></p><p id="alcance-paquete-web"></p>
+          <a id="ficha-paquete-web" href="paquetes-web.html">Ver ficha del paquete</a>
+        </div>
         <p class="nota">La selección permite consultar disponibilidad. Los paquetes nuevos están en desarrollo; no supone contratación ni confirma que las funciones estén disponibles.</p>
       </fieldset>
       <fieldset>
@@ -67,8 +72,11 @@
       </fieldset>
 
       <fieldset id="funciones-web" hidden>
-        <legend>Funciones opcionales</legend>
+        <legend>Funciones de tu proyecto</legend>
+        <p id="orientacion-paquete-web" class="ayuda-cotizacion" hidden>Las funciones previstas para este paquete se preseleccionan según el tipo de página. Puedes modificarlas y solicitar funciones adicionales, que se revisarán en tu propuesta.</p>
         <p id="ayuda-pedidos" class="ayuda-cotizacion" hidden>Para vender desde tu sitio, marca <strong>Carrito y pedidos desde la página</strong>. Eso habilita las opciones de cobro. Si prefieres atender los pedidos en el chat, selecciona <strong>Pedidos por WhatsApp</strong>.</p>
+        <h3 id="titulo-funciones-plan" hidden>Funciones previstas del paquete</h3>
+        <div id="funciones-plan">
         <label class="opcion" data-paginas="productos">
           <input type="checkbox" id="pedidos-web" name="funciones" value="Carrito y pedidos desde la página">
           <span>Carrito y pedidos desde la página<small>El cliente agrega artículos, elige cantidades y confirma su pedido en el sitio. El negocio recibe el pedido registrado.</small></span>
@@ -117,6 +125,17 @@
           <input type="checkbox" name="funciones" value="Reportes de pedidos y cobros">
           <span>Reportes de pedidos y cobros<small>Exportación en CSV. Requiere pedidos desde la página.</small></span>
         </label>
+        <label class="opcion" data-paginas="negocio"><input type="checkbox" name="funciones" value="Punto de venta y caja"><span>Punto de venta y caja<small>Registro de ventas y control de caja. · sujeto a disponibilidad.</small></span></label>
+        <label class="opcion" data-paginas="productos"><input type="checkbox" name="funciones" value="Inventario básico"><span>Inventario básico<small>Existencias de productos y movimientos básicos. · sujeto a disponibilidad.</small></span></label>
+        <label class="opcion" data-paginas="negocio"><input type="checkbox" name="funciones" value="Tickets"><span>Tickets<small>Emisión de comprobantes internos de operación, no facturas fiscales. · sujeto a disponibilidad.</small></span></label>
+        <label class="opcion" data-paginas="productos"><input type="checkbox" name="funciones" value="Inventario avanzado"><span>Inventario avanzado<small>Control avanzado de existencias y movimientos. · sujeto a disponibilidad.</small></span></label>
+        <label class="opcion" data-paginas="negocio"><input type="checkbox" name="funciones" value="Costos y proveedores"><span>Costos y proveedores<small>Organización de costos y proveedores. · sujeto a disponibilidad.</small></span></label>
+        <label class="opcion" data-paginas="negocio"><input type="checkbox" name="funciones" value="Fidelización"><span>Fidelización<small>Herramientas para atención y fidelización de clientes. · sujeto a disponibilidad.</small></span></label>
+        <label class="opcion" data-paginas="negocio"><input type="checkbox" name="funciones" value="Administración avanzada"><span>Administración avanzada<small>Herramientas adicionales de administración según el giro. · sujeto a disponibilidad.</small></span></label>
+        <label class="opcion" data-paginas="negocio"><input type="checkbox" name="funciones" value="Automatizaciones"><span>Automatizaciones<small>Automatización de tareas según el alcance acordado. · sujeto a disponibilidad.</small></span></label>
+        <label class="opcion" data-paginas="negocio"><input type="checkbox" name="funciones" value="Reportes avanzados"><span>Reportes avanzados<small>Indicadores y reportes de operación según el giro. · sujeto a disponibilidad.</small></span></label>
+        </div>
+        <div id="funciones-adicionales" hidden><h3>Funciones adicionales bajo cotización</h3><p class="nota">No se consideran incluidas en la mensualidad prevista del paquete.</p><div id="funciones-extra"></div></div>
       </fieldset>
 
       <fieldset>

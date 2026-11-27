@@ -16,3 +16,6 @@ Los precios son referencias en MXN + IVA, no oferta de contratación. Publicaci�
 - Verificar navegación, galería, cotizaciones de llaveros, QR, resina y piezas a medida, cuestionario, redes y guía NFC.
 - Verificar los enlaces históricos de El Comal desde navegador; no activar nuevas demos sin prueba funcional.
 - Verificar que el despliegue previo no apunte a D1 o correo de producción. No incorporar nuevas demos sin autorización.
+
+## Fichas y cotización adaptada
+Las tarjetas enlazan a `public/paquetes-web.html`. La cotización muestra un resumen del paquete y propone funciones por tipo de sitio. El usuario puede modificarlas y agregar otras bajo cotización. Los precios y alcances son orientativos y los módulos no disponibles siguen sujetos a revisión. Los complementos, datos, privacidad, dominio, folio y panel administrativo conservan su flujo. El formulario de proyecto a medida mantiene todas las opciones compatibles. Los giros del selector precargan un tipo sugerido sin bloquear su cambio.

@@ -18,3 +18,17 @@
 #paginas-web .demo-selectores select{min-width:0;width:100%;min-height:48px;padding:8px;border:1px solid var(--borde);border-radius:8px;background:var(--fondo);color:var(--texto);font:inherit}
 #paginas-web [hidden]{display:none!important}
 @media(max-width:650px){#paginas-web .planes-digitales,#paginas-web .demo-selectores{grid-template-columns:minmax(0,1fr)}}
+
+/* Fichas y cotización por paquete: reutilizan el tema comercial. */
+#fichas-paquetes .ficha-paquete{scroll-margin-top:20px;margin:24px 0;border-top:4px solid var(--amarillo)}
+#fichas-paquetes .ficha-paquete:target{border-color:var(--azul)}
+#fichas-paquetes .ficha-precios{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0 8px}
+#fichas-paquetes .ficha-precios dt{color:var(--suave);font-weight:600}
+#fichas-paquetes .ficha-precios dd{margin:2px 0;font-size:clamp(1.25rem,4vw,1.8rem);color:var(--titulo);font-weight:800}
+#fichas-paquetes .fichas-navegacion{margin:16px 0}
+#form-web .resumen-paquete-web{border:1px solid var(--borde);border-inline-start:4px solid var(--amarillo);border-radius:10px;padding:14px;margin:12px 0}
+#form-web .resumen-paquete-web h3{margin:0 0 8px}
+#form-web .resumen-paquete-web p{margin:0 0 8px}
+#form-web #funciones-adicionales{border-top:1px solid var(--borde);margin-top:18px;padding-top:14px}
+#form-web [hidden]{display:none!important}
+@media(max-width:420px){#fichas-paquetes .ficha-precios{grid-template-columns:1fr}}

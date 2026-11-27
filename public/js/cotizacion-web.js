@@ -13,6 +13,85 @@ function actualizarDominio() {
 formularioWeb.addEventListener('change', actualizarDominio);
 
 
+const planesCotizacion = {
+  "presencia-digital": {
+    "nombre": "Presencia digital",
+    "precio": "Implementación $750 MXN · $149 MXN al mes + IVA (referencias)",
+    "alcance": "Página comercial con identidad, horarios, ubicación y contacto. Menú o catálogo básico, según el tipo de negocio. Acceso desde QR/NFC y consultas por WhatsApp.",
+    "funciones": [
+      "Pedidos por WhatsApp"
+    ]
+  },
+  "negocio-interactivo": {
+    "nombre": "Negocio interactivo",
+    "precio": "Implementación $1,500 MXN · $299 MXN al mes + IVA (referencias)",
+    "alcance": "Funciones de presencia digital. Carrito, pedidos y seguimiento para menús o catálogos. Agenda o reservaciones según el giro. Panel privado; cocina básica y pedidos de mesa cuando corresponda.",
+    "funciones": [
+      "Pedidos por WhatsApp",
+      "Carrito y pedidos desde la página",
+      "Pedidos para recoger o a domicilio",
+      "Pedidos desde las mesas",
+      "Reservaciones y agenda",
+      "Reservaciones de tours y pases turísticos",
+      "Panel privado",
+      "Pantalla de cocina y comandas",
+      "Seguimiento de pedidos"
+    ]
+  },
+  "gestion-comercial": {
+    "nombre": "Gestión comercial",
+    "precio": "Implementación $2,500 MXN · $449 MXN al mes + IVA (referencias)",
+    "alcance": "Funciones de Negocio interactivo, según el giro. Punto de venta, caja y registro de cobros. Inventario básico para productos; comandas o atención de servicios. Tickets y reportes de pedidos y cobros.",
+    "funciones": [
+      "Pedidos por WhatsApp",
+      "Carrito y pedidos desde la página",
+      "Pedidos para recoger o a domicilio",
+      "Pedidos desde las mesas",
+      "Reservaciones y agenda",
+      "Reservaciones de tours y pases turísticos",
+      "Panel privado",
+      "Pantalla de cocina y comandas",
+      "Seguimiento de pedidos",
+      "Efectivo y transferencias con registro manual",
+      "Reportes de pedidos y cobros",
+      "Punto de venta y caja",
+      "Inventario básico",
+      "Tickets"
+    ]
+  },
+  "gestion-profesional": {
+    "nombre": "Gestión profesional",
+    "precio": "Implementación $3,500 MXN · $649 MXN al mes + IVA (referencias)",
+    "alcance": "Funciones de Gestión comercial, según el giro. Inventario avanzado, costos y proveedores. Fidelización y administración avanzada. Automatizaciones y reportes avanzados.",
+    "funciones": [
+      "Pedidos por WhatsApp",
+      "Carrito y pedidos desde la página",
+      "Pedidos para recoger o a domicilio",
+      "Pedidos desde las mesas",
+      "Reservaciones y agenda",
+      "Reservaciones de tours y pases turísticos",
+      "Panel privado",
+      "Pantalla de cocina y comandas",
+      "Seguimiento de pedidos",
+      "Efectivo y transferencias con registro manual",
+      "Reportes de pedidos y cobros",
+      "Punto de venta y caja",
+      "Tickets",
+      "Inventario avanzado",
+      "Costos y proveedores",
+      "Fidelización",
+      "Administración avanzada",
+      "Automatizaciones",
+      "Reportes avanzados"
+    ]
+  }
+};
+const bloquePlan = document.getElementById('funciones-plan');
+const bloqueExtra = document.getElementById('funciones-extra');
+const contenedorExtra = document.getElementById('funciones-adicionales');
+const resumenPaquete = document.getElementById('resumen-paquete-web');
+let ultimaConfiguracion = null;
+let sugeridasAntes = new Set();
 function actualizarFunciones() {
   const tipo = formularioWeb.querySelector('[name="tipo"]:checked')?.dataset.tipo;
   const disponibles = {
@@ -20,17 +99,64 @@ function actualizarFunciones() {
     menu: tipo === 'menu',
     negocio: Boolean(tipo && tipo !== 'contacto')
   };
-  let hayFunciones = false;
-
+  const clave = formularioWeb.elements.paquete.value;
+  const plan = Object.hasOwn(planesCotizacion, clave) ? planesCotizacion[clave] : null;
+  const giro = formularioWeb.elements.giro.value.trim().toLowerCase();
+  const esTurismo = /turismo|tour|excursi/.test(giro);
+  const esCitas = /barber|est[ée]tica|consultor|dent|servicios profesionales/.test(giro);
+  const configuracion = clave + '/' + (tipo || '') + '/' + (esTurismo ? 'turismo' : esCitas ? 'citas' : 'general');
+  const cambio = ultimaConfiguracion !== configuracion;
+  const sugeridas = new Set();
+  function aplica(opcion) {
+    const valor = opcion.querySelector('input').value;
+    // En negocios turísticos se sugiere el módulo de tours, y para servicios la agenda.
+    if (valor === 'Reservaciones de tours y pases turísticos') return esTurismo;
+    if (valor === 'Reservaciones y agenda') return !esTurismo && (esCitas || tipo === 'negocio');
+    return true;
+  }
+  if (plan) {
+    for (const opcion of opcionesWeb) {
+      const campo = opcion.querySelector('input');
+      if (disponibles[opcion.dataset.paginas] && plan.funciones.includes(campo.value) && aplica(opcion)) sugeridas.add(campo.value);
+    }
+  }
+  // Quitar únicamente las preselecciones anteriores que ya no pertenecen al nuevo paquete.
+  if (cambio && ultimaConfiguracion !== null) for (const opcion of opcionesWeb) {
+    const campo = opcion.querySelector('input');
+    if (sugeridasAntes.has(campo.value) && !sugeridas.has(campo.value)) campo.checked = false;
+  }
+  // Primero el carrito, para satisfacer las dependencias de las demás casillas.
+  if (cambio) for (const opcion of opcionesWeb) {
+    const campo = opcion.querySelector('input');
+    if (sugeridas.has(campo.value) && !sugeridasAntes.has(campo.value)) campo.checked = true;
+  }
+  let hayFunciones = false, hayPlan = false, hayExtra = false;
   for (const opcion of opcionesWeb) {
     const campo = opcion.querySelector('input');
     const requiere = opcion.dataset.requiere;
+    const incluida = Boolean(plan && plan.funciones.includes(campo.value) && aplica(opcion));
+    const destino = !plan || incluida ? bloquePlan : bloqueExtra;
+    if (opcion.parentElement !== destino) destino.append(opcion);
     opcion.hidden = !disponibles[opcion.dataset.paginas];
     campo.disabled = opcion.hidden || Boolean(requiere && !document.getElementById(requiere).checked);
     if (campo.disabled) campo.checked = false;
     hayFunciones ||= !opcion.hidden;
+    if (!opcion.hidden) {
+      if (destino === bloqueExtra) hayExtra = true; else hayPlan = true;
+    }
   }
-
+  ultimaConfiguracion = configuracion;
+  sugeridasAntes = sugeridas;
+  resumenPaquete.hidden = !plan;
+  if (plan) {
+    document.getElementById('nombre-paquete-web').textContent = plan.nombre;
+    document.getElementById('precio-paquete-web').textContent = plan.precio;
+    document.getElementById('alcance-paquete-web').textContent = plan.alcance;
+    document.getElementById('ficha-paquete-web').href = 'paquetes-web.html#' + clave;
+  }
+  document.getElementById('titulo-funciones-plan').hidden = !plan || !hayPlan;
+  document.getElementById('orientacion-paquete-web').hidden = !plan || !hayFunciones;
+  contenedorExtra.hidden = !hayExtra;
   ayudaPedidos.hidden = !disponibles.productos;
   funcionesWeb.hidden = !hayFunciones;
 }
@@ -81,6 +207,7 @@ formularioWeb.addEventListener('submit', (evento) => {
     `WhatsApp: ${datosPendientes.telefono}`,
     `Tipo de página: ${datosPendientes.tipo_pagina}`,
     `Funciones: ${datosPendientes.funciones.join('; ') || 'Ninguna'}`,
+    ...(datosPendientes.paquete ? [`Funciones adicionales bajo revisión: ${datosPendientes.funciones.filter(x => !sugeridasAntes.has(x)).join('; ') || 'Ninguna'}`] : []),
     `Complementos: ${datosPendientes.complementos.join('; ') || 'Ninguno'}`,
     `Presupuesto: ${datosPendientes.presupuesto || "No indicado"}`,
     `Modalidad de dirección: ${({subdominio:"Subdominio incluido",necesito_dominio:"Dominio .com nuevo",tengo_dominio:"Dominio existente",orientacion:"Necesita orientación"})[datosPendientes.situacion_dominio] || datosPendientes.situacion_dominio}`,
@@ -137,6 +264,11 @@ if (Array.from(selectorPaquete.options).some(o => o.value === paqueteCatalogo)) 
 const girosCatalogo = new Map([["restaurante","Restaurante / taquería"],["cafeteria","Cafetería"],["barberia","Barbería / estética"],["mascotas","Tienda de mascotas"],["comercio","Comercio / tienda"],["servicios","Servicios profesionales"],["turismo","Turismo y actividades"],["otro","Otro giro"]]);
 const giroCatalogo = parametrosCatalogo.get('giro');
 if (!formularioWeb.elements.giro.value && girosCatalogo.has(giroCatalogo)) formularioWeb.elements.giro.value = girosCatalogo.get(giroCatalogo);
+const tiposPorGiro = {restaurante:'menu',cafeteria:'menu',mascotas:'catalogo',comercio:'catalogo',barberia:'negocio',servicios:'negocio',turismo:'negocio'};
+if (Object.hasOwn(tiposPorGiro, giroCatalogo) && !formularioWeb.querySelector('[name="tipo"]:checked')) {
+  const sugerido = formularioWeb.querySelector('[name="tipo"][data-tipo="' + tiposPorGiro[giroCatalogo] + '"]');
+  if (sugerido) sugerido.checked = true;
+}
 actualizarFunciones();
 actualizarDominio();
 formularioWeb.hidden = false;
