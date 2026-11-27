@@ -124,3 +124,27 @@
 @media(max-width:700px){#paginas-web .plan-integrado{grid-template-columns:minmax(0,1fr);gap:16px}#paginas-web .plan-demostraciones{border-inline-start:0;border-top:1px solid var(--borde);padding-inline-start:0;padding-top:16px}}
 
 #paginas-web .plan-cotizar{margin-top:18px}#paginas-web .plan-cotizar .accion{width:100%;text-align:center;justify-content:center;white-space:normal}
+
+/* Selector protagonista: misma identidad marino/amarillo, controles claros y amplios. */
+#paginas-web .acceso-selector-demo{align-items:center;margin:14px 0 22px}
+#paginas-web .acceso-selector-demo span{color:var(--suave);font-size:.9rem}
+#paginas-web .destacar-selector{margin:30px 0;padding:0;border:2px solid var(--marino);border-radius:20px;overflow:hidden;background:linear-gradient(180deg,#fff 0%,#edf3ff 100%);box-shadow:0 14px 34px rgba(15,35,71,.14);scroll-margin-top:24px}
+#paginas-web .selector-cabecera{padding:clamp(20px,4vw,32px);background:var(--marino);color:var(--texto-inverso);border-top:5px solid var(--amarillo)}
+#paginas-web .sobrelinea-demo{margin:0 0 8px;color:var(--amarillo);font-size:.78rem;font-weight:800;letter-spacing:.07em}
+#paginas-web .selector-cabecera h3{margin:0 0 10px;color:var(--texto-inverso);font-size:clamp(1.55rem,3.6vw,2.2rem);line-height:1.18}
+#paginas-web .selector-intro{margin:0;color:var(--suave-inverso);max-width:760px;line-height:1.6}
+#paginas-web .selector-contenido{padding:clamp(18px,3.8vw,30px)}
+#paginas-web .destacar-selector .demo-selectores{gap:16px;margin:0 0 18px}
+#paginas-web .selector-numero{display:inline-flex;align-items:center;justify-content:center;width:27px;height:27px;border-radius:50%;background:var(--marino);color:white;font-size:.84rem;margin-inline-end:5px;flex:none}
+#paginas-web .destacar-selector select{min-height:54px;background:#fff;border-color:#a9b9d6;padding:10px 12px;border-radius:10px}
+#paginas-web .destacar-selector select:focus-visible,#paginas-web .destacar-selector a:focus-visible{outline:3px solid var(--azul);outline-offset:3px}
+#paginas-web .selector-eleccion{padding:14px 16px;border:1px solid #c6d4ee;border-inline-start:4px solid var(--amarillo);border-radius:10px;background:#fff}
+#paginas-web .selector-eleccion-titulo{font-size:.82rem;font-weight:700;color:var(--suave);margin:0 0 4px}
+#paginas-web #demo-combinacion{font-size:clamp(1rem,2.6vw,1.25rem);font-weight:800;color:var(--marino);margin:0;overflow-wrap:anywhere}
+#paginas-web #demo-resultado{font-size:.85rem;color:var(--suave);margin:6px 0 0}
+#paginas-web .selector-paso-final{display:flex;align-items:center;font-weight:700;margin:20px 0 12px}
+#paginas-web .acciones-selector-demo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0}
+#paginas-web .acciones-selector-demo .accion{min-height:54px;width:100%;padding:12px;white-space:normal;overflow-wrap:anywhere}
+#paginas-web .acciones-selector-demo .accion-principal-demo{font-size:1.08rem;font-weight:800}
+#paginas-web .selector-beneficio{margin:15px 0 0;font-size:.9rem;color:var(--suave)}
+@media(max-width:700px){#paginas-web .destacar-selector .demo-selectores,#paginas-web .acciones-selector-demo{grid-template-columns:minmax(0,1fr)}#paginas-web .selector-cabecera{padding:22px 18px}#paginas-web .selector-contenido{padding:18px}}

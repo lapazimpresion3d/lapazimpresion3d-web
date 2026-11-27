@@ -10,9 +10,9 @@
   <link rel="stylesheet" href="css/inicio.css">
   <script src="js/navegacion.js" defer></script>
   <script src="js/quiz-negocio.js" defer></script>
-  <link rel="stylesheet" href="css/soluciones-digitales.css?v=5">
+  <link rel="stylesheet" href="css/soluciones-digitales.css?v=6">
   <script src="js/demos-config.js?v=3" defer></script>
-  <script src="js/soluciones-digitales.js?v=4" defer></script>
+  <script src="js/soluciones-digitales.js?v=5" defer></script>
 </head>
 <body>
   <header class="cabecera cabecera-fotografica cabecera-inicio">
@@ -139,6 +139,7 @@
     <section id="paginas-web" aria-labelledby="titulo-web">
       <h2 id="titulo-web" tabindex="-1">Soluciones digitales para tu negocio</h2>
       <p class="introduccion">Desde una página de contacto hasta herramientas para organizar tus pedidos, citas y operaciones. Compara los paquetes y explora los ejemplos de práctica. Consulta disponibilidad antes de contratar.</p>
+      <div class="acciones acceso-selector-demo"><a class="accion" href="#selector-demos">Explora una demo para tu negocio</a><span>Elige entre 5 giros y 4 paquetes.</span></div>
       <p class="nota">Tarifas de lanzamiento en MXN + IVA. Las funciones en desarrollo no están disponibles para contratar todavía.</p><h3 id="titulo-escaparate-demos">Paquetes y demostraciones interactivas</h3>
       <p class="nota">Explora cómo funciona cada paquete con nuestras demostraciones interactivas. Puedes probar las funciones disponibles sin generar pedidos, citas ni cobros reales. Utiliza datos de ejemplo. Cada demostración puede adaptarse a otros giros.</p>
       <p class="nota" id="aviso-revision-demos" hidden>Modo revisión: enlaces de desarrollo pendientes de comprobación pública. No constituyen una oferta de contratación.</p>
@@ -203,8 +204,26 @@
       </div>
       <p class="nota"><a href="cotizacion-web.html#precios-paquetes">Ver detalles y condiciones de los paquetes</a>.</p>
       <div class="acciones demos-generales"><a class="accion" id="demo-galeria" hidden>Explorar todas las demostraciones</a><a class="accion secundaria" id="demo-comparador" hidden>Comparar negocios y paquetes</a></div>
-      <div class="caja explorar-demos" id="selector-demos"><h3>Explora una demo para tu negocio</h3><p>Selecciona un giro y paquete para conocer sus dos vistas.</p><div class="demo-selectores"><label for="demo-giro">Giro comercial<select id="demo-giro"><option value="cafe-mirador">Cafetería · Café Mirador</option><option value="barberia-elite">Barberías y estéticas · Barbería Elite</option><option value="mundo-mascotas">Tiendas y comercios · Mundo Mascotas</option><option value="auto-servicio-bahia">Talleres y servicios · Auto Servicio Bahía</option><option value="taqueria-el-comal">Restaurantes y taquerías · Taquería El Comal</option></select></label><label for="demo-paquete">Paquete<select id="demo-paquete"><option value="p1">P1 — Presencia digital</option><option value="p2">P2 — Negocio interactivo</option><option value="p3">P3 — Gestión comercial</option><option value="p4">P4 — Gestión profesional</option></select></label></div><p id="demo-resultado" role="status" aria-live="polite">Demostraciones de práctica en desarrollo.</p><div class="acciones"><a id="demo-seleccionada" class="accion" hidden>Ver demostración</a><a id="demo-panel" class="accion secundaria" hidden>Probar panel administrativo</a><a id="demo-cotizar" class="accion secundaria" hidden>Me interesa este paquete</a></div></div>
-<div class="caja cierre-cotizacion-web">
+      <section class="caja explorar-demos destacar-selector" id="selector-demos" aria-labelledby="titulo-selector-demos">
+        <div class="selector-cabecera">
+          <p class="sobrelinea-demo">PRUEBA INTERACTIVA · 20 COMBINACIONES</p>
+          <h3 id="titulo-selector-demos">Explora una demo para tu negocio</h3>
+          <p class="selector-intro">Selecciona tu giro y el paquete que te interesa. Descubre cómo podría funcionar una página web adaptada a tu negocio, tanto para tus clientes como para ti.</p>
+        </div>
+        <div class="selector-contenido">
+          <div class="demo-selectores"><label for="demo-giro"><span><b class="selector-numero" aria-hidden="true">1</b> Elige tu giro comercial</span><select id="demo-giro"><option value="cafe-mirador">Cafetería · Café Mirador</option><option value="barberia-elite">Barberías y estéticas · Barbería Elite</option><option value="mundo-mascotas">Tiendas y comercios · Mundo Mascotas</option><option value="auto-servicio-bahia">Talleres y servicios · Auto Servicio Bahía</option><option value="taqueria-el-comal">Restaurantes y taquerías · Taquería El Comal</option></select></label><label for="demo-paquete"><span><b class="selector-numero" aria-hidden="true">2</b> Elige tu paquete</span><select id="demo-paquete"><option value="p1">P1 — Presencia digital</option><option value="p2">P2 — Negocio interactivo</option><option value="p3">P3 — Gestión comercial</option><option value="p4">P4 — Gestión profesional</option></select></label></div>
+          <div class="selector-eleccion" aria-live="polite" aria-atomic="true">
+            <p class="selector-eleccion-titulo">Tu demostración seleccionada</p>
+            <p id="demo-combinacion">Cafetería · Café Mirador — P1 — Presencia digital</p>
+            <p id="demo-resultado" role="status">Demostraciones de práctica en desarrollo.</p>
+          </div>
+          <p class="selector-paso-final"><b class="selector-numero" aria-hidden="true">3</b> Explora la página o su panel administrativo</p>
+          <div class="acciones acciones-selector-demo"><a id="demo-seleccionada" class="accion accion-principal-demo" hidden>Ver demostración</a><a id="demo-panel" class="accion secundaria" hidden>Probar panel administrativo</a><a id="demo-cotizar" class="accion secundaria" hidden>Me interesa este paquete</a></div>
+          <p class="selector-beneficio">Cambia el giro o el paquete cuantas veces quieras. Puedes probar las funciones disponibles sin generar pedidos, citas ni cobros reales.</p>
+          <noscript><p class="nota">Activa JavaScript para explorar las combinaciones interactivas.</p></noscript>
+        </div>
+      </section>
+      <div class="caja cierre-cotizacion-web">
         <h3>¿Qué solución necesita tu negocio?</h3>
         <p>Cuéntanos qué necesitas y prepararemos una propuesta adaptada a tu negocio.</p>
         <div class="acciones"><a class="accion" href="cotizacion-web.html">Solicitar cotización</a></div>

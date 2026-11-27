@@ -22,3 +22,6 @@ Presentar los ejemplos como demostraciones interactivas, no como negocios fictic
 
 ## Captación desde paquetes y demos
 Cada ficha tiene «Me interesa este paquete», con precarga por slug del paquete. El selector añade únicamente un giro permitido, editable en cotización. No se copian nombres de establecimientos de demostración ni datos de práctica; no se envía una solicitud sin revisión y confirmación. POS, caja, inventario, almacenes y compras se describen como ejemplos de práctica, no contratación validada. No modificar contratos ni estados de verificación.
+
+## Selector destacado
+El bloque Explora una demo para tu negocio conserva su ubicación tras las cuatro fichas y recibe un acceso directo desde el comienzo de Servicios Web. Cabecera marino/amarillo, tres pasos numerados, controles grandes, resumen de giro/paquete actualizado en tiempo real, tres acciones y aviso de práctica. Una columna en móvil. No modifica el mapa de URLs, precios, estados de verificación ni el configurador de cotización.
