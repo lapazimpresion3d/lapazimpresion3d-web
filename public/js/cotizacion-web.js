@@ -154,7 +154,7 @@ function actualizarFunciones() {
   tituloFunciones.textContent = plan ? 'Funciones de ' + plan.nombre : 'Funciones del proyecto';
   conteoFunciones.hidden = !plan;
   const marcadasPlan = Array.from(opcionesWeb).filter(o=>o.parentElement===bloquePlan && o.querySelector('input').checked).length;
-  conteoFunciones.textContent = plan ? marcadasPlan + ' de ' + nuevasIncluidas.size + ' funciones seleccionadas. Puedes desmarcar las que no necesites; el alcance y la disponibilidad se confirman en la propuesta.' : '';
+  conteoFunciones.textContent = plan ? marcadasPlan + ' de ' + nuevasIncluidas.size + ' funciones seleccionadas. Puedes desmarcar las que no necesites.' : '';
   const extrasSeleccionadas = opcionesWeb.length && Array.from(opcionesWeb).filter(o=>o.parentElement===bloqueExtra && o.querySelector('input').checked).length;
   document.getElementById('estado-paquete-web').textContent = plan ? plan.nombre + ' seleccionado · ' + marcadasPlan + ' de ' + nuevasIncluidas.size + ' funciones marcadas. Revisa sus características debajo.' : 'Proyecto a medida seleccionado · elige las funciones que necesitas.';
   contenedorExtra.querySelector('summary').textContent = 'Funciones adicionales bajo cotización' + (extrasSeleccionadas ? ' (' + extrasSeleccionadas + ' seleccionadas)' : '');
