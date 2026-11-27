@@ -43,7 +43,7 @@
     const demo = entradas.find(d => d.listaParaContratar === true) || entradas[0];
     const activa = configurarEnlace(card.querySelector('[data-demo]'), demo);
     card.querySelector('.plan-acciones').hidden = !activa;
-    card.querySelector('[data-estado]').textContent = !activa ? 'En desarrollo' : demo.listaParaContratar === true ? 'Demo disponible' : 'Demo disponible · contratación en desarrollo';
+    card.querySelector('[data-estado]').textContent = !activa ? 'Demo próximamente' : demo.listaParaContratar === true ? 'Demo disponible' : 'Demo disponible · contratación en desarrollo';
   }
   for (const o of giros) {
     o.disabled = !paquetes.some(p => disponible(p.value, o.value));
