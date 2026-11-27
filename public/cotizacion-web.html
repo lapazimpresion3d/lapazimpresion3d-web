@@ -31,17 +31,19 @@
     <a class="regreso" href="index.html#paginas-web">← Servicios digitales</a>
   <section id="cotizacion-web" aria-labelledby="titulo-cotizacion">
     <section id="precios-paquetes" class="caja comparativa-cotizacion" aria-labelledby="titulo-precios-paquetes">
-      <h2 id="titulo-precios-paquetes">Paquetes y precios</h2>
+      <h2 id="titulo-precios-paquetes">Paquete de interés</h2>
+      <p id="ayuda-seleccion-paquete" class="nota">Selecciona un paquete para adaptar las funciones de tu cotización.</p>
       <table class="tabla-precios-cotizacion">
         <thead><tr><th scope="col">Paquete</th><th scope="col">Implementación</th><th scope="col">Mensualidad</th></tr></thead>
         <tbody>
-          <tr><th scope="row">Presencia digital</th><td><span class="precio-desde">Desde</span> <strong>$750</strong></td><td><strong>$149</strong><span class="precio-periodo"> / mes</span></td></tr>
-          <tr><th scope="row">Negocio interactivo</th><td><span class="precio-desde">Desde</span> <strong>$1,500</strong></td><td><strong>$299</strong><span class="precio-periodo"> / mes</span></td></tr>
-          <tr><th scope="row">Gestión comercial</th><td><span class="precio-desde">Desde</span> <strong>$2,500</strong></td><td><strong>$449</strong><span class="precio-periodo"> / mes</span></td></tr>
-          <tr><th scope="row">Gestión profesional</th><td><span class="precio-desde">Desde</span> <strong>$3,500</strong></td><td><strong>$649</strong><span class="precio-periodo"> / mes</span></td></tr>
+          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="presencia-digital" required aria-describedby="precio-presencia-digital mensual-presencia-digital"><span>Presencia digital</span></label></th><td id="precio-presencia-digital"><span class="precio-desde">Desde</span> <strong>$750</strong></td><td id="mensual-presencia-digital"><strong>$149</strong><span class="precio-periodo"> / mes</span></td></tr>
+          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="negocio-interactivo" required aria-describedby="precio-negocio-interactivo mensual-negocio-interactivo"><span>Negocio interactivo</span></label></th><td id="precio-negocio-interactivo"><span class="precio-desde">Desde</span> <strong>$1,500</strong></td><td id="mensual-negocio-interactivo"><strong>$299</strong><span class="precio-periodo"> / mes</span></td></tr>
+          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="gestion-comercial" required aria-describedby="precio-gestion-comercial mensual-gestion-comercial"><span>Gestión comercial</span></label></th><td id="precio-gestion-comercial"><span class="precio-desde">Desde</span> <strong>$2,500</strong></td><td id="mensual-gestion-comercial"><strong>$449</strong><span class="precio-periodo"> / mes</span></td></tr>
+          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="gestion-profesional" required aria-describedby="precio-gestion-profesional mensual-gestion-profesional"><span>Gestión profesional</span></label></th><td id="precio-gestion-profesional"><span class="precio-desde">Desde</span> <strong>$3,500</strong></td><td id="mensual-gestion-profesional"><strong>$649</strong><span class="precio-periodo"> / mes</span></td></tr>
+          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="a-medida" required checked><span>Proyecto a medida</span></label></th><td colspan="2">Bajo cotización</td></tr>
         </tbody>
       </table>
-      <p class="nota">MXN + IVA. La implementación depende del alcance; las mensualidades corresponden al paquete estándar.</p>
+      <p class="nota">MXN + IVA. La implementación depende del alcance; las mensualidades corresponden al paquete estándar. La disponibilidad se confirma en la propuesta.</p>
       <p class="nota"><a href="paquetes-web.html#fichas-paquetes">Ver características y alcance de cada paquete</a>.</p>
     </section>
     <details id="condiciones-paquetes" class="condiciones-comerciales condiciones-desplegables">
@@ -74,23 +76,10 @@
     <p class="introduccion">Elige el paquete y las funciones que necesita tu negocio. Con esos datos podremos preparar una propuesta a la medida.</p>
     <p class="nota aviso-cotizacion-breve">Recibirás un folio de seguimiento. Enviar tu solicitud no genera ningún cargo.</p>
     <form id="form-web" class="caja web" hidden>
-      <fieldset>
-        <legend>Paquete de interés</legend>
-        <label>Selecciona tu paquete
-          <select name="paquete" id="paquete-web">
-            <option value="">Proyecto a medida / sin definir</option>
-            <option value="presencia-digital">Presencia digital</option>
-<option value="negocio-interactivo">Negocio interactivo</option>
-<option value="gestion-comercial">Gestión comercial</option>
-<option value="gestion-profesional">Gestión profesional</option>
-          </select>
-        </label>
         <div id="resumen-paquete-web" class="resumen-paquete-web" hidden aria-live="polite">
           <h3 id="nombre-paquete-web"></h3><p id="precio-paquete-web"></p><p id="alcance-paquete-web"></p>
           <a id="ficha-paquete-web" href="paquetes-web.html">Ver ficha del paquete</a>
         </div>
-        <p class="nota">Puedes elegir un paquete o solicitar un proyecto a medida. La propuesta confirma la disponibilidad y el alcance antes de contratar.</p>
-      </fieldset>
       <fieldset id="funciones-web" hidden>
         <legend>Características y funciones del proyecto</legend>
         <p id="orientacion-paquete-web" class="ayuda-cotizacion" hidden>Selecciona las funciones del paquete que necesita tu negocio. Las opciones comunes se sugieren automáticamente; el menú, catálogo, pedidos y reservaciones se eligen según tus necesidades. Puedes modificar la selección.</p>

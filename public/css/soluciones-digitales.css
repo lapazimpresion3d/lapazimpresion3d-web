@@ -72,3 +72,14 @@
 #form-web #funciones-adicionales summary{font-weight:700;color:var(--titulo);cursor:pointer;padding:8px 0}
 #form-web #funciones-adicionales summary:focus-visible{outline:2px solid var(--titulo);outline-offset:3px}
 #form-web #funciones-adicionales[open] .nota{margin:8px 0 12px}
+
+/* La tabla de precios es la selección real del paquete. */
+#precios-paquetes[hidden]{display:none!important}
+#precios-paquetes .selector-paquete{display:flex;gap:8px;align-items:center;cursor:pointer;line-height:1.4;font-weight:700}
+#precios-paquetes .selector-paquete input{width:19px;height:19px;min-width:19px;margin:0;accent-color:var(--titulo);cursor:pointer}
+#precios-paquetes tr[data-opcion-paquete]{cursor:pointer}
+#precios-paquetes tr[data-opcion-paquete]:hover{background:#f5f7fc}
+#precios-paquetes tr.paquete-seleccionado{background:#eaf0fd}
+#precios-paquetes tr.paquete-seleccionado th{box-shadow:inset 3px 0 0 var(--titulo)}
+#precios-paquetes .selector-paquete:focus-within{outline:2px solid var(--titulo);outline-offset:3px;border-radius:3px}
+@media(max-width:420px){#precios-paquetes .selector-paquete{gap:4px}#precios-paquetes .selector-paquete input{width:16px;height:16px;min-width:16px}}

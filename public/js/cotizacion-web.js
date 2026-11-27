@@ -106,13 +106,16 @@ const bloquePlan = document.getElementById('funciones-plan');
 const bloqueExtra = document.getElementById('funciones-extra');
 const contenedorExtra = document.getElementById('funciones-adicionales');
 const resumenPaquete = document.getElementById('resumen-paquete-web');
+const tablaPaquetes = document.getElementById('precios-paquetes');
+const radiosPaquete = Array.from(tablaPaquetes.querySelectorAll('input[name="paquete"]'));
 let ultimoPaquete = null;
 let incluidas = new Set();
 let automaticas = new Set();
 // Los módulos específicos de menú, inventario, pedidos o agenda no se presuponen.
 const comunes = new Set(["Página comercial personalizada","Información de contacto y horarios","Panel privado"]);
 function actualizarFunciones() {
-  const clave = formularioWeb.elements.paquete.value;
+  const clave = radiosPaquete.find(r => r.checked)?.value || 'a-medida';
+  for (const radio of radiosPaquete) radio.closest('tr').classList.toggle('paquete-seleccionado',radio.checked);
   const plan = Object.hasOwn(planesCotizacion, clave) ? planesCotizacion[clave] : null;
   const cambio = ultimoPaquete !== clave;
   const nuevasIncluidas = new Set(plan?.funciones || []);
@@ -162,6 +165,12 @@ formularioWeb.addEventListener('change', evento => {
 });
 
 formularioWeb.addEventListener('change', actualizarFunciones);
+// Los radios pertenecen al formulario mediante form=, pero sus eventos no suben por él.
+tablaPaquetes.addEventListener('change', actualizarFunciones);
+for (const radio of radiosPaquete) radio.closest('tr').addEventListener('click', evento => {
+  if (evento.target.closest('label, input')) return;
+  radio.click();
+});
 window.addEventListener('pageshow', actualizarFunciones);
 
 const telefonoWeb = formularioWeb.elements.telefono;
@@ -188,7 +197,7 @@ formularioWeb.addEventListener('submit', (evento) => {
     nombre: String(f.get('nombre') || '').trim(),
     negocio: String(f.get('negocio') || '').trim(),
     giro: String(f.get('giro') || '').trim(),
-    paquete: formularioWeb.elements.paquete.selectedOptions[0]?.value ? formularioWeb.elements.paquete.selectedOptions[0].textContent.trim() : '',
+    paquete: Object.hasOwn(planesCotizacion, f.get('paquete')) ? planesCotizacion[f.get('paquete')].nombre : '',
     telefono,
     funciones: f.getAll('funciones').map(String),
     complementos: f.getAll('complementos').map(String),
@@ -215,6 +224,7 @@ formularioWeb.addEventListener('submit', (evento) => {
   resumenWeb.textContent = lineas.join('\n');
   errorWeb.hidden = true;
   formularioWeb.hidden = true;
+  tablaPaquetes.hidden = true;
   revisionWeb.hidden = false;
   document.querySelector('#titulo-revision').focus();
 });
@@ -225,7 +235,8 @@ document.querySelector('#editar-cotizacion').addEventListener('click', () => {
   if (botonEnviar.disabled) return;
   revisionWeb.hidden = true;
   formularioWeb.hidden = false;
-  formularioWeb.elements.paquete.focus();
+  tablaPaquetes.hidden = false;
+  radiosPaquete.find(r => r.checked)?.focus();
 });
 
 botonEnviar.addEventListener('click', async () => {
@@ -256,9 +267,9 @@ botonEnviar.addEventListener('click', async () => {
 
 // Solo valores conocidos: no insertar parámetros de URL como HTML ni cambiar selecciones en pageshow.
 const parametrosCatalogo = new URLSearchParams(location.search);
-const selectorPaquete = formularioWeb.elements.paquete;
 const paqueteCatalogo = parametrosCatalogo.get('paquete');
-if (Array.from(selectorPaquete.options).some(o => o.value === paqueteCatalogo)) selectorPaquete.value = paqueteCatalogo;
+const radioInicial = radiosPaquete.find(r => r.value === paqueteCatalogo);
+if (radioInicial) radioInicial.checked = true;
 const girosCatalogo = new Map([["restaurante","Restaurante / taquería"],["cafeteria","Cafetería"],["barberia","Barbería / estética"],["mascotas","Tienda de mascotas"],["comercio","Comercio / tienda"],["servicios","Servicios profesionales"],["turismo","Turismo y actividades"],["otro","Otro giro"]]);
 const giroCatalogo = parametrosCatalogo.get('giro');
 if (!formularioWeb.elements.giro.value && girosCatalogo.has(giroCatalogo)) formularioWeb.elements.giro.value = girosCatalogo.get(giroCatalogo);
