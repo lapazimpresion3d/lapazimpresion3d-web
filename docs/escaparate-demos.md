@@ -16,3 +16,6 @@ Se integra el escaparate en main por autorización explícita. Los enlaces de pr
 
 ## Fichas integradas
 Se reúnen los precios, características y demostraciones en cuatro fichas comerciales. P3 contiene dos ejemplos, los demás uno. Se conserva el selector de veinte combinaciones y todos los accesos, sin repetir el nombre del paquete en cada negocio. El ancla titulo-escaparate-demos sigue disponible.
+
+## Redacción comercial
+Presentar los ejemplos como demostraciones interactivas, no como negocios ficticios. Explicar que se pueden probar las funciones disponibles sin generar pedidos, citas, mensajes ni cobros reales; usar datos de ejemplo. La redacción no cambia la disponibilidad comercial ni la lógica de práctica.
