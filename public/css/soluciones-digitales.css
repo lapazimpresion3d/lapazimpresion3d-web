@@ -126,8 +126,6 @@
 #paginas-web .plan-demostraciones > .plan-cotizar{margin-top:14px;width:100%}#paginas-web .plan-cotizar .accion{width:100%;min-height:48px;text-align:center;justify-content:center;white-space:normal;overflow-wrap:anywhere}
 
 /* Selector protagonista: misma identidad marino/amarillo, controles claros y amplios. */
-#paginas-web .acceso-selector-demo{align-items:center;margin:14px 0 22px}
-#paginas-web .acceso-selector-demo span{color:var(--suave);font-size:.9rem}
 #paginas-web .destacar-selector{margin:30px 0;padding:0;border:2px solid var(--marino);border-radius:20px;overflow:hidden;background:linear-gradient(180deg,#fff 0%,#edf3ff 100%);box-shadow:0 14px 34px rgba(15,35,71,.14);scroll-margin-top:24px}
 #paginas-web .selector-cabecera{padding:clamp(20px,4vw,32px);background:var(--marino);color:var(--texto-inverso);border-top:5px solid var(--amarillo)}
 #paginas-web .sobrelinea-demo{margin:0 0 8px;color:var(--amarillo);font-size:.78rem;font-weight:800;letter-spacing:.07em}
@@ -159,20 +157,34 @@
 .ventajas-suscripcion-lista span{display:block;font-size:.95rem;color:#46536d;line-height:1.5;white-space:normal;overflow-wrap:anywhere}
 @media(max-width:700px){.ventajas-suscripcion{padding:16px}.ventajas-suscripcion-lista{grid-template-columns:minmax(0,1fr);gap:10px}.ventajas-suscripcion-lista li{padding:12px}}
 
-/* Orientación comercial: independiente del cuestionario general y del selector de demos. */
-#paginas-web .asistente-paquetes{scroll-margin-top:24px;margin:26px 0;padding:clamp(18px,3.5vw,28px);border:1px solid #c6d4ee;border-inline-start:5px solid var(--amarillo);background:#f6f9ff}
-#paginas-web .asistente-sobrelinea{font-size:.78rem;font-weight:800;letter-spacing:.06em;color:var(--titulo);margin:0 0 6px}
-#paginas-web .asistente-paquetes h3{margin:0 0 8px;font-size:clamp(1.35rem,3vw,1.8rem)}
-#paginas-web .asistente-giro{display:grid;gap:8px;margin:18px 0;max-width:100%;min-width:0}
-#paginas-web .asistente-giro select{font:inherit;color:var(--texto);background:#fff;border:1px solid #a9b9d6;border-radius:10px;min-height:48px;padding:8px 12px;width:100%;min-width:0}
+/* Asistente: superficie clara autónoma, incluso con tema oscuro del dispositivo. */
+#paginas-web .asistente-paquetes,#paginas-web .destacar-selector{
+  color-scheme:light;--texto:#16203a;--titulo:#174ab8;--subtitulo:#304a78;--suave:#46536d;--borde:#c6d4ee;--tarjeta:#ffffff;--fondo:#f1f5fc;color:var(--texto)
+}
+#paginas-web .asistente-paquetes{scroll-margin-top:24px;margin:26px 0;padding:0;border:1px solid #c6d4ee;border-radius:18px;background:#f6f9ff;overflow:hidden;min-width:0;max-width:100%}
+#paginas-web .asistente-cabecera{padding:clamp(18px,3.5vw,28px);border-top:5px solid #ffc82a;background:#0f2347;color:#fff}
+#paginas-web .asistente-sobrelinea{font-size:.8rem;font-weight:800;letter-spacing:.05em;color:#174ab8;margin:0 0 8px}
+#paginas-web .asistente-cabecera .asistente-sobrelinea{color:#ffc82a}
+#paginas-web .asistente-cabecera h3{margin:0 0 10px;color:#fff;font-size:clamp(1.35rem,3vw,1.85rem);line-height:1.25}
+#paginas-web .asistente-cabecera>p:last-child{margin:0;color:#e0e8f7;line-height:1.6;font-size:1rem}
+#paginas-web .asistente-contenido{padding:clamp(16px,3.5vw,28px);color:#16203a;min-width:0}
+#paginas-web .asistente-giro{display:grid;gap:8px;margin:0 0 22px;max-width:100%;min-width:0;color:#16203a}
+#paginas-web .asistente-giro strong,#paginas-web .asistente-objetivos legend{font-size:1rem;color:#0f2347;font-weight:800;line-height:1.5;white-space:normal}
+#paginas-web .asistente-giro select{font:inherit;color:#16203a;background:#fff;border:1px solid #8a9dbd;border-radius:10px;min-height:52px;padding:10px 12px;width:100%;min-width:0}
 #paginas-web .asistente-objetivos{border:0;padding:0;min-width:0;margin:0 0 18px}
-#paginas-web .asistente-objetivos legend{font-weight:800;color:var(--marino);margin-bottom:6px}
+#paginas-web .asistente-objetivos legend{margin-bottom:8px;padding:0;max-width:100%}
+#paginas-web .asistente-objetivos>.nota{margin:0 0 12px}
 #paginas-web .asistente-opciones{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-#paginas-web .asistente-opciones label{display:flex;align-items:flex-start;gap:9px;background:#fff;border:1px solid var(--borde);padding:12px;border-radius:10px;cursor:pointer;min-width:0}
-#paginas-web .asistente-opciones input{accent-color:var(--titulo);width:19px;height:19px;flex:none;margin:3px 0 0}
-#paginas-web .asistente-opciones label:has(input:checked){background:#eaf0fd;border-color:#93aedb}
-#paginas-web .asistente-recomendacion{background:#fff;padding:16px;border:1px solid #a9b9d6;border-radius:12px}
-#paginas-web .asistente-recomendacion h4{font-size:1.35rem;color:var(--marino);margin:6px 0}
-#paginas-web #asistente-precio{font-weight:700;color:var(--titulo)}
-#paginas-web .asistente-recomendacion summary{cursor:pointer;font-weight:700}
-@media(max-width:700px){#paginas-web .asistente-opciones{grid-template-columns:minmax(0,1fr)}#paginas-web .asistente-recomendacion .accion{width:100%}}
+#paginas-web .asistente-opciones label{display:flex;align-items:flex-start;gap:11px;background:#fff;color:#16203a;border:1px solid #b8c7de;padding:13px;border-radius:10px;cursor:pointer;min-width:0;min-height:50px;line-height:1.45}
+#paginas-web .asistente-opciones label span{min-width:0;overflow-wrap:anywhere;font-size:1rem}
+#paginas-web .asistente-opciones input{accent-color:#174ab8;width:22px;height:22px;flex:none;margin:1px 0 0}
+#paginas-web .asistente-opciones label:has(input:checked){background:#eaf0fd;border-color:#174ab8;box-shadow:inset 0 0 0 1px #174ab8}
+#paginas-web .asistente-recomendacion{background:#fff;color:#16203a;padding:18px;border:1px solid #a9b9d6;border-inline-start:4px solid #ffc82a;border-radius:12px;min-width:0;overflow-wrap:anywhere}
+#paginas-web .asistente-recomendacion h4{font-size:1.35rem;color:#0f2347;margin:6px 0}
+#paginas-web #asistente-precio{font-weight:700;color:#174ab8}
+#paginas-web .asistente-recomendacion summary{cursor:pointer;font-weight:700;color:#16203a}
+#paginas-web .asistente-recomendacion .acciones{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:10px}
+#paginas-web .asistente-recomendacion .accion{width:100%;min-height:50px;white-space:normal;overflow-wrap:anywhere}
+#paginas-web .asistente-paquetes .nota{color:#46536d;font-size:.95rem;line-height:1.5}
+#paginas-web #asistente-aviso{margin:14px 0 0;padding:10px 12px;background:#e9f0fb;border-radius:8px;color:#16203a}
+@media(max-width:700px){#paginas-web .asistente-opciones,#paginas-web .asistente-recomendacion .acciones{grid-template-columns:minmax(0,1fr)}#paginas-web .asistente-contenido,#paginas-web .asistente-cabecera{padding:18px}#paginas-web .asistente-opciones label{padding:12px}#paginas-web .asistente-recomendacion{padding:14px}}

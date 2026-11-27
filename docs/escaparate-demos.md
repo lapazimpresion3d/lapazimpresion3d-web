@@ -28,3 +28,6 @@ El bloque Explora una demo para tu negocio conserva su ubicación tras las cuatr
 
 ## Legibilidad en móvil y orden de cotización
 El aviso Sin plazos forzosos mantiene fondo claro y colores de texto explícitos de alto contraste incluso con el modo oscuro del sistema. Las ventajas se apilan en una columna en pantallas pequeñas. El botón Me interesa este paquete se coloca después de las demostraciones dentro de cada ficha (en P3, después de ambos negocios), conservando el destino y la precarga. El selector interactivo conserva su orden y los tres enlaces. No cambia precios, lógica o datos.
+
+## Orden y legibilidad del escaparate en móvil
+La sección comienza con introducción y cuatro paquetes; se elimina la botonera inicial duplicada. Después de las fichas y el selector interactivo aparecen las ventajas de suscripción y el enlace a condiciones, luego el asistente y el cierre de cotización. El asistente tiene cabecera marino/amarillo, pasos numerados, controles amplios y una columna en móvil. Asistente y selector usan variables locales de tema claro y texto oscuro en todos los controles, notas y resultados, aun con el dispositivo en modo oscuro. Se conservan los IDs, 12 opciones, recomendaciones, enlaces y precios. No se modifica la lógica de selección.
