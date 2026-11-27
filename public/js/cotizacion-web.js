@@ -272,3 +272,14 @@ if (Object.hasOwn(tiposPorGiro, giroCatalogo) && !formularioWeb.querySelector('[
 actualizarFunciones();
 actualizarDominio();
 formularioWeb.hidden = false;
+// El destino está dentro de un formulario inicialmente oculto: desplazar tras mostrarlo.
+if (location.hash === "#condiciones-paquetes") {
+  requestAnimationFrame(() => {
+    if (location.hash !== "#condiciones-paquetes") return;
+    const destino = document.getElementById("condiciones-paquetes");
+    if (destino) {
+      document.getElementById("titulo-condiciones-web")?.focus({preventScroll:true});
+      destino.scrollIntoView({block:"start"});
+    }
+  });
+}

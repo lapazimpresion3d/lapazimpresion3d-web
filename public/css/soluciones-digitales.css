@@ -43,3 +43,5 @@
 /* Condiciones generales: una sola sección para todo el catálogo. */
 #fichas-paquetes .condiciones-paquetes li+li{margin-top:9px}
 #paginas-web .plan-precios dd,#fichas-paquetes .ficha-precios dd{overflow-wrap:anywhere}
+
+#condiciones-paquetes{scroll-margin-top:24px}
