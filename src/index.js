@@ -181,6 +181,21 @@ function periodoMensualidad(q,ultimo,d,hoy){
  return {inicio,fin:finMensualidad(inicio,ancla),dia_ancla:ancla};
 }
 
+// Aprobación de la versión registrada; no despliega ni modifica dominios.
+function urlEntrega(v){
+ if(typeof v!=="string"||v.length>500||!/^https:\/\/[a-z0-9.-]+\.[a-z]{2,}(?::443)?(?:\/[^\s\\?#]*)?$/i.test(v))return false;
+ try{const u=new URL(v);return u.protocol==="https:"&&!u.username&&!u.password&&!u.search&&!u.hash&&!u.hostname.endsWith(".local");}catch{return false;}
+}
+function textoEntrega(v,min,max){return typeof v==="string"&&v.trim().length>=min&&v.length<=max;}
+function revisionEntregaValida(d){return !!d&&["web","fisica","combinada"].includes(d.modalidad)&&textoEntrega(d.revision,1,120)&&textoEntrega(d.notas_revision,3,2000)&&Number.isSafeInteger(d.version)&&d.version>=0&&(d.modalidad==="fisica"?d.vista_previa==="":urlEntrega(d.vista_previa));}
+function decisionEntregaValida(d){return !!d&&["aprobado","requiere_cambios"].includes(d.decision)&&textoEntrega(d.comentario,d.decision==="requiere_cambios"?3:0,1000)&&Number.isSafeInteger(d.version)&&d.version>0;}
+function entregaFinalValida(d,q,hoy){
+ if(!d||!q||q.decision!=="aprobado"||q.fecha_entrega||!q.fecha_decision||d.version!==q.version||!fechaMensualidad(d.fecha_entrega)||d.fecha_entrega>hoy||d.fecha_entrega<q.fecha_decision)return false;
+ if(q.modalidad==="fisica")return d.tipo_dominio==="no_aplica"&&d.url_final===""&&d.fecha_publicacion==="";
+ return ["propio","subdominio"].includes(d.tipo_dominio)&&urlEntrega(d.url_final)&&fechaMensualidad(d.fecha_publicacion)&&d.fecha_publicacion>=q.fecha_decision&&d.fecha_publicacion<=d.fecha_entrega;
+}
+function garantiaEntrega(fecha){const d=new Date(fecha+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+60);return d.toISOString().slice(0,10);}
+
 const ESTADOS_REVISION_MATERIAL = new Set(["recibido","requiere_correccion","aprobado"]);
 function revisionMaterialValida(data,esTexto) {
   return !!data && ESTADOS_REVISION_MATERIAL.has(data.estado) && (!esTexto || (typeof data.version==="string" && data.version.length<=35 && Number.isFinite(Date.parse(data.version))));
@@ -514,6 +529,17 @@ async function api(request,env,ctx) {
         :null;
       return json({proyecto:{folio:p.folio,nombre:p.nombre,proyecto:p.proyecto,estado:p.estado,categoria,instrucciones:p.instrucciones||""},cotizacion,secciones:secciones.results,archivos:archivos.results});
     }
+    if(path==="/api/cliente/entrega"&&request.method==="GET"){
+      const entrega=await env.QUIZ_DB.prepare("SELECT modalidad,revision,vista_previa,notas_revision,version,decision,comentario,fecha_decision,tipo_dominio,url_final,fecha_entrega,fecha_publicacion,garantia_hasta FROM proyecto_entregas WHERE proyecto_id=?1").bind(p.id).first();
+      return json({entrega});
+    }
+    if(path==="/api/cliente/entrega"&&request.method==="POST"){
+      if(!sameOrigin(request))return error("Origen no autorizado",403);
+      if(["finalizado","cancelado"].includes(p.estado))return error("Proyecto cerrado",409);
+      const d=await leerJson(request,8000);if(!decisionEntregaValida(d))return error("Decisión inválida",400);
+      const res=await env.QUIZ_DB.prepare("UPDATE proyecto_entregas SET decision=?1,comentario=?2,fecha_decision=?3,origen_decision='cliente',fecha_actualizacion=?4 WHERE proyecto_id=?5 AND version=?6 AND decision='pendiente' AND fecha_entrega IS NULL AND EXISTS(SELECT 1 FROM proyectos_cliente WHERE id=?5 AND estado NOT IN ('finalizado','cancelado') AND acceso_revocado=0 AND acceso_expira>?4)").bind(d.decision,d.comentario.trim(),hoyMensualidad(),new Date().toISOString(),p.id,d.version).run();
+      return res.meta.changes?json({ok:true}):error("La revisión cambió o ya fue respondida. Actualiza el portal.",409);
+    }
     const archivoCliente=path.match(/^\/api\/cliente\/archivos\/([0-9a-f-]{36})$/i);
     if(archivoCliente && request.method==="GET"){
       if(!env.COTIZACIONES_R2)return error("Almacenamiento no configurado",503);
@@ -577,6 +603,52 @@ async function api(request,env,ctx) {
     if(path==="/api/admin/sesion" && request.method==="GET") return json({ok:true});
     if(path==="/api/admin/salir" && request.method==="POST") return json({ok:true},200,{"set-cookie":"lp3d_session=; Path=/api/admin; Max-Age=0; HttpOnly; Secure; SameSite=Strict"});
     // Consulta administrativa de materiales recibidos sin exponer R2 públicamente.
+    const entregaAdmin=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/entrega(?:\/(decision|finalizar|cambios))?$/i);
+    if(entregaAdmin){
+      const id=entregaAdmin[1],accion=entregaAdmin[2],db=env.QUIZ_DB,hoy=hoyMensualidad(),ahora=new Date().toISOString();
+      if(request.method!=="GET"&&!sameOrigin(request))return error("Origen no autorizado",403);
+      const p=await db.prepare("SELECT id,estado,propuesta_id FROM proyectos_cliente WHERE id=?1").bind(id).first();
+      if(!p)return error("Proyecto no encontrado",404);
+      const q=await db.prepare("SELECT * FROM proyecto_entregas WHERE proyecto_id=?1").bind(id).first();
+      if(!accion&&request.method==="GET"){
+        const cambios=await db.prepare("SELECT id,descripcion,fecha_registro FROM proyecto_cambios WHERE proyecto_id=?1 ORDER BY fecha_registro DESC LIMIT 100").bind(id).all();
+        return json({entrega:q,cambios:cambios.results,hoy});
+      }
+      if(p.estado==="cancelado")return error("Proyecto cancelado",409);
+      if(!accion&&request.method==="PUT"){
+        const d=await leerJson(request,16000);
+        if(!revisionEntregaValida(d))return error("Revisa modalidad, revisión, descripción y URL HTTPS sin parámetros ni credenciales.",400);
+        if(p.estado==="finalizado")return error("Proyecto finalizado",409);
+        const args=[id,d.modalidad,d.revision.trim(),d.vista_previa,d.notas_revision.trim(),ahora];
+        const res=d.version===0
+          ?await db.prepare("INSERT INTO proyecto_entregas(proyecto_id,modalidad,revision,vista_previa,notas_revision,fecha_actualizacion) SELECT ?1,?2,?3,?4,?5,?6 FROM proyectos_cliente WHERE id=?1 AND estado NOT IN ('finalizado','cancelado') ON CONFLICT(proyecto_id) DO NOTHING").bind(...args).run()
+          :await db.prepare("UPDATE proyecto_entregas SET modalidad=?2,revision=?3,vista_previa=?4,notas_revision=?5,fecha_actualizacion=?6,version=version+1,decision='pendiente',comentario='',fecha_decision=NULL,origen_decision=NULL WHERE proyecto_id=?1 AND version=?7 AND fecha_entrega IS NULL AND EXISTS(SELECT 1 FROM proyectos_cliente WHERE id=?1 AND estado NOT IN ('finalizado','cancelado'))").bind(...args,d.version).run();
+        return res.meta.changes?json({ok:true}):error("La revisión cambió o el proyecto fue entregado.",409);
+      }
+      if(!q)return error("Guarda primero una revisión",409);
+      if(accion==="decision"&&request.method==="POST"){
+        const d=await leerJson(request,8000);
+        if(!decisionEntregaValida(d)||d.confirmada!==true)return error("Confirma la decisión externa del cliente.",400);
+        const res=await db.prepare("UPDATE proyecto_entregas SET decision=?1,comentario=?2,fecha_decision=?3,origen_decision='administrador',fecha_actualizacion=?4 WHERE proyecto_id=?5 AND version=?6 AND decision='pendiente' AND fecha_entrega IS NULL AND EXISTS(SELECT 1 FROM proyectos_cliente WHERE id=?5 AND estado NOT IN ('finalizado','cancelado'))").bind(d.decision,d.comentario.trim(),hoy,ahora,id,d.version).run();
+        return res.meta.changes?json({ok:true}):error("La revisión cambió o ya fue respondida.",409);
+      }
+      if(accion==="finalizar"&&request.method==="POST"){
+        const d=await leerJson(request,3000);
+        if(!entregaFinalValida(d,q,hoy))return error("Se requiere revisión aprobada, fechas válidas y dirección definitiva si corresponde.",400);
+        const garantia=q.modalidad==="fisica"?null:garantiaEntrega(d.fecha_entrega);
+        const res=await db.prepare("UPDATE proyecto_entregas SET tipo_dominio=?1,url_final=?2,fecha_entrega=?3,fecha_publicacion=?4,garantia_hasta=?5,fecha_actualizacion=?6 WHERE proyecto_id=?7 AND version=?8 AND decision='aprobado' AND fecha_entrega IS NULL AND EXISTS(SELECT 1 FROM proyectos_cliente WHERE id=?7 AND estado NOT IN ('finalizado','cancelado'))").bind(d.tipo_dominio,d.url_final,d.fecha_entrega,d.fecha_publicacion||null,garantia,ahora,id,d.version).run();
+        return res.meta.changes?json({ok:true}):error("La revisión cambió o ya fue entregada.",409);
+      }
+      if(accion==="cambios"&&request.method==="POST"){
+        const d=await leerJson(request,16000);
+        if(!q.fecha_entrega||!textoEntrega(d?.descripcion,3,2000)||!ID_UUID.test(d?.id||""))return error("Registra una entrega y describe la modificación.",400);
+        const res=await db.prepare("INSERT INTO proyecto_cambios(id,proyecto_id,descripcion,fecha_registro) SELECT ?1,?2,?3,?4 FROM proyectos_cliente WHERE id=?2 AND estado<>'cancelado' ON CONFLICT(id) DO NOTHING").bind(d.id,id,d.descripcion.trim(),ahora).run();
+        if(res.meta.changes)return json({ok:true},201);
+        const previo=await db.prepare("SELECT proyecto_id,descripcion FROM proyecto_cambios WHERE id=?1").bind(d.id).first();
+        return previo?.proyecto_id===id&&previo.descripcion===d.descripcion.trim()?json({ok:true,repetido:true}):error("No se pudo registrar el cambio.",409);
+      }
+      return error("Método no permitido",405);
+    }
     const materialesAdmin=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/materiales$/i);
     if(materialesAdmin && request.method==="GET"){
       const p=await env.QUIZ_DB.prepare("SELECT p.id,p.instrucciones,q.folio FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.id=?1").bind(materialesAdmin[1]).first();

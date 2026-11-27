@@ -212,7 +212,7 @@ async function cargarProyectos(){
        art.append(caja);
      }catch(e){estadoProyectos.textContent=e.message;}finally{revisar.disabled=false;}
    });
-   acciones.append(generar,revocar,revisar);art.append(acciones);listaProyectos.append(art);
+   acciones.append(generar,revocar,revisar);art.append(acciones);globalThis.LP_ADMIN_ENTREGA?.agregar(art,p);listaProyectos.append(art);
   }
  }catch(e){estadoProyectos.textContent="Proyectos no disponibles: "+e.message+". Comprueba que la migración 0004 esté aplicada a D1.";}
 }

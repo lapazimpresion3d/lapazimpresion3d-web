@@ -104,6 +104,26 @@ function pintarArchivos(){
   lista.append(fila);
  }
 }
+async function cargarEntrega(){
+ const caja=document.querySelector("#entrega-proyecto");
+ try{
+  const d=await api("/api/cliente/entrega"),q=d.entrega;if(!q){caja.hidden=true;return;}
+  const e=(tag,v)=>{const n=document.createElement(tag);n.textContent=v;return n;};
+  caja.replaceChildren(e("h2","Revisión y entrega del proyecto"),e("p",q.revision+" · Revisión "+q.version),e("p",q.notas_revision));
+  const link=(u,t)=>{const a=e("a",t);a.href=u;a.target="_blank";a.rel="noopener noreferrer";return a;};
+  if(q.vista_previa)caja.append(link(q.vista_previa,"Abrir vista previa"));
+  caja.append(e("p",({pendiente:"Pendiente de tu aprobación",aprobado:"Revisión aprobada",requiere_cambios:"Solicitaste cambios"})[q.decision]||"En revisión"));
+  if(q.comentario)caja.append(e("p",q.comentario));
+  if(q.fecha_entrega){caja.append(e("p","Fecha de entrega: "+q.fecha_entrega));if(q.url_final)caja.append(link(q.url_final,"Abrir tu sitio publicado"),e("p","Garantía de desarrollo hasta "+q.garantia_hasta));}
+  if(q.decision==="pendiente"&&!q.fecha_entrega&&!["finalizado","cancelado"].includes(estadoProyecto)){
+   const f=document.createElement("form"),l=e("label","Comentario (obligatorio para solicitar cambios)"),t=document.createElement("textarea");t.maxLength=1000;l.append(t);
+   const aprobar=e("button","Aprobar esta revisión"),cambiar=e("button","Solicitar cambios"),msg=e("p","");msg.setAttribute("role","status");aprobar.type=cambiar.type="button";cambiar.className="secundario";
+   async function decidir(decision){if(decision==="requiere_cambios"&&t.value.trim().length<3){msg.textContent="Describe qué cambios necesitas.";t.focus();return;}if(!confirm(decision==="aprobado"?"¿Confirmas que revisaste y apruebas esta versión?":"¿Enviar la solicitud de cambios?"))return;aprobar.disabled=cambiar.disabled=true;try{await api("/api/cliente/entrega","POST",{version:q.version,decision,comentario:t.value});await cargarEntrega();}catch(e){msg.textContent=e.message;aprobar.disabled=cambiar.disabled=false;}}
+   aprobar.addEventListener("click",()=>decidir("aprobado"));cambiar.addEventListener("click",()=>decidir("requiere_cambios"));f.addEventListener("submit",e=>e.preventDefault());const controles=document.createElement("div");controles.className="controles";controles.append(aprobar,cambiar);f.append(l,controles,msg);caja.append(f);
+  }
+  caja.hidden=false;
+ }catch(e){caja.hidden=true;/* No bloquea materiales si 0007 no está aplicada. */}
+}
 async function iniciar(){
  try{
   const hash=new URLSearchParams(location.hash.slice(1)),token=hash.get("acceso");
@@ -154,6 +174,7 @@ async function iniciar(){
   archivos=data.archivos||[];pintarArchivos();
   if(["finalizado","cancelado"].includes(p.estado)){document.querySelector("#subir-imagenes").disabled=true;imagenes.disabled=true;}
   mensaje.hidden=true;panel.hidden=false;
+  await cargarEntrega();
  }catch(e){panel.hidden=true;mensaje.hidden=false;mensaje.className="error";mensaje.textContent=e.message+". Solicita un nuevo enlace a Lapazimpresion3d si tu acceso venció.";}
 }
 document.querySelector("#subir-imagenes").addEventListener("click",async()=>{

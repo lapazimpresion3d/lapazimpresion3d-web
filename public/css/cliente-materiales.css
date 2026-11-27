@@ -19,3 +19,5 @@
 @media(max-width:550px){.resumen-cotizacion{grid-template-columns:1fr;gap:3px}.resumen-cotizacion dd{margin-bottom:10px}}
 
 .indicaciones-revision{border-left:4px solid var(--amarillo)}#texto-indicaciones{white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:0}.estado-material{display:inline-block;font-size:.88rem;font-weight:700;color:#435578;overflow-wrap:anywhere}.estado-material[data-revision=aprobado]{color:#166534}.estado-material[data-revision=requiere_correccion]{color:#a01b2e}.lista-archivos .archivo .estado-material{flex:0 1 auto;min-width:0}
+
+.entrega-proyecto{border-left:4px solid var(--amarillo)}.entrega-proyecto p{white-space:pre-wrap;overflow-wrap:anywhere}.entrega-proyecto a{color:var(--azul);font-weight:700;overflow-wrap:anywhere}
