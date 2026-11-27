@@ -40,3 +40,6 @@ Se conserva la tarifa de lanzamiento aprobada en 097988b (149/249/349/499). El d
 
 ## Preferencia de inversión en cotización web
 Se sustituyen los rangos de presupuesto por una preferencia opcional sobre las tarifas publicadas, ajuste de alcance, presupuesto propio indicado en detalles u orientación. La implementación y mensualidad ya constan en el paquete. Se conserva el campo `presupuesto` y los rangos históricos en API, JSON, panel y CSV; las tres claves `web_` solo se aceptan en el formulario web. No se alteran las cotizaciones físicas, el cuestionario, los precios ni las bases de datos.
+
+## Sin plazos forzosos de permanencia
+Beneficio comercial aprobado: implementación inicial independiente y mensualidad por uso, alojamiento, seguridad y mantenimiento conforme al alcance contratado. Cancelación de futuras mensualidades sin penalización por permanencia, comunicada antes de la siguiente renovación. Se mantienen las obligaciones de pago previamente adquiridas. Al finalizar el periodo contratado sin renovación se desactiva el servicio. El aviso se muestra antes de las fichas; condiciones coherentes en paquetes-web y cotizacion-web (desplegable al final). No se cambian tarifas, contratos existentes, pagos, API ni automatizaciones de cancelación. La propuesta individual deberá especificar las condiciones operativas de cierre y datos.

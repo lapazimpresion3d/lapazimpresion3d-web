@@ -148,3 +148,13 @@
 #paginas-web .acciones-selector-demo .accion-principal-demo{font-size:1.08rem;font-weight:800}
 #paginas-web .selector-beneficio{margin:15px 0 0;font-size:.9rem;color:var(--suave)}
 @media(max-width:700px){#paginas-web .destacar-selector .demo-selectores,#paginas-web .acciones-selector-demo{grid-template-columns:minmax(0,1fr)}#paginas-web .selector-cabecera{padding:22px 18px}#paginas-web .selector-contenido{padding:18px}}
+
+/* Ventajas del modelo mensual, sin cambiar las fichas ni el selector. */
+.ventajas-suscripcion{margin:20px 0 24px;padding:clamp(18px,3vw,26px);background:#f1f5fc;border:1px solid #c6d4ee;border-inline-start:5px solid var(--amarillo);border-radius:14px;color:var(--texto)}
+.ventajas-suscripcion h2,.ventajas-suscripcion h3{margin:0 0 8px;color:var(--marino);font-size:clamp(1.25rem,3vw,1.65rem);line-height:1.25}
+.ventajas-suscripcion p{margin:0;line-height:1.6}
+.ventajas-suscripcion-lista{list-style:none;padding:0;margin:18px 0 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ventajas-suscripcion-lista li{min-width:0;padding:12px;border-radius:10px;background:var(--tarjeta);border:1px solid var(--borde);display:grid;align-content:start;gap:6px}
+.ventajas-suscripcion-lista strong{color:var(--marino);line-height:1.4}
+.ventajas-suscripcion-lista span{font-size:.9rem;color:var(--suave);line-height:1.5}
+@media(max-width:700px){.ventajas-suscripcion-lista{grid-template-columns:minmax(0,1fr)}}
