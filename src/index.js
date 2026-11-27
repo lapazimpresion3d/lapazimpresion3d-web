@@ -148,6 +148,39 @@ function fechaEconomicaValida(v){
  return Number.isFinite(n.getTime())&&n.toISOString().slice(0,10)===v&&v<=(new Date()).toISOString().slice(0,10)&&v>="2000-01-01";
 }
 function pagoEconomicoValido(d){return !!d&&typeof d.id==="string"&&ID_UUID.test(d.id)&&Number.isSafeInteger(d.importe)&&d.importe>0&&d.importe<=348000000&&fechaEconomicaValida(d.fecha)&&["efectivo","transferencia","otro"].includes(d.metodo)&&typeof d.referencia==="string"&&d.referencia.length<=160;}
+// Calendario comercial de La Paz: fin exclusivo, sin cargos automáticos.
+function hoyMensualidad(now=new Date()){
+ const p=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Mazatlan",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(now);
+ const v=Object.fromEntries(p.map(x=>[x.type,x.value]));return v.year+"-"+v.month+"-"+v.day;
+}
+function fechaMensualidad(v){
+ if(typeof v!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(v)||v<"2000-01-01"||v>"2099-12-31")return false;
+ const d=new Date(v+"T00:00:00Z");return Number.isFinite(d.getTime())&&d.toISOString().slice(0,10)===v;
+}
+function finMensualidad(inicio,ancla){
+ if(!fechaMensualidad(inicio)||!Number.isInteger(ancla)||ancla<1||ancla>31)throw Error("Periodo inválido");
+ const [y,m]=inicio.split("-").map(Number);const ultimo=new Date(Date.UTC(y,m+1,0)).getUTCDate();
+ return new Date(Date.UTC(y,m,Math.min(ancla,ultimo))).toISOString().slice(0,10);
+}
+function estadoMensualidad(q,ultimo,hoy){
+ if(!q.inicio)return {situacion:"sin_iniciar",proxima:null,dia_ancla:null};
+ const proxima=ultimo?.fin||q.inicio,ancla=ultimo?.dia_ancla||Number(q.inicio.slice(-2));
+ const situacion=q.estado==="cancelado"?"cancelado":q.estado==="suspendido"?"suspendido":proxima<=hoy?(ultimo?"vencido":"pendiente"):"al_corriente";
+ return {situacion,proxima,dia_ancla:ancla};
+}
+function pagoMensualidadValido(d,hoy){
+ return !!d&&typeof d.id==="string"&&ID_UUID.test(d.id)&&fechaMensualidad(d.fecha)&&d.fecha<=hoy&&fechaMensualidad(d.esperada)&&["continuar","reiniciar"].includes(d.modo)&&["efectivo","transferencia","otro"].includes(d.metodo)&&typeof d.referencia==="string"&&d.referencia.length<=160;
+}
+function periodoMensualidad(q,ultimo,d,hoy){
+ const e=estadoMensualidad(q,ultimo,hoy);
+ if(q.estado!=="activo"||d.esperada!==e.proxima)return null;
+ if(d.modo==="reiniciar"&&e.proxima>=hoy)return null;
+ // Solo la renovación solicitada: reiniciar desde hoy no crea cuotas por el intervalo vencido.
+ const inicio=d.modo==="reiniciar"?hoy:e.proxima;
+ const ancla=d.modo==="reiniciar"?Number(hoy.slice(-2)):e.dia_ancla;
+ return {inicio,fin:finMensualidad(inicio,ancla),dia_ancla:ancla};
+}
+
 const ESTADOS_REVISION_MATERIAL = new Set(["recibido","requiere_correccion","aprobado"]);
 function revisionMaterialValida(data,esTexto) {
   return !!data && ESTADOS_REVISION_MATERIAL.has(data.estado) && (!esTexto || (typeof data.version==="string" && data.version.length<=35 && Number.isFinite(Date.parse(data.version))));
@@ -647,6 +680,50 @@ async function api(request,env,ctx) {
       return json({items:results.results.map(x=>({...x,ficha:JSON.parse(x.ficha_json),ficha_json:undefined}))});
     }
     // El módulo económico se consulta de forma independiente: las solicitudes anteriores siguen disponibles.
+    // Mensualidades: acceso exclusivamente administrativo, separado de pagos iniciales.
+    if(path==="/api/admin/mensualidades"&&request.method==="GET"){
+      const rows=await env.QUIZ_DB.prepare("SELECT q.id AS propuesta_id,q.folio,q.nombre,q.proyecto,e.paquete,e.fecha_aceptacion,e.mensualidad AS tarifa_acordada,e.total_mensual AS total_acordado,s.inicio,s.mensualidad,s.total_mensual,s.estado,s.version,(SELECT MAX(fin) FROM pagos_mensualidad WHERE propuesta_id=q.id) AS ultimo_fin FROM propuestas_economicas e JOIN quiz_propuestas q ON q.id=e.propuesta_id LEFT JOIN suscripciones_cliente s ON s.propuesta_id=q.id WHERE e.fecha_aceptacion IS NOT NULL AND e.mensualidad>0 AND e.paquete<>'solo_fisico' ORDER BY q.fecha DESC LIMIT 200").all();
+      const hoy=hoyMensualidad();
+      return json({hoy,items:rows.results.map(q=>({...q,...estadoMensualidad(q,q.ultimo_fin?{fin:q.ultimo_fin}:null,hoy)}))});
+    }
+    const mensual=path.match(/^\/api\/admin\/mensualidades\/([0-9a-f-]{36})(?:\/(pagos))?$/i);
+    if(mensual){
+      const id=mensual[1],accion=mensual[2],db=env.QUIZ_DB,hoy=hoyMensualidad();
+      if(request.method!=="GET"&&!sameOrigin(request))return error("Origen no autorizado",403);
+      const e=await db.prepare("SELECT paquete,mensualidad,total_mensual,fecha_aceptacion FROM propuestas_economicas WHERE propuesta_id=?1 AND fecha_aceptacion IS NOT NULL AND mensualidad>0 AND paquete<>'solo_fisico'").bind(id).first();
+      if(!e)return error("No hay una propuesta mensual aceptada",404);
+      const q=await db.prepare("SELECT * FROM suscripciones_cliente WHERE propuesta_id=?1").bind(id).first();
+      if(!accion&&request.method==="GET"){
+        const p=await db.prepare("SELECT id,inicio,fin,dia_ancla,importe,fecha,metodo,referencia FROM pagos_mensualidad WHERE propuesta_id=?1 ORDER BY fin DESC").bind(id).all();
+        return json({suscripcion:q,acuerdo:e,pagos:p.results,hoy,...estadoMensualidad(q||{},p.results[0],hoy)});
+      }
+      if(!accion&&request.method==="POST"){
+        const d=await leerJson(request,200);
+        if(!fechaMensualidad(d?.inicio)||d.inicio>hoy||d.inicio<e.fecha_aceptacion)return error("La fecha de inicio debe estar entre la aceptación y hoy.",400);
+        const res=await db.prepare("INSERT INTO suscripciones_cliente(propuesta_id,inicio,mensualidad,total_mensual,fecha_actualizacion) SELECT propuesta_id,?2,mensualidad,total_mensual,?3 FROM propuestas_economicas WHERE propuesta_id=?1 AND fecha_aceptacion IS NOT NULL AND mensualidad>0 AND paquete<>'solo_fisico' ON CONFLICT(propuesta_id) DO NOTHING").bind(id,d.inicio,new Date().toISOString()).run();
+        return res.meta.changes?json({ok:true},201):error("Ya existe una suscripción. Vuelve a cargarla.",409);
+      }
+      if(!q)return error("Registra primero el inicio del servicio",409);
+      if(!accion&&request.method==="PATCH"){
+        const d=await leerJson(request,200);
+        if(!["activo","suspendido","cancelado"].includes(d?.estado)||!Number.isSafeInteger(d.version))return error("Estado o versión inválidos",400);
+        const res=await db.prepare("UPDATE suscripciones_cliente SET estado=?1,version=version+1,fecha_actualizacion=?2 WHERE propuesta_id=?3 AND version=?4 AND estado<>'cancelado'").bind(d.estado,new Date().toISOString(),id,d.version).run();
+        return res.meta.changes?json({ok:true}):error("La suscripción cambió o ya está cancelada.",409);
+      }
+      if(accion==="pagos"&&request.method==="POST"){
+        const d=await leerJson(request,1500);
+        if(!pagoMensualidadValido(d,hoy)||d.fecha<e.fecha_aceptacion)return error("Datos de pago inválidos",400);
+        const previo=await db.prepare("SELECT * FROM pagos_mensualidad WHERE id=?1").bind(d.id).first();
+        if(previo)return previo.propuesta_id===id&&previo.fecha===d.fecha&&previo.metodo===d.metodo&&previo.referencia===d.referencia.trim()&&((d.modo==="continuar"&&previo.inicio===d.esperada)||(d.modo==="reiniciar"&&previo.inicio>=d.esperada))?json({ok:true,repetido:true}):error("Identificador de pago ya utilizado.",409);
+        const ultimo=await db.prepare("SELECT fin,dia_ancla FROM pagos_mensualidad WHERE propuesta_id=?1 ORDER BY fin DESC LIMIT 1").bind(id).first();
+        const periodo=periodoMensualidad(q,ultimo,d,hoy);
+        if(!periodo)return error("La renovación no corresponde al periodo pendiente o el servicio no está activo. Actualiza.",409);
+        // El máximo fin y la versión se verifican dentro de la escritura: evita duplicar periodos simultáneos.
+        const res=await db.prepare("INSERT INTO pagos_mensualidad(id,propuesta_id,inicio,fin,dia_ancla,importe,fecha,metodo,referencia,fecha_registro) SELECT ?1,propuesta_id,?3,?4,?5,total_mensual,?6,?7,?8,?9 FROM suscripciones_cliente WHERE propuesta_id=?2 AND estado='activo' AND version=?10 AND COALESCE((SELECT MAX(fin) FROM pagos_mensualidad WHERE propuesta_id=?2),inicio)=?11 ON CONFLICT DO NOTHING").bind(d.id,id,periodo.inicio,periodo.fin,periodo.dia_ancla,d.fecha,d.metodo,d.referencia.trim(),new Date().toISOString(),q.version,d.esperada).run();
+        return res.meta.changes?json({ok:true,periodo},201):error("El periodo cambió. Actualiza antes de registrar otro pago.",409);
+      }
+      return error("Método no permitido",405);
+    }
     const economica=path.match(/^\/api\/admin\/propuestas\/([0-9a-f-]{36})\/economica(?:\/(aceptar|pagos))?$/i);
     if(economica){
       const id=economica[1],accion=economica[2];
