@@ -240,6 +240,81 @@ function exportarPropuestasCSV(){
  const a=document.createElement("a");a.href=url;a.download="solicitudes-lapazimpresion3d.csv";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
+// Control comercial: no envía propuestas ni realiza cargos.
+const paquetesEconomicos={"solo_fisico":"Solo productos físicos (pago único)","presencia-digital":"Presencia digital","negocio-interactivo":"Negocio interactivo","gestion-comercial":"Gestión comercial","gestion-profesional":"Gestión profesional","a-medida":"Proyecto a medida"};
+const dineroEconomico=n=>new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(n/100);
+function centavosEconomicos(v){
+ if(!/^\d{1,7}(?:\.\d{1,2})?$/.test(v))throw Error("Escribe importes positivos con hasta dos decimales, sin comas.");
+ const [a,b=""]=v.split(".");return Number(a)*100+Number(b.padEnd(2,"0"));
+}
+function fechaLocalEconomica(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function agregarEconomica(art,x){
+ const abrir=elem("button","secundario","Propuesta económica y pagos");abrir.type="button";
+ const panel=elem("section","economica-panel");panel.hidden=true;
+ const ruta="/api/admin/propuestas/"+encodeURIComponent(x.id)+"/economica";
+ let cargando=false;
+ async function cargar(){
+  if(cargando)return;cargando=true;abrir.disabled=true;panel.hidden=false;panel.replaceChildren(elem("p","metadatos","Cargando propuesta…"));
+  try{const d=await req(ruta);pintar(d);}catch(e){panel.replaceChildren(elem("p",null,"No se pudo cargar el control económico: "+e.message+". Comprueba la migración 0005 en D1."));}
+  finally{cargando=false;abrir.disabled=false;}
+ }
+ function pintar(d){
+  panel.replaceChildren(elem("h3",null,"Propuesta económica · "+x.folio));
+  const q=d.propuesta,aceptada=!!q?.fecha_aceptacion;
+  panel.append(elem("p","metadatos",aceptada?"Aceptada el "+q.fecha_aceptacion+" · importes bloqueados":"Borrador · no enviado al cliente"));
+  const form=elem("form","economica-form");
+  function campo(etiqueta,tag="input"){const l=elem("label",null,etiqueta),v=elem(tag);l.append(v);form.append(l);return v;}
+  const paquete=campo("Paquete acordado","select");
+  for(const [k,v] of Object.entries(paquetesEconomicos)){const o=elem("option",null,v);o.value=k;paquete.append(o);}
+  const interes={"Presencia digital":"presencia-digital","Negocio interactivo":"negocio-interactivo","Gestión comercial":"gestion-comercial","Gestión profesional":"gestion-profesional"};
+  paquete.value=q?.paquete||(x.ficha?.tipo_documento==="solicitud_web"?(interes[x.ficha.paquete]||"a-medida"):x.ficha?.tipo_documento==="solicitud_servicio"?"solo_fisico":"a-medida");
+  const alcance=campo("Alcance y funciones acordadas","textarea");alcance.rows=5;alcance.maxLength=4000;alcance.required=true;
+  alcance.value=q?.alcance||"";
+  const importes={};for(const [k,t] of [["implementacion","Implementación web"],["fabricacion","Fabricación / productos físicos"],["extras","Extras de pago único"],["mensualidad","Mensualidad"]]){
+    const v=campo(t+" (MXN antes de IVA)");v.type="number";v.min="0";v.max="1000000";v.step="0.01";v.required=true;v.value=((q?.[k]||0)/100).toFixed(2);importes[k]=v;
+  }
+  const resumen=elem("p","economica-total");
+  function actualizar(){
+    const fisico=paquete.value==="solo_fisico";
+    for(const k of ["implementacion","mensualidad"]){if(fisico&&!aceptada)importes[k].value="0.00";importes[k].disabled=fisico||aceptada;}
+    try{const n=Object.fromEntries(Object.entries(importes).map(([k,v])=>[k,centavosEconomicos(v.value)]));const subtotal=n.implementacion+n.fabricacion+n.extras,iva=Math.floor((subtotal*16+50)/100),m=n.mensualidad+Math.floor((n.mensualidad*16+50)/100);resumen.textContent="Subtotal inicial: "+dineroEconomico(subtotal)+" · IVA 16%: "+dineroEconomico(iva)+" · Total inicial: "+dineroEconomico(subtotal+iva)+" · Mensualidad con IVA: "+dineroEconomico(m);}catch{resumen.textContent="Completa los importes para calcular el total.";}
+  }
+  form.append(resumen,elem("p","metadatos","Sin cobro automático. La mensualidad se informa por separado; los pagos registrados aquí corresponden únicamente al total inicial. IVA general del 16%."));
+  const msg=elem("p","metadatos","");msg.setAttribute("role","status");
+  if(!aceptada){
+    const guardar=elem("button",null,"Guardar borrador");guardar.type="submit";form.append(guardar,msg);
+    form.addEventListener("submit",async e=>{e.preventDefault();guardar.disabled=true;try{const payload={paquete:paquete.value,alcance:alcance.value,version:q?.version||0,...Object.fromEntries(Object.entries(importes).map(([k,v])=>[k,centavosEconomicos(v.value)]))};await req(ruta,{method:"PUT",body:JSON.stringify(payload)});await cargar();}catch(e){msg.textContent=e.message;guardar.disabled=false;}});
+    paquete.addEventListener("change",actualizar);form.addEventListener("input",actualizar);
+  }else{paquete.disabled=alcance.readOnly=true;for(const v of Object.values(importes))v.readOnly=true;}
+  actualizar();panel.append(form);
+  if(q&&!aceptada){
+    const f=elem("div","economica-aceptar"),l=elem("label",null,"Fecha en que el cliente aceptó la propuesta"),fecha=elem("input");fecha.type="date";fecha.value=fechaLocalEconomica();fecha.max=fechaLocalEconomica();l.append(fecha);
+    const btn=elem("button","secundario","Registrar aceptación");btn.type="button";
+    const estado=elem("p","metadatos","");estado.setAttribute("role","status");
+    btn.addEventListener("click",async()=>{if(!fecha.value||!fecha.checkValidity())return;if(!confirm("¿Confirmas que el cliente aceptó el último borrador guardado? Los importes quedarán bloqueados. Los cambios sin guardar no se incluyen."))return;btn.disabled=true;try{await req(ruta+"/aceptar",{method:"POST",body:JSON.stringify({fecha:fecha.value,version:q.version})});await cargarPropuestas();}catch(e){estado.textContent=e.message;btn.disabled=false;}});
+    f.append(l,btn,estado);panel.append(f);
+  }
+  if(aceptada){
+    const saldos=elem("dl","economica-saldos");for(const [t,n] of [["Total inicial con IVA",q.total_inicial],["Pagado",d.pagado],["Saldo pendiente",d.saldo],["Mensualidad con IVA",q.total_mensual]])saldos.append(elem("dt",null,t),elem("dd",null,dineroEconomico(n)));panel.append(saldos,elem("h4",null,"Pagos recibidos"));
+    if(!d.pagos.length)panel.append(elem("p","metadatos","Aún no hay pagos registrados."));
+    for(const p of d.pagos)panel.append(elem("p","pago-economico",p.fecha+" · "+dineroEconomico(p.importe)+" · "+p.metodo+(p.referencia?" · "+p.referencia:"")));
+    if(d.saldo>0){
+      const pf=elem("form","economica-form"),pl=elem("label",null,"Importe recibido (MXN, IVA incluido)"),pi=elem("input");pi.type="number";pi.min=".01";pi.step=".01";pi.max=(d.saldo/100).toFixed(2);pi.required=true;pl.append(pi);
+      const fl=elem("label",null,"Fecha del pago"),fi=elem("input");fi.type="date";fi.required=true;fi.value=fechaLocalEconomica();fi.max=fechaLocalEconomica();fl.append(fi);
+      const ml=elem("label",null,"Método"),mi=elem("select");for(const [k,t] of [["transferencia","Transferencia"],["efectivo","Efectivo"],["otro","Otro"]]){const o=elem("option",null,t);o.value=k;mi.append(o);}ml.append(mi);
+      const rl=elem("label",null,"Referencia o nota (opcional)"),ri=elem("input");ri.maxLength=160;rl.append(ri);
+      const pb=elem("button",null,"Registrar pago recibido"),pm=elem("p","metadatos","");pb.type="submit";pm.setAttribute("role","status");pf.append(pl,fl,ml,rl,pb,pm);
+      let intento=null;
+      pf.addEventListener("input",()=>{intento=null;});
+      pf.addEventListener("submit",async e=>{e.preventDefault();try{if(!intento){if(!confirm("¿Registrar este pago ya recibido? No se realizará ningún cargo. Revisa el importe antes de confirmar."))return;intento={id:crypto.randomUUID(),importe:centavosEconomicos(pi.value),fecha:fi.value,metodo:mi.value,referencia:ri.value};}pb.disabled=true;await req(ruta+"/pagos",{method:"POST",body:JSON.stringify(intento)});await cargar();}catch(e){pm.textContent=e.message;pb.disabled=false;}});
+      panel.append(pf);
+    }
+    panel.append(elem("p","metadatos","Registro interno de pagos iniciales; no sustituye CFDI ni conciliación bancaria. No permite eliminar pagos desde esta versión."));
+  }
+ }
+ abrir.addEventListener("click",()=>{if(!panel.hidden){panel.hidden=true;return;}cargar();});
+ art.append(abrir,panel);
+}
 async function cargarPropuestas(){
  estadoPropuestas.textContent="Cargando solicitudes…";
  try {
@@ -286,6 +361,7 @@ async function cargarPropuestas(){
      });box.append(imagenesPanel);
    }
    art.append(box);
+   agregarEconomica(art,x);
    const actions=elem("div","acciones");
    const wa=elem("a","boton-enlace","Contactar por WhatsApp");wa.href=`https://wa.me/52${x.telefono}?text=${encodeURIComponent(`Hola ${x.nombre}, te contactamos de Lapazimpresion3d sobre tu solicitud ${x.folio}.`)}`;wa.target="_blank";wa.rel="noopener noreferrer";actions.append(wa);
    const select=elem("select");select.setAttribute("aria-label",`Estado de ${x.folio}`);

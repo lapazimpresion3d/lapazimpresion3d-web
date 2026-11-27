@@ -130,6 +130,24 @@ async function hashTokenCliente(token) {
   return Array.from(new Uint8Array(buffer),b=>b.toString(16).padStart(2,"0")).join("");
 }
 const SECCIONES_CLIENTE=["datos_negocio","servicios_productos","horarios_contacto","indicaciones"];
+// Importes en centavos de MXN; nunca usar coma flotante para persistir dinero.
+const PAQUETES_ECONOMICOS=new Set(["solo_fisico","presencia-digital","negocio-interactivo","gestion-comercial","gestion-profesional","a-medida"]);
+const CAMPOS_IMPORTE=["implementacion","fabricacion","extras","mensualidad"];
+function importeValido(n){return Number.isSafeInteger(n)&&n>=0&&n<=100000000;}
+function totalesEconomicos(d){
+ const inicial=d.implementacion+d.fabricacion+d.extras;
+ const iva=n=>Math.floor((n*16+50)/100);
+ return {subtotal_inicial:inicial,iva_inicial:iva(inicial),total_inicial:inicial+iva(inicial),iva_mensual:iva(d.mensualidad),total_mensual:d.mensualidad+iva(d.mensualidad)};
+}
+function propuestaEconomicaValida(d){
+ return !!d&&PAQUETES_ECONOMICOS.has(d.paquete)&&typeof d.alcance==="string"&&d.alcance.trim().length>=3&&d.alcance.length<=4000&&CAMPOS_IMPORTE.every(k=>importeValido(d[k]))&&Number.isSafeInteger(d.version)&&d.version>=0&&d.version<=1000000&&(d.paquete!=="solo_fisico"||(!d.implementacion&&!d.mensualidad))&&CAMPOS_IMPORTE.some(k=>d[k]>0);
+}
+function fechaEconomicaValida(v){
+ if(typeof v!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;
+ const n=new Date(v+"T00:00:00Z");
+ return Number.isFinite(n.getTime())&&n.toISOString().slice(0,10)===v&&v<=(new Date()).toISOString().slice(0,10)&&v>="2000-01-01";
+}
+function pagoEconomicoValido(d){return !!d&&typeof d.id==="string"&&ID_UUID.test(d.id)&&Number.isSafeInteger(d.importe)&&d.importe>0&&d.importe<=348000000&&fechaEconomicaValida(d.fecha)&&["efectivo","transferencia","otro"].includes(d.metodo)&&typeof d.referencia==="string"&&d.referencia.length<=160;}
 const ESTADOS_REVISION_MATERIAL = new Set(["recibido","requiere_correccion","aprobado"]);
 function revisionMaterialValida(data,esTexto) {
   return !!data && ESTADOS_REVISION_MATERIAL.has(data.estado) && (!esTexto || (typeof data.version==="string" && data.version.length<=35 && Number.isFinite(Date.parse(data.version))));
@@ -627,6 +645,52 @@ async function api(request,env,ctx) {
       const results=await env.QUIZ_DB.prepare("SELECT id,folio,fecha,nombre,proyecto,telefono,comentario,servicio_id,ficha_json,estado FROM quiz_propuestas WHERE (?1 IS NULL OR estado=?1) AND (?2='' OR folio LIKE ?3 ESCAPE '\\' OR nombre LIKE ?3 ESCAPE '\\' OR telefono LIKE ?3 ESCAPE '\\' OR proyecto LIKE ?3 ESCAPE '\\') ORDER BY fecha DESC LIMIT 100")
        .bind(estado,busqueda,filtro).all();
       return json({items:results.results.map(x=>({...x,ficha:JSON.parse(x.ficha_json),ficha_json:undefined}))});
+    }
+    // El módulo económico se consulta de forma independiente: las solicitudes anteriores siguen disponibles.
+    const economica=path.match(/^\/api\/admin\/propuestas\/([0-9a-f-]{36})\/economica(?:\/(aceptar|pagos))?$/i);
+    if(economica){
+      const id=economica[1],accion=economica[2];
+      if(request.method!=="GET"&&!sameOrigin(request))return error("Origen no autorizado",403);
+      const propuesta=await env.QUIZ_DB.prepare("SELECT id,estado FROM quiz_propuestas WHERE id=?1").bind(id).first();
+      if(!propuesta)return error("Solicitud no encontrada",404);
+      const db=env.QUIZ_DB;
+      if(!accion&&request.method==="GET"){
+        const q=await db.prepare("SELECT * FROM propuestas_economicas WHERE propuesta_id=?1").bind(id).first();
+        if(!q)return json({propuesta:null,pagos:[]});
+        const p=await db.prepare("SELECT id,importe,fecha,metodo,referencia,fecha_registro FROM pagos_propuesta WHERE propuesta_id=?1 ORDER BY fecha,fecha_registro,id").bind(id).all();
+        const pagado=p.results.reduce((n,x)=>n+x.importe,0);
+        return json({propuesta:q,pagos:p.results,pagado,saldo:q.total_inicial-pagado});
+      }
+      if(!accion&&request.method==="PUT"){
+        const d=await leerJson(request,26000);
+        if(!propuestaEconomicaValida(d))return error("Revisa alcance, paquete e importes; la fabricación de pago único no admite mensualidad ni implementación web.",400);
+        const t=totalesEconomicos(d),ahora=new Date().toISOString();
+        const args=[id,d.paquete,d.alcance.trim(),d.implementacion,d.fabricacion,d.extras,d.mensualidad,t.total_inicial,t.total_mensual,ahora];
+        const res=d.version===0
+          ?await db.prepare("INSERT INTO propuestas_economicas(propuesta_id,paquete,alcance,implementacion,fabricacion,extras,mensualidad,total_inicial,total_mensual,fecha_actualizacion) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10) ON CONFLICT(propuesta_id) DO NOTHING").bind(...args).run()
+          :await db.prepare("UPDATE propuestas_economicas SET paquete=?2,alcance=?3,implementacion=?4,fabricacion=?5,extras=?6,mensualidad=?7,total_inicial=?8,total_mensual=?9,fecha_actualizacion=?10,version=version+1 WHERE propuesta_id=?1 AND version=?11 AND fecha_aceptacion IS NULL").bind(...args,d.version).run();
+        return res.meta.changes?json({ok:true}):error("La propuesta cambió o fue aceptada. Vuelve a cargarla.",409);
+      }
+      if(accion==="aceptar"&&request.method==="POST"){
+        const d=await leerJson(request,250);
+        if(!fechaEconomicaValida(d?.fecha)||!Number.isSafeInteger(d?.version)||d.version<1)return error("Fecha o versión inválida",400);
+        const resultados=await db.batch([
+          db.prepare("UPDATE propuestas_economicas SET fecha_aceptacion=?1,fecha_actualizacion=?2,version=version+1 WHERE propuesta_id=?3 AND version=?4 AND fecha_aceptacion IS NULL").bind(d.fecha,new Date().toISOString(),id,d.version),
+          db.prepare("UPDATE quiz_propuestas SET estado='cotizado' WHERE id=?1 AND estado<>'cerrado' AND EXISTS(SELECT 1 FROM propuestas_economicas WHERE propuesta_id=?1 AND fecha_aceptacion=?2 AND version=?3)").bind(id,d.fecha,d.version+1)
+        ]);
+        return resultados[0].meta.changes?json({ok:true}):error("La propuesta cambió o ya fue aceptada.",409);
+      }
+      if(accion==="pagos"&&request.method==="POST"){
+        const d=await leerJson(request,1600);
+        if(!pagoEconomicoValido(d))return error("Pago inválido",400);
+        // Una sola escritura condicional evita sobrepagos concurrentes y duplicados.
+        const res=await db.prepare("INSERT INTO pagos_propuesta(id,propuesta_id,importe,fecha,metodo,referencia,fecha_registro) SELECT ?1,?2,?3,?4,?5,?6,?7 FROM propuestas_economicas q WHERE q.propuesta_id=?2 AND q.fecha_aceptacion IS NOT NULL AND ?3<=q.total_inicial-COALESCE((SELECT SUM(importe) FROM pagos_propuesta WHERE propuesta_id=?2),0) ON CONFLICT(id) DO NOTHING").bind(d.id,id,d.importe,d.fecha,d.metodo,d.referencia.trim(),new Date().toISOString()).run();
+        if(res.meta.changes)return json({ok:true},201);
+        const anterior=await db.prepare("SELECT propuesta_id,importe,fecha,metodo,referencia FROM pagos_propuesta WHERE id=?1").bind(d.id).first();
+        if(anterior&&anterior.propuesta_id===id&&anterior.importe===d.importe&&anterior.fecha===d.fecha&&anterior.metodo===d.metodo&&anterior.referencia===d.referencia.trim())return json({ok:true,repetido:true});
+        return error("El pago supera el saldo inicial, la propuesta no está aceptada o la referencia de operación ya existe.",409);
+      }
+      return error("Método no permitido",405);
     }
     const imagenSolicitud=path.match(/^\/api\/admin\/propuestas\/([0-9a-f-]{36})\/imagen\/([0-2])$/i);
     if(imagenSolicitud && request.method==='GET'){
