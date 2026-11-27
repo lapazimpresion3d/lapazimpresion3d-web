@@ -43,3 +43,6 @@ Se sustituyen los rangos de presupuesto por una preferencia opcional sobre las t
 
 ## Sin plazos forzosos de permanencia
 Beneficio comercial aprobado: implementación inicial independiente y mensualidad por uso, alojamiento, seguridad y mantenimiento conforme al alcance contratado. Cancelación de futuras mensualidades sin penalización por permanencia, comunicada antes de la siguiente renovación. Se mantienen las obligaciones de pago previamente adquiridas. Al finalizar el periodo contratado sin renovación se desactiva el servicio. El aviso se muestra antes de las fichas; condiciones coherentes en paquetes-web y cotizacion-web (desplegable al final). No se cambian tarifas, contratos existentes, pagos, API ni automatizaciones de cancelación. La propuesta individual deberá especificar las condiciones operativas de cierre y datos.
+
+## Navegación directa a cotización
+El enlace comercial `cotizacion-web.html#precios-paquetes` conserva su destino. Tras la inicialización y carga de la página, JavaScript posiciona el encabezado Paquete de interés; también responde a cambios de ancla. `#condiciones-paquetes` abre las condiciones plegadas y desplaza a su encabezado. No se reinician los datos ni se fuerza el desplazamiento al volver desde el historial. Se añadió acceso directo a condiciones desde la tabla.

@@ -300,17 +300,20 @@ const giroCatalogo = parametrosCatalogo.get('giro');
 if (!formularioWeb.elements.giro.value && girosCatalogo.has(giroCatalogo)) formularioWeb.elements.giro.value = girosCatalogo.get(giroCatalogo);
 actualizarDominio();
 formularioWeb.hidden = false;
-// El panel está cerrado inicialmente; el enlace directo a condiciones lo abre.
-function abrirCondicionesDesdeEnlace() {
-  if (location.hash !== "#condiciones-paquetes") return;
-  const destino = document.getElementById("condiciones-paquetes");
-  if (!destino) return;
-  destino.open = true;
+// Resolver las anclas después de inicializar el formulario y estabilizar su diseño.
+function navegarAnclaCotizacion() {
+  const hash = location.hash;
+  const id = hash === "#precios-paquetes" ? "precios-paquetes" : hash === "#condiciones-paquetes" ? "condiciones-paquetes" : null;
+  if (!id) return;
+  const destino = document.getElementById(id);
+  if (!destino || destino.closest("[hidden]")) return;
+  if (id === "condiciones-paquetes") destino.open = true;
   requestAnimationFrame(() => {
-    if (location.hash !== "#condiciones-paquetes") return;
-    destino.querySelector("summary")?.focus({preventScroll:true});
-    destino.scrollIntoView({block:"start"});
+    if (location.hash !== hash || destino.closest("[hidden]")) return;
+    destino.querySelector(id === "condiciones-paquetes" ? "summary" : "h2")?.focus({preventScroll:true});
+    destino.scrollIntoView({block:"start",behavior:"auto"});
   });
 }
-abrirCondicionesDesdeEnlace();
-window.addEventListener("hashchange", abrirCondicionesDesdeEnlace);
+if (document.readyState === "complete") navegarAnclaCotizacion();
+else window.addEventListener("load", navegarAnclaCotizacion, {once:true});
+window.addEventListener("hashchange", navegarAnclaCotizacion);
