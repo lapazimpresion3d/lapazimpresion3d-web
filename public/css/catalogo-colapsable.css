@@ -1,0 +1,35 @@
+/* Catálogo compacto: cada servicio funciona de forma independiente. */
+main > .servicio-colapsable{margin-top:16px;scroll-margin-top:16px;min-width:0}
+main > #llaveros.servicio-colapsable{margin-top:clamp(24px,4vw,44px)}
+.servicio-desplegable{background:var(--tarjeta);border:1px solid var(--borde);border-radius:16px;overflow:hidden;min-width:0}
+.servicio-resumen{display:block;cursor:pointer;list-style:none;padding:16px;min-height:76px}
+.servicio-resumen::-webkit-details-marker{display:none}
+.servicio-resumen::marker{content:""}
+.servicio-resumen:focus-visible{outline-offset:-5px}
+.servicio-resumen:hover{background:var(--fondo)}
+.servicio-resumen h1,.servicio-resumen h2{display:grid;grid-template-columns:112px minmax(0,1fr) 28px;gap:16px;align-items:center;margin:0;letter-spacing:normal;line-height:1.25}
+.servicio-miniatura{display:grid;place-items:center;width:112px;height:86px;border-radius:10px;overflow:hidden;color:var(--marino);background:#edf2fc;flex:none}
+.servicio-miniatura img{display:block;width:100%;height:100%;object-fit:cover}
+.servicio-miniatura svg{width:46px;height:46px}
+.servicio-identidad{display:grid;gap:6px;min-width:0}
+.servicio-titulo{font-size:clamp(1.18rem,2.6vw,1.7rem);color:var(--titulo);font-weight:800;overflow-wrap:anywhere}
+.servicio-descripcion{font-size:.95rem;line-height:1.45;font-weight:500;color:var(--texto);overflow-wrap:anywhere}
+.servicio-indicador{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--amarillo);color:#16203a}
+.servicio-indicador::after{content:"";display:block;width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-top:-4px}
+.servicio-desplegable[open]>.servicio-resumen .servicio-indicador::after{transform:rotate(225deg);margin-top:4px}
+.servicio-desplegable[open]>.servicio-resumen{border-bottom:1px solid var(--borde)}
+.servicio-contenido{padding:clamp(14px,2.5vw,24px);min-width:0}
+.servicio-contenido> :first-child{margin-top:0}
+.servicio-contenido> :last-child{margin-bottom:0}
+#paginas-web .servicio-contenido>#titulo-escaparate-demos{margin-top:0}
+@media(max-width:650px){
+ .servicio-resumen{padding:12px}
+ .servicio-resumen h1,.servicio-resumen h2{grid-template-columns:64px minmax(0,1fr) 26px;gap:10px}
+ .servicio-miniatura{width:64px;height:70px;border-radius:8px}
+ .servicio-miniatura svg{width:36px;height:36px}
+ .servicio-titulo{font-size:1.15rem}
+ .servicio-descripcion{font-size:.85rem}
+ .servicio-indicador{width:26px;height:26px}
+}
+@media(max-width:350px){.servicio-resumen h1,.servicio-resumen h2{grid-template-columns:48px minmax(0,1fr) 24px;gap:7px}.servicio-miniatura{width:48px;height:58px}.servicio-resumen{padding:10px}.servicio-contenido{padding:10px}}
+@media print{.servicio-resumen{cursor:default}.servicio-indicador{display:none}}
