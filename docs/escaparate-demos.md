@@ -13,3 +13,6 @@ El título principal es el nombre del paquete (P1–P4); el establecimiento fict
 
 ## Publicación comercial autorizada
 Se integra el escaparate en main por autorización explícita. Los enlaces de práctica se habilitan públicamente sin parámetro especial; no se marcan como verificados ni se afirma disponibilidad de contratación. Las pruebas públicas siguen pendientes. Se conserva la configuración de producción, sin añadir el Worker de preview, DNS, D1 ni cambios al repositorio de demos. Las tarifas del sitio comercial son las últimas aprobadas.
+
+## Fichas integradas
+Se reúnen los precios, características y demostraciones en cuatro fichas comerciales. P3 contiene dos ejemplos, los demás uno. Se conserva el selector de veinte combinaciones y todos los accesos, sin repetir el nombre del paquete en cada negocio. El ancla titulo-escaparate-demos sigue disponible.
