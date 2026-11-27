@@ -46,3 +46,8 @@ main > #llaveros.servicio-colapsable{margin-top:clamp(24px,4vw,44px)}
 .inicio-catalogo .accion.accion-contacto:hover{background:#096b4e}
 .inicio-catalogo .servicio-indicador{background:#edf2fc;color:#0f2347}
 .inicio-catalogo #paginas-web .asistente-abrir{color:#e0e8f7;border-color:#e0e8f7}
+
+/* Imágenes de ejemplo en el contenido desplegado. */
+.servicio-ejemplo{margin:0 0 18px;max-width:420px}
+.servicio-ejemplo img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--borde)}
+.servicio-ejemplo figcaption{font-size:.85rem;color:var(--suave);margin-top:6px;line-height:1.45}

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480">
+<title>Ilustración de una torre de ajedrez impresa en 3D</title>
+<defs>
+<linearGradient id="bg" x2="0" y2="1"><stop stop-color="#edf2f5"/><stop offset="1" stop-color="#c8d8e2"/></linearGradient>
+<linearGradient id="body" x1="0" y1="0" x2="1" y2=".2"><stop stop-color="#162a43"/><stop offset=".3" stop-color="#416b93"/><stop offset=".52" stop-color="#32587e"/><stop offset=".8" stop-color="#19334e"/><stop offset="1" stop-color="#0e2035"/></linearGradient>
+<linearGradient id="rim" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#274965"/><stop offset=".45" stop-color="#5884a9"/><stop offset="1" stop-color="#132a43"/></linearGradient>
+<pattern id="layers" width="3" height="5" patternUnits="userSpaceOnUse"><path d="M0 4.5H3" stroke="#e6f1ff" stroke-opacity=".16" stroke-width=".8"/></pattern>
+<filter id="shadow" x="-45%" y="-100%" width="190%" height="300%"><feGaussianBlur stdDeviation="12"/></filter>
+<clipPath id="surface"><path d="M229 351Q251 325 256 284L266 203Q265 187 240 170L221 151V102L245 96V122L269 126V92L297 88V123L326 125V89L354 91V125L382 121V97L407 105V151L388 170Q365 189 365 203L375 285Q381 327 403 351L421 369V390Q320 431 211 390V369Z"/></clipPath>
+</defs>
+<rect width="640" height="480" fill="url(#bg)"/>
+<path d="M0 346Q320 323 640 346V480H0Z" fill="#dfe6e8"/>
+<ellipse cx="336" cy="409" rx="161" ry="27" fill="#2d4155" opacity=".3" filter="url(#shadow)"/>
+<!-- Torre de ajedrez: base circular, cuerpo torneado y almenas -->
+<path d="M211 369Q320 338 421 369V390Q320 431 211 390Z" fill="#102238"/>
+<ellipse cx="316" cy="369" rx="105" ry="26" fill="url(#rim)"/>
+<path d="M229 351Q251 325 256 284L266 203Q265 187 240 170L221 151V102L245 96V122L269 126V92L297 88V123L326 125V89L354 91V125L382 121V97L407 105V151L388 170Q365 189 365 203L375 285Q381 327 403 351L421 369Q320 399 211 369Z" fill="url(#body)"/>
+<g clip-path="url(#surface)"><rect x="210" y="88" width="214" height="310" fill="url(#layers)"/></g>
+<path d="M221 102 245 96 255 84 233 88Z M269 92 297 88 306 76 280 80Z M326 89 354 91 367 80 341 77Z M382 97 407 105 415 94 391 86Z" fill="#6d96b7"/>
+<path d="M245 96 255 84V112L269 126 245 122Z M297 88 306 76V110L326 125 297 123Z M354 91 367 80V111L382 121 354 125Z M407 105 415 94V142L407 151Z" fill="#102b44"/>
+<path d="M221 151Q313 178 407 151L397 165Q315 189 231 165Z" fill="url(#rim)"/>
+<path d="M242 180Q316 201 386 180L378 194Q316 213 251 194Z" fill="#203e59"/>
+<path d="M229 351Q315 377 403 351L411 364Q317 393 221 364Z" fill="url(#rim)"/>
+<path d="M211 389Q315 423 421 389" fill="none" stroke="#6389a5" stroke-width="2" opacity=".5"/>
+</svg>
