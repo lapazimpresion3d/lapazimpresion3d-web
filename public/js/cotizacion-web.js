@@ -28,7 +28,7 @@ const planesCotizacion = {
   },
   "negocio-interactivo": {
     "nombre": "Negocio interactivo",
-    "precio": "Implementación desde $1,500 MXN · $299 MXN al mes + IVA",
+    "precio": "Implementación desde $1,500 MXN · $249 MXN al mes + IVA",
     "alcance": "Funciones de presencia digital. Carrito, pedidos y seguimiento para menús o catálogos. Agenda o reservaciones según el giro. Panel privado; cocina básica y pedidos de mesa cuando corresponda.",
     "funciones": [
       "Página comercial personalizada",
@@ -48,7 +48,7 @@ const planesCotizacion = {
   },
   "gestion-comercial": {
     "nombre": "Gestión comercial",
-    "precio": "Implementación desde $2,500 MXN · $449 MXN al mes + IVA",
+    "precio": "Implementación desde $2,500 MXN · $349 MXN al mes + IVA",
     "alcance": "Funciones de Negocio interactivo, según el giro. Punto de venta, caja y registro de cobros. Inventario básico para productos; comandas o atención de servicios. Tickets y reportes de pedidos y cobros.",
     "funciones": [
       "Página comercial personalizada",
@@ -73,7 +73,7 @@ const planesCotizacion = {
   },
   "gestion-profesional": {
     "nombre": "Gestión profesional",
-    "precio": "Implementación desde $3,500 MXN · $649 MXN al mes + IVA",
+    "precio": "Implementación desde $3,500 MXN · $499 MXN al mes + IVA",
     "alcance": "Funciones de Gestión comercial, según el giro. Inventario avanzado, costos y proveedores. Fidelización y administración avanzada. Automatizaciones y reportes avanzados.",
     "funciones": [
       "Página comercial personalizada",
