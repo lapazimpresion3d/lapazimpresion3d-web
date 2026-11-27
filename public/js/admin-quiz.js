@@ -203,8 +203,8 @@ function celdaCSV(valor) {
 }
 function exportarPropuestasCSV(){
  if(!propuestasVisibles.length){estadoPropuestas.textContent="No hay resultados visibles para exportar.";return;}
- const cabeceras=["Folio","Fecha","Estado","Nombre","Proyecto","WhatsApp","Comentario","Recomendación","Complemento","Origen","Tipo de página","Giro","Funciones","Complementos","Servicio","Presupuesto","Detalles específicos","Tipo de solicitud","Trabajo académico","Institución educativa","Descuento académico sugerido"];
- const filas=propuestasVisibles.map(x=>[x.folio,x.fecha,x.estado,x.nombre,x.proyecto,x.telefono,x.comentario,x.ficha?.recomendacion?.titulo,x.ficha?.recomendacion?.complemento_sugerido,x.ficha?.origen||"cuestionario",x.ficha?.tipo_pagina||"",x.ficha?.giro||"",(x.ficha?.funciones||[]).join("; "),(x.ficha?.complementos||[]).join("; "),x.ficha?.titulo_servicio||x.ficha?.tipo_pagina||x.ficha?.recomendacion?.titulo||"",etiquetasPresupuesto[x.ficha?.presupuesto||x.ficha?.respuestas?.presupuesto]||"",JSON.stringify(x.ficha?.campos||{}),etiquetasContexto[x.ficha?.contexto]||"",tiposAcademicos[x.ficha?.tipo_trabajo_academico]||"",x.ficha?.institucion_academica||"",x.ficha?.contexto==="academico"?"5% sujeto a verificación, no aplicado":""]);
+ const cabeceras=["Folio","Fecha","Estado","Nombre","Proyecto","WhatsApp","Comentario","Recomendación","Complemento","Origen","Tipo de página","Paquete de interés","Giro","Funciones","Complementos","Servicio","Presupuesto","Detalles específicos","Tipo de solicitud","Trabajo académico","Institución educativa","Descuento académico sugerido"];
+ const filas=propuestasVisibles.map(x=>[x.folio,x.fecha,x.estado,x.nombre,x.proyecto,x.telefono,x.comentario,x.ficha?.recomendacion?.titulo,x.ficha?.recomendacion?.complemento_sugerido,x.ficha?.origen||"cuestionario",x.ficha?.tipo_pagina||"",x.ficha?.paquete||"",x.ficha?.giro||"",(x.ficha?.funciones||[]).join("; "),(x.ficha?.complementos||[]).join("; "),x.ficha?.titulo_servicio||x.ficha?.tipo_pagina||x.ficha?.recomendacion?.titulo||"",etiquetasPresupuesto[x.ficha?.presupuesto||x.ficha?.respuestas?.presupuesto]||"",JSON.stringify(x.ficha?.campos||{}),etiquetasContexto[x.ficha?.contexto]||"",tiposAcademicos[x.ficha?.tipo_trabajo_academico]||"",x.ficha?.institucion_academica||"",x.ficha?.contexto==="academico"?"5% sujeto a verificación, no aplicado":""]);
  const csv="\uFEFF"+[cabeceras,...filas].map(f=>f.map(celdaCSV).join(",")).join("\r\n")+"\r\n";
  const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
  const a=document.createElement("a");a.href=url;a.download="solicitudes-lapazimpresion3d.csv";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -238,7 +238,7 @@ async function cargarPropuestas(){
    } else if(esWeb){
      box.append(elem("p","resultado-etiqueta","COTIZACIÓN WEB · SOLICITUD DIRECTA"),elem("h3",null,x.ficha.tipo_pagina));
      const detWeb=elem("dl");
-     for(const [t,v] of [["Giro",x.ficha.giro],["Presupuesto",etiquetasPresupuesto[x.ficha.presupuesto]||"Sin indicar"],["Funciones solicitadas",(x.ficha.funciones||[]).join(" · ")||"Ninguna"],["Complementos",(x.ficha.complementos||[]).join(" · ")||"Ninguno"]]) detWeb.append(elem("dt",null,t),elem("dd",null,v));
+     for(const [t,v] of [["Paquete de interés",x.ficha.paquete||"Sin definir"],["Giro",x.ficha.giro],["Presupuesto",etiquetasPresupuesto[x.ficha.presupuesto]||"Sin indicar"],["Funciones solicitadas",(x.ficha.funciones||[]).join(" · ")||"Ninguna"],["Complementos",(x.ficha.complementos||[]).join(" · ")||"Ninguno"]]) detWeb.append(elem("dt",null,t),elem("dd",null,v));
      box.append(detWeb);
    } else {
      const rec=x.ficha?.recomendacion||{};

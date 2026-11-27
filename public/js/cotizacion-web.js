@@ -62,6 +62,7 @@ formularioWeb.addEventListener('submit', (evento) => {
     nombre: String(f.get('nombre') || '').trim(),
     negocio: String(f.get('negocio') || '').trim(),
     giro: String(f.get('giro') || '').trim(),
+    paquete: formularioWeb.elements.paquete.selectedOptions[0]?.value ? formularioWeb.elements.paquete.selectedOptions[0].textContent.trim() : '',
     telefono,
     tipo_pagina: String(f.get('tipo') || ''),
     funciones: f.getAll('funciones').map(String),
@@ -76,6 +77,7 @@ formularioWeb.addEventListener('submit', (evento) => {
     `Nombre: ${datosPendientes.nombre}`,
     `Negocio: ${datosPendientes.negocio}`,
     `Giro: ${datosPendientes.giro}`,
+    `Paquete de interés: ${datosPendientes.paquete || "Proyecto a medida / sin definir"}`,
     `WhatsApp: ${datosPendientes.telefono}`,
     `Tipo de página: ${datosPendientes.tipo_pagina}`,
     `Funciones: ${datosPendientes.funciones.join('; ') || 'Ninguna'}`,
@@ -127,6 +129,14 @@ botonEnviar.addEventListener('click', async () => {
   }
 });
 
+// Solo valores conocidos: no insertar parámetros de URL como HTML ni cambiar selecciones en pageshow.
+const parametrosCatalogo = new URLSearchParams(location.search);
+const selectorPaquete = formularioWeb.elements.paquete;
+const paqueteCatalogo = parametrosCatalogo.get('paquete');
+if (Array.from(selectorPaquete.options).some(o => o.value === paqueteCatalogo)) selectorPaquete.value = paqueteCatalogo;
+const girosCatalogo = new Map([["restaurante","Restaurante / taquería"],["cafeteria","Cafetería"],["barberia","Barbería / estética"],["mascotas","Tienda de mascotas"],["comercio","Comercio / tienda"],["servicios","Servicios profesionales"],["turismo","Turismo y actividades"],["otro","Otro giro"]]);
+const giroCatalogo = parametrosCatalogo.get('giro');
+if (!formularioWeb.elements.giro.value && girosCatalogo.has(giroCatalogo)) formularioWeb.elements.giro.value = girosCatalogo.get(giroCatalogo);
 actualizarFunciones();
 actualizarDominio();
 formularioWeb.hidden = false;
