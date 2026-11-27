@@ -52,7 +52,7 @@ main > #llaveros.servicio-colapsable{margin-top:clamp(24px,4vw,44px)}
 .servicio-ejemplo img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--borde)}
 .servicio-ejemplo figcaption{font-size:.85rem;color:var(--suave);margin-top:6px;line-height:1.45}
 
-.comparativa-publica{margin:0 0 18px;min-width:0}.comparativa-publica table{width:100%;border-collapse:collapse;font-size:.9rem;table-layout:fixed}.comparativa-publica th,.comparativa-publica td{padding:9px 5px;border-bottom:1px solid var(--borde);text-align:left;overflow-wrap:anywhere}.comparativa-publica th:first-child{width:52%}.comparativa-publica .nota{margin-bottom:0}
+.comparativa-publica{margin:0 0 18px;min-width:0}.comparativa-publica table{width:100%;border-collapse:collapse;font-size:.9rem;table-layout:fixed}.comparativa-publica th,.comparativa-publica td{padding:9px 5px;border-bottom:1px solid var(--borde);text-align:left;overflow-wrap:anywhere}.comparativa-publica th:first-child{width:36%}.comparativa-publica .nota{margin-bottom:0}
 
 .accesos-servicios{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:20px 0}
 .accesos-servicios a{display:flex;flex-direction:column;min-width:0;background:var(--tarjeta);border:1px solid var(--borde);border-radius:12px;overflow:hidden;text-decoration:none;color:var(--titulo)}
@@ -64,3 +64,10 @@ main > #llaveros.servicio-colapsable{margin-top:clamp(24px,4vw,44px)}
 @media(max-width:700px){.accesos-servicios{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.accesos-servicios img{aspect-ratio:16/9}.pagina-servicio .servicio-resumen h1,.pagina-servicio .servicio-resumen h2{grid-template-columns:64px minmax(0,1fr)}.whatsapp-flotante{width:54px;height:54px;padding:0}.whatsapp-flotante span{display:none}}
 
 @media(max-width:700px){.pie-comercial{padding-bottom:86px}}
+
+/* Contacto fijo: contraste independiente del tema y espacio de desplazamiento. */
+.whatsapp-flotante{min-width:48px;min-height:48px;right:calc(14px + env(safe-area-inset-right, 0px));bottom:calc(14px + env(safe-area-inset-bottom, 0px));color:#fff}
+.whatsapp-flotante:visited{color:#fff}.whatsapp-flotante:focus-visible{outline:3px solid #ffc82a;outline-offset:3px}
+html:has(.whatsapp-flotante){scroll-padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
+.pie-comercial{padding-bottom:calc(86px + env(safe-area-inset-bottom, 0px))}
+@media(max-width:700px){.comparativa-publica table{font-size:.76rem}.comparativa-publica th,.comparativa-publica td{padding:8px 3px}.comparativa-publica th:first-child{width:36%}}

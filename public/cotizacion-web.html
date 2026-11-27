@@ -10,9 +10,9 @@
   <link rel="stylesheet" href="css/inicio.css">
   <link rel="stylesheet" href="css/cotizacion-web.css">
   <link rel="stylesheet" href="css/soluciones-digitales.css?v=9">
-  <script src="js/orientacion-web.js?v=2" defer></script>
-  <script src="js/cotizacion-web.js?v=20261127-11" defer></script>
-<link rel="stylesheet" href="css/catalogo-colapsable.css?v=6"></head>
+  <script src="js/orientacion-web.js?v=3" defer></script>
+  <script src="js/cotizacion-web.js?v=20261127-12" defer></script>
+<link rel="stylesheet" href="css/catalogo-colapsable.css?v=7"></head>
 <body class="pagina-cotizacion">
   <header class="cabecera cabecera-fotografica cabecera-cotizacion">
     <picture>
@@ -41,11 +41,13 @@
           <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="negocio-interactivo" required aria-describedby="precio-negocio-interactivo mensual-negocio-interactivo"><span>Negocio interactivo</span></label></th><td id="precio-negocio-interactivo"><span class="precio-desde">Desde</span> <strong>$1,500</strong></td><td id="mensual-negocio-interactivo"><strong>$249</strong><span class="precio-periodo"> / mes</span></td></tr>
           
           
+          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="gestion-comercial" required aria-describedby="precio-gestion-comercial mensual-gestion-comercial"><span>Gestión comercial</span></label></th><td id="precio-gestion-comercial"><span class="precio-desde">Desde</span> <strong>$2,500</strong></td><td id="mensual-gestion-comercial"><strong>$349</strong><span class="precio-periodo"> / mes</span></td></tr>
+          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="gestion-profesional" required aria-describedby="precio-gestion-profesional mensual-gestion-profesional"><span>Gestión profesional</span></label></th><td id="precio-gestion-profesional"><span class="precio-desde">Desde</span> <strong>$3,500</strong></td><td id="mensual-gestion-profesional"><strong>$499</strong><span class="precio-periodo"> / mes</span></td></tr>
           <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="a-medida" required checked><span>Proyecto a medida</span></label></th><td colspan="2">Bajo cotización</td></tr>
         </tbody>
       </table>
       <p id="estado-paquete-web" class="estado-paquete-web" role="status" aria-live="polite"></p>
-      <p class="nota">MXN + IVA. La implementación depende del alcance; las mensualidades corresponden al paquete estándar. La disponibilidad se confirma en la propuesta.</p>
+      <p class="nota">MXN + IVA. La implementación depende del alcance; las mensualidades corresponden al paquete estándar. El alcance se acuerda en la propuesta.</p>
       <p class="nota"><a href="paquetes-web.html#fichas-paquetes">Ver características y alcance de cada paquete</a> · <a href="#condiciones-paquetes">Ver condiciones generales del servicio</a>.</p>
     </section>
     <h2 class="titulo-formulario-cotizacion">Solicita tu cotización</h2>
@@ -76,8 +78,14 @@
           <input type="checkbox" name="funciones" value="Pedidos por WhatsApp">
           <span>Pedidos por WhatsApp<small>El cliente abre el chat con su solicitud y el negocio confirma el pedido por WhatsApp. Puedes elegir esta opción por sí sola o junto al carrito.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        
-        
+        <label class="opcion" data-funcion data-requiere="pedidos-web">
+          <input type="checkbox" name="funciones" value="Efectivo y transferencias con registro manual">
+          <span>Efectivo y transferencias<small>Muestra las instrucciones de pago. El encargado verifica las transferencias o registra el cobro en efectivo. Requiere carrito.</small><small class="nivel-funcion" hidden></small></span>
+        </label>
+        <label class="opcion" data-funcion data-requiere="pedidos-web">
+          <input type="checkbox" name="funciones" value="Cotizar integración de pagos en línea con tarjeta">
+          <span>Pagos en línea con tarjeta<small>Solicita cotización para integrar una plataforma de pagos. Requiere carrito y una cuenta del negocio con el proveedor de pagos.</small><small class="nivel-funcion" hidden></small></span>
+        </label>
         <label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Pedidos para recoger o a domicilio">
           <span>Pedidos para recoger o a domicilio<small>Dirección y costo de envío. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
@@ -90,7 +98,10 @@
           <input type="checkbox" name="funciones" value="Reservaciones y agenda">
           <span>Agenda y reservaciones de citas<small>Para dentistas, estilistas, barberías, consultorios y servicios profesionales. Los clientes pueden solicitar una fecha y hora; el negocio organiza la disponibilidad y confirma las citas.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        
+        <label class="opcion" data-funcion>
+          <input type="checkbox" name="funciones" value="Reservaciones de tours y pases turísticos">
+          <span>Reservaciones de tours, actividades y pases turísticos<small>Para excursiones, paseos y experiencias. Permite solicitar fecha, horario y número de personas, consultar cupos y gestionar confirmaciones. La emisión de pases digitales y los pagos en línea se cotizan según el proyecto.</small><small class="nivel-funcion" hidden></small></span>
+        </label>
         <label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Panel privado">
           <span>Panel privado<small>Edita contenido, precios, horarios o disponibilidad según tu página.</small><small class="nivel-funcion" hidden></small></span>
@@ -103,16 +114,19 @@
           <input type="checkbox" name="funciones" value="Seguimiento de pedidos">
           <span>Seguimiento de pedidos<small>Estado de preparación, entrega y pago por folio. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        <label class="opcion" data-funcion data-requiere="pedidos-web">
+          <input type="checkbox" name="funciones" value="Reportes de pedidos y cobros">
+          <span>Reportes de pedidos y cobros<small>Exportación en CSV. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
+        </label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Punto de venta y caja"><span>Punto de venta y caja<small>Registro de ventas y control de caja.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Inventario básico"><span>Inventario básico<small>Existencias de productos y movimientos básicos.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Tickets"><span>Tickets<small>Emisión de comprobantes internos de operación, no facturas fiscales.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Inventario avanzado"><span>Inventario avanzado<small>Control avanzado de existencias y movimientos.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Costos y proveedores"><span>Costos y proveedores<small>Organización de costos y proveedores.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Fidelización"><span>Fidelización<small>Herramientas para atención y fidelización de clientes.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Administración avanzada"><span>Administración avanzada<small>Herramientas adicionales de administración según el giro.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Automatizaciones"><span>Automatizaciones<small>Automatización de tareas según el alcance acordado.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Reportes avanzados"><span>Reportes avanzados<small>Indicadores y reportes de operación según el giro.</small><small class="nivel-funcion" hidden></small></span></label>
         </div>
         <p class="nota">El alcance definitivo de las funciones y su precio se acuerdan en la propuesta, según el giro de tu negocio.</p>
       </fieldset>
@@ -189,7 +203,7 @@
       <details id="condiciones-paquetes" class="condiciones-comerciales condiciones-desplegables">
         <summary><h2 id="titulo-condiciones-web">Condiciones generales del servicio</h2></summary>
         <div class="contenido-condiciones">
-        <p>Consulta las <a href="paquetes-web.html#fichas-paquetes">características, precios y alcance de los dos paquetes</a>. A continuación te explicamos las condiciones de implementación y mantenimiento.</p>
+        <p>Consulta las <a href="paquetes-web.html#fichas-paquetes">características, precios y alcance de los cuatro paquetes</a>. A continuación te explicamos las condiciones de implementación y mantenimiento.</p>
         <p>Antes de contratar, conocerás por separado el costo de desarrollo, el dominio y la cuota de operación y mantenimiento. <strong>Enviar este formulario no genera ningún cargo.</strong></p>
 
         <h3>Operación, mantenimiento y dominio</h3>
@@ -242,6 +256,6 @@
   </section>
 
   </main>
-  <footer class="pie-comercial"><strong>Lapazimpresion3d · La Paz, Baja California Sur</strong><p>Entregas locales en La Paz, BCS, según el pedido. Atención y entregas con horario acordado por WhatsApp.</p><nav aria-label="Información y soporte"><a href="aviso-privacidad.html">Aviso de privacidad</a><a href="guia-nfc.html">Guía de uso NFC</a><a href="https://wa.me/526121992396">Contacto por WhatsApp</a></nav><p>© 2026 Lapazimpresion3d</p></footer>
+  <footer class="pie-comercial"><strong>Lapazimpresion3d · La Paz, Baja California Sur</strong><p>Zona de servicio: La Paz, BCS, y envíos locales según el pedido. Atención y entregas con horario acordado por WhatsApp.</p><nav aria-label="Información y soporte"><a href="aviso-privacidad.html">Aviso de privacidad</a><a href="guia-nfc.html">Cómo reprogramar tu llavero NFC</a><a href="https://wa.me/526121992396">Contacto por WhatsApp</a><a href="https://www.instagram.com/lapazimpresion3d/" target="_blank" rel="noopener noreferrer">Instagram · @lapazimpresion3d</a><a href="https://www.facebook.com/profile.php?id=61587977253393" target="_blank" rel="noopener noreferrer">Facebook · Lapazimpresion3d</a></nav><p>© 2026 Lapazimpresion3d</p></footer>
 <a class="whatsapp-flotante" href="https://wa.me/526121992396" aria-label="Contactar a Lapazimpresion3d por WhatsApp" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20.5 11.8a8.5 8.5 0 0 1-12.6 7.5L4 20l.8-3.8A8.5 8.5 0 1 1 20.5 11.8Z"/><path stroke-linecap="round" d="M9 8c-2 1 0 4 1.7 5.5S15 16 16 14l-2-1.5-1.2 1c-1.6-.8-2.5-1.8-3-3.3L10.5 9 9 8Z"/></svg><span>WhatsApp</span></a></body>
 </html>
