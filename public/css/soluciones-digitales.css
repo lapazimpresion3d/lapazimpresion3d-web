@@ -32,3 +32,10 @@
 #form-web #funciones-adicionales{border-top:1px solid var(--borde);margin-top:18px;padding-top:14px}
 #form-web [hidden]{display:none!important}
 @media(max-width:420px){#fichas-paquetes .ficha-precios{grid-template-columns:1fr}}
+
+/* Cierre comercial de la sección, después de las demostraciones. */
+#paginas-web .cierre-cotizacion-web{margin-top:20px;padding:clamp(20px,4vw,32px);text-align:center}
+#paginas-web .cierre-cotizacion-web h3{margin:0 0 8px}
+#paginas-web .cierre-cotizacion-web p{margin:0 auto 18px;max-width:52ch;color:var(--suave)}
+#paginas-web .cierre-cotizacion-web .acciones{justify-content:center}
+@media(max-width:480px){#paginas-web .cierre-cotizacion-web .accion{width:100%;text-align:center;justify-content:center}}
