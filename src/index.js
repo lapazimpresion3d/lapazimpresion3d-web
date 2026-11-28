@@ -499,6 +499,7 @@ function solicitudWebValida(d) {
    textoWeb(d.nombre,2,100) && textoWeb(d.negocio,2,100) && textoWeb(d.giro,2,80) &&
    typeof d.telefono==='string' && /^\d{10}$/.test(d.telefono) &&
    (d.paquete == null || d.paquete === '' || WEB_PAQUETES.has(d.paquete)) &&
+   (d.paquete_base == null || d.paquete_base === '' || WEB_PAQUETES.has(d.paquete_base)) &&
    (d.tipo_pagina == null || d.tipo_pagina === "" || WEB_TIPOS.has(d.tipo_pagina)) && listaWeb(d.funciones,WEB_FUNCIONES) &&
    listaWeb(d.complementos,WEB_COMPLEMENTOS) && textoWeb(d.detalles,5,500) && presupuestoWebValido(d.presupuesto??"") &&
    dominioWebValido(d) && d.acepta_privacidad===true;
@@ -665,7 +666,7 @@ async function api(request,env,ctx) {
     const ficha={
       tipo_documento:"solicitud_web",version_esquema:"1.0",id_solicitud:id,
       origen:"cotiza_pagina_web",fecha_generacion:fecha,
-      paquete:d.paquete||"",tipo_pagina:d.tipo_pagina||"",funciones:d.funciones,complementos:d.complementos,
+      paquete:d.paquete||"",paquete_base:d.paquete_base||d.paquete||"",tipo_pagina:d.tipo_pagina||"",funciones:d.funciones,complementos:d.complementos,
       giro:d.giro,detalles:d.detalles,presupuesto:d.presupuesto||"",estado:"orientativa",
       dominio:{situacion:d.situacion_dominio||"no_indicado",actual:d.dominio_actual||"",precio_anual_referencia_mxn:700,precio_final_pendiente:true},
       renovacion_anual:{dominio:"segun_propuesta",operacion_y_soporte:"segun_propuesta"}

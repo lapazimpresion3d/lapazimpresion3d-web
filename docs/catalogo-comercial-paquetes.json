@@ -1,5 +1,5 @@
 {
-  "version": "2026-11-28-catalogo2",
+  "version": "2026-11-28-catalogo3",
   "moneda": "MXN",
   "iva_incluido": false,
   "precios": "comerciales confirmados",
@@ -823,5 +823,9 @@
     "eventos": "Eventos y espectáculos",
     "academia": "Academias y capacitación",
     "otro": "Otro giro"
+  },
+  "personalizacion": {
+    "regla": "Los paquetes son referencias; todas las funciones se pueden seleccionar sin restricción por giro. El paquete sugerido considera todos los módulos estándar seleccionados, incluidos los de otros giros. Los módulos añadidos, retirados, adaptaciones e integraciones se valoran en propuesta.",
+    "tarifas_modulares": "pendientes de definición; no aplicar precios o descuentos arbitrarios"
   }
 }

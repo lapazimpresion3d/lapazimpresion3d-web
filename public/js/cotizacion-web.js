@@ -23,6 +23,7 @@ const coberturas = new Map(ordenPaquetes.map(clave=>[clave,new Set(planesCotizac
 coberturas.get('gestion-profesional').add('Inventario básico');
 const funcionesCatalogo = new Set(Array.from(coberturas.values()).flatMap(s=>Array.from(s)));
 let claveActiva = 'a-medida';
+let paqueteBase = 'a-medida';
 let modoMedida = false;
 let incluidas = new Set();
 let avisoAjuste = '';
@@ -34,6 +35,7 @@ function recomendarPaquete(seleccionadas) { return LP_ORIENTACION_WEB.baseRecome
 function seleccionarPaquete(clave) {
   claveActiva = ordenPaquetes.includes(clave) ? clave : 'a-medida';
   modoMedida = claveActiva === 'a-medida';
+  paqueteBase = claveActiva;
   avisoAjuste = '';
   const funciones = new Set(LP_ORIENTACION_WEB.funcionesPorGiro(claveActiva,giroActivo));
   for (const opcion of opcionesWeb) opcion.querySelector('input').checked = funciones.has(opcion.querySelector('input').value);
@@ -47,6 +49,7 @@ function actualizarFunciones() {
     radio.closest('tr').classList.toggle('paquete-seleccionado',radio.checked);
   }
   const seleccionadas = camposSeleccionados();
+  const configuracion = LP_ORIENTACION_WEB.configuracion(paqueteBase,giroActivo,seleccionadas);
   for (const opcion of opcionesWeb) {
     const campo = opcion.querySelector('input');
     // Todas las casillas son seleccionables; las dependencias se resuelven al editarlas.
@@ -56,13 +59,13 @@ function actualizarFunciones() {
     const minimo = ordenPaquetes.find(clave=>coberturas.get(clave).has(campo.value));
     const etiqueta = opcion.querySelector('.nivel-funcion');
     const estado=LP_ORIENTACION_WEB.estadoFuncion(campo.value,giroActivo);
-    etiqueta.textContent = ['externa','personalizado','adaptacion'].includes(estado)?({externa:'Integración externa',personalizado:'Desarrollo personalizado',adaptacion:'Requiere adaptación'})[estado]+' · Sujeto a cotización':(minimo?'Desde P'+(ordenPaquetes.indexOf(minimo)+1):'Sujeto a cotización')+(estado==='demo'?' · Disponible en demostración; implementación según propuesta':' · Alcance comercial según propuesta');
+    etiqueta.textContent = ['externa','personalizado','adaptacion'].includes(estado)?(minimo?'Desde P'+(ordenPaquetes.indexOf(minimo)+1)+' · ':'')+({externa:'Integración externa',personalizado:'Desarrollo personalizado',adaptacion:'Adaptación al giro'})[estado]+' · Sujeto a cotización':(minimo?'Desde P'+(ordenPaquetes.indexOf(minimo)+1):'Sujeto a cotización')+(estado==='demo'?' · Disponible en demostración; implementación según propuesta':' · Alcance comercial según propuesta');
     etiqueta.hidden = !etiqueta.textContent;
   }
   resumenPaquete.hidden = !plan;
   if (plan) {
     document.getElementById('nombre-paquete-web').textContent = plan.nombre;
-    document.getElementById('precio-paquete-web').textContent = plan.precio;
+    document.getElementById('precio-paquete-web').textContent = (configuracion.personalizada?'Referencia del paquete sugerido: ':'')+plan.precio;
     document.getElementById('alcance-paquete-web').textContent = LP_ORIENTACION_WEB.alcancePorGiro(claveActiva,giroActivo);
     document.getElementById('ficha-paquete-web').href = 'paquetes-web.html#' + claveActiva;
   }
@@ -74,6 +77,9 @@ function actualizarFunciones() {
   const extras = seleccionadas.filter(v=>!funcionesCatalogo.has(v)||['externa','personalizado','adaptacion'].includes(LP_ORIENTACION_WEB.estadoFuncion(v,giroActivo)));
   conteo.textContent = seleccionadas.length + ' de ' + opcionesWeb.length + ' funciones seleccionadas.' + (extras.length ? ' ' + extras.length + ' función adicional sujeta a cotización.' : '');
   document.getElementById('estado-paquete-web').textContent = (plan ? plan.nombre + ' · ' + plan.precio : 'Proyecto a medida · bajo cotización') + (extras.length ? ' · incluye opciones sujetas a cotización' : '');
+  const ajuste=document.getElementById('ajuste-precio-web');
+  ajuste.textContent=configuracion.personalizada?'Configuración personalizada · '+configuracion.agregadas.length+' añadidas, '+configuracion.retiradas.length+' retiradas respecto al paquete inicial. Implementación y mensualidad finales sujetas a cotización según módulos, adaptaciones y alcance.':'Configuración estándar sugerida · tarifas publicadas como referencia.';
+  document.getElementById('estado-paquete-web').textContent += configuracion.personalizada?' · Precio final personalizado por cotizar':'';
   const aviso = document.getElementById('aviso-ajuste-paquete');
   aviso.textContent = avisoAjuste;
   aviso.hidden = !avisoAjuste;
@@ -83,12 +89,12 @@ function actualizarFunciones() {
   filtrarFunciones();actualizarDemoCotizacion();
 }
 const normalizarBusqueda=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-const filtroIds=['buscar-funciones','filtrar-nivel','filtrar-categoria','mostrar-adicionales'];
+const filtroIds=['buscar-funciones','filtrar-nivel','filtrar-categoria'];
 for(const id of filtroIds){const el=document.getElementById(id);el.addEventListener(id==='buscar-funciones'?'input':'change',()=>filtrarFunciones(true));}
 function filtrarFunciones(abrir=false){
- const a=LP_ORIENTACION_WEB,q=normalizarBusqueda(document.getElementById('buscar-funciones').value),nivel=document.getElementById('filtrar-nivel').value,cat=document.getElementById('filtrar-categoria').value,otros=document.getElementById('mostrar-adicionales').checked;
+ const a=LP_ORIENTACION_WEB,q=normalizarBusqueda(document.getElementById('buscar-funciones').value),nivel=document.getElementById('filtrar-nivel').value,cat=document.getElementById('filtrar-categoria').value;
  for(const opcion of opcionesWeb){const input=opcion.querySelector('input'),m=a.metadatos[input.value],estado=a.estadoFuncion(input.value,giroActivo),extra=['externa','personalizado','adaptacion'].includes(estado);
- opcion.hidden=(!otros&&!input.checked&&extra&&!q&&nivel!=='extra')||(q&&!normalizarBusqueda(opcion.textContent).includes(q))||(cat!==''&&String(m?.categoria)!==cat)||(nivel!==''&&(nivel==='extra'?!extra:extra||String(m?.minimo)!==nivel));}
+ opcion.hidden=(q&&!normalizarBusqueda(opcion.textContent).includes(q))||(cat!==''&&String(m?.categoria)!==cat)||(nivel!==''&&(nivel==='extra'?!extra:String(m?.minimo)!==nivel));}
  for(const g of funcionesWeb.querySelectorAll('.grupo-funciones')){const visible=[...g.querySelectorAll('[data-funcion]')].filter(x=>!x.hidden);g.hidden=!visible.length;g.querySelector('.grupo-conteo').textContent=visible.length?'('+visible.filter(x=>x.querySelector('input').checked).length+' seleccionadas / '+visible.length+')':'';if(abrir&&visible.length&&(q||cat!==''||nivel!==''))g.open=true;}
  const seleccionadas=camposSeleccionados();document.getElementById('resumen-funciones-elegidas').textContent=seleccionadas.length?'Seleccionadas: '+seleccionadas.join(' · '):'Sin funciones seleccionadas.';
 }
@@ -105,13 +111,13 @@ function editarFuncion(campo) {
   if (!modoMedida) {
     const anterior = claveActiva;
     claveActiva = recomendarPaquete(camposSeleccionados());
-    if (anterior !== claveActiva) avisoAjuste = 'Paquete ajustado automáticamente a ' + (planesCotizacion[claveActiva]?.nombre || 'Proyecto a medida') + ' según tus funciones. Se conservaron tus selecciones.';
+    if (anterior !== claveActiva) avisoAjuste = 'Paquete sugerido actualizado a ' + (planesCotizacion[claveActiva]?.nombre || 'Proyecto a medida') + ' según tus funciones. Se conservaron tus selecciones.';
   }
   actualizarFunciones();
 }
 formularioWeb.addEventListener('change', evento => {
   if (evento.target?.name === 'funciones') editarFuncion(evento.target);
-  if (evento.target?.name === 'giro') {const nuevo=LP_ORIENTACION_WEB.giroDesdeTexto(evento.target.value);if(nuevo!==giroActivo){giroActivo=nuevo;avisoAjuste='Se conservaron tus selecciones. Las funciones de otro giro se indican como adaptaciones; revisa las recomendaciones.';actualizarFunciones();}}
+  if (evento.target?.name === 'giro') {const nuevo=LP_ORIENTACION_WEB.giroDesdeTexto(evento.target.value);if(nuevo!==giroActivo){giroActivo=nuevo;if(!modoMedida)claveActiva=recomendarPaquete(camposSeleccionados());avisoAjuste='Se conservaron tus selecciones. Las funciones de otro giro se indican como adaptaciones; revisa las recomendaciones.';actualizarFunciones();}}
 });
 for (const radio of radiosPaquete) {
   radio.addEventListener('change',()=>seleccionarPaquete(radio.value));
@@ -142,7 +148,9 @@ formularioWeb.addEventListener('submit', (evento) => {
   telefonoWeb.setCustomValidity(telefono ? '' : 'Escribe un número mexicano válido de 10 dígitos.');
   if (!formularioWeb.reportValidity()) return;
   const f = new FormData(formularioWeb);
+  const configuracion = LP_ORIENTACION_WEB.configuracion(paqueteBase,giroActivo,camposSeleccionados());
   datosPendientes = {
+    paquete_base: planesCotizacion[paqueteBase]?.nombre || '',
     nombre: String(f.get('nombre') || '').trim(),
     negocio: String(f.get('negocio') || '').trim(),
     giro: String(f.get('giro') || '').trim(),
@@ -162,7 +170,11 @@ formularioWeb.addEventListener('submit', (evento) => {
     `Giro: ${datosPendientes.giro}`,
     `Paquete de interés: ${datosPendientes.paquete || "Proyecto a medida / sin definir"}`,
     `Paquete recomendado: ${planesCotizacion[recomendarPaquete(datosPendientes.funciones)]?.nombre || "Proyecto a medida"}`,
-    `Tarifas base: ${planesCotizacion[claveActiva]?.precio || "Sujeto a cotización"}`,
+    `Paquete inicial: ${datosPendientes.paquete_base || "Proyecto a medida"}`,
+    `Tarifas de referencia: ${planesCotizacion[claveActiva]?.precio || "Sujeto a cotización"}`,
+    `Funciones añadidas: ${configuracion.agregadas.join('; ') || 'Ninguna'}`,
+    `Funciones retiradas: ${configuracion.retiradas.join('; ') || 'Ninguna'}`,
+    `Precio final: ${configuracion.personalizada?'Configuración personalizada; implementación y mensualidad sujetas a cotización':'Tarifas base según propuesta'}`,
     `Integraciones y adaptaciones: ${datosPendientes.funciones.filter(n=>["externa","personalizado","adaptacion"].includes(LP_ORIENTACION_WEB.estadoFuncion(n,giroActivo))).join("; ") || "Ninguna"} (sujeto a cotización cuando corresponda)`,
     `WhatsApp: ${datosPendientes.telefono}`,
     `Funciones: ${datosPendientes.funciones.join('; ') || 'Ninguna'}`,
@@ -230,6 +242,7 @@ seleccionarPaquete(radioInicial?.value || radiosPaquete.find(r=>r.checked)?.valu
 const orientacionInicial = LP_ORIENTACION_WEB.leer(parametrosCatalogo);
 if (orientacionInicial) {
   claveActiva = orientacionInicial.paquete;
+  paqueteBase = claveActiva;
   modoMedida = false;
   const elegidas = new Set(orientacionInicial.funciones);
   for (const opcion of opcionesWeb) opcion.querySelector('input').checked = elegidas.has(opcion.querySelector('input').value);
