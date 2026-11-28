@@ -957,20 +957,21 @@ async function api(request,env,ctx) {
       if(!objeto)return error('Imagen no encontrada',404);
       return new Response(objeto.body,{headers:{'Content-Type':adj.tipo,'Content-Disposition':`inline; filename="referencia.${IMG_MIME[adj.tipo]||'jpg'}"`,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; sandbox"}});
     }
-    // Protección conservadora: preservar cualquier solicitud con proyecto o registro económico.
-    // Las tablas de migraciones aún no instaladas no pueden contener registros.
-    async function condicionesBorrado(){
-      const nombres=["proyectos_cliente","propuestas_economicas","pagos_propuesta","suscripciones_cliente","pagos_mensualidad"];
-      const tablas=await env.QUIZ_DB.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
-      const presentes=new Set(tablas.results.map(x=>x.name));
-      return ["proyectos_cliente","propuestas_economicas","pagos_propuesta","suscripciones_cliente","pagos_mensualidad"].filter(n=>presentes.has(n)).map(n=>"NOT EXISTS (SELECT 1 FROM "+n+" t WHERE t.propuesta_id=quiz_propuestas.id)").join(" AND ")||"1=1";
-    }
+    // El candado se conserva en la ficha existente, sin exigir una migración remota.
+    const desbloqueada="COALESCE(json_extract(ficha_json,'$.proteccion_borrado'),0)<>1";
     if(path==="/api/admin/propuestas/eliminables" && request.method==="GET"){
-      const condicion=await condicionesBorrado();
       const total=await env.QUIZ_DB.prepare("SELECT COUNT(*) AS n FROM quiz_propuestas").first();
-      const filas=await env.QUIZ_DB.prepare("SELECT id FROM quiz_propuestas WHERE "+condicion+" ORDER BY fecha,id LIMIT 1001").all();
+      const filas=await env.QUIZ_DB.prepare("SELECT id FROM quiz_propuestas WHERE "+desbloqueada+" ORDER BY fecha,id LIMIT 1001").all();
       if(filas.results.length>1000)return error("Hay más de 1000 solicitudes eliminables. Elimina por selección en grupos.",409);
       return json({ids:filas.results.map(x=>x.id),protegidas:Math.max(0,total.n-filas.results.length)});
+    }
+    const candado=path.match(/^\/api\/admin\/propuestas\/([0-9a-f-]{36})\/proteccion$/i);
+    if(candado&&request.method==="PATCH"){
+      if(!sameOrigin(request))return error("Origen no autorizado",403);
+      const d=await leerJson(request,100);
+      if(typeof d?.protegida!=="boolean")return error("Protección inválida",400);
+      const res=await env.QUIZ_DB.prepare("UPDATE quiz_propuestas SET ficha_json=json_set(ficha_json,'$.proteccion_borrado',?1) WHERE id=?2").bind(d.protegida?1:0,candado[1]).run();
+      return res.meta.changes?json({ok:true,protegida:d.protegida}):error("Solicitud no encontrada",404);
     }
     const propuesta=path.match(/^\/api\/admin\/propuestas\/([0-9a-f-]{36})$/i);
     if(propuesta && request.method==="PATCH") {
@@ -981,18 +982,39 @@ async function api(request,env,ctx) {
       return json({ok:result.meta.changes>0});
     }
     if(propuesta && request.method==="DELETE") {
-      if(!sameOrigin(request)) return error("Origen no autorizado",403);
-      const fila=await env.QUIZ_DB.prepare('SELECT ficha_json FROM quiz_propuestas WHERE id=?1').bind(propuesta[1]).first();
+      if(!sameOrigin(request))return error("Origen no autorizado",403);
+      const db=env.QUIZ_DB,id=propuesta[1];
+      const fila=await db.prepare("SELECT ficha_json FROM quiz_propuestas WHERE id=?1").bind(id).first();
       if(!fila)return error("Solicitud no encontrada",404);
-      const condicion=await condicionesBorrado();
-      const imagenes=JSON.parse(fila.ficha_json).imagenes||[];
-      if(!Array.isArray(imagenes)||imagenes.some(a=>typeof a?.clave!=="string"||!a.clave.startsWith("solicitudes/"+propuesta[1]+"/")))return error("Referencias de imágenes inválidas; requiere revisión.",409);
-      if(imagenes.length&&!env.COTIZACIONES_R2)return error("Almacenamiento de imágenes no disponible.",503);
-      const result=await env.QUIZ_DB.prepare("DELETE FROM quiz_propuestas WHERE id=?1 AND "+condicion).bind(propuesta[1]).run();
-      if(!result.meta.changes)return error("Solicitud protegida por un proyecto o registro económico, o ya eliminada.",409);
-      const limpieza=await Promise.allSettled(imagenes.map(a=>env.COTIZACIONES_R2.delete(a.clave)));
+      const ficha=JSON.parse(fila.ficha_json);
+      if(ficha.proteccion_borrado===1)return error("Solicitud protegida con candado. Desbloquéala antes de eliminar.",409);
+      const tablas=new Set((await db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all()).results.map(x=>x.name));
+      const tieneProyecto=tablas.has("proyectos_cliente");
+      const proyecto="SELECT id FROM proyectos_cliente WHERE propuesta_id=?1";
+      const guardia="EXISTS(SELECT 1 FROM quiz_propuestas WHERE id=?1 AND "+desbloqueada+")";
+      const claves=(ficha.imagenes||[]).map(a=>a.clave);
+      if(claves.some(k=>typeof k!=="string"||!k.startsWith("solicitudes/"+id+"/")))return error("Referencias de imágenes inválidas.",409);
+      if(tieneProyecto&&tablas.has("proyecto_archivos")){
+        const archivos=await db.prepare("SELECT clave_r2 FROM proyecto_archivos WHERE proyecto_id IN ("+proyecto+")").bind(id).all();
+        claves.push(...archivos.results.map(x=>x.clave_r2));
+      }
+      if(claves.length&&!env.COTIZACIONES_R2)return error("Almacenamiento de imágenes no disponible.",503);
+      const stmts=[];
+      const borrar=(tabla,filtro)=>{if(tablas.has(tabla))stmts.push(db.prepare("DELETE FROM "+tabla+" WHERE "+filtro+" AND "+guardia).bind(id));};
+      borrar("pagos_mensualidad","propuesta_id=?1");
+      borrar("suscripciones_cliente","propuesta_id=?1");
+      borrar("pagos_propuesta","propuesta_id=?1");
+      borrar("propuestas_economicas","propuesta_id=?1");
+      if(tieneProyecto){
+        for(const tabla of ["proyecto_cambios","proyecto_entregas","proyecto_archivos","proyecto_secciones"])borrar(tabla,"proyecto_id IN ("+proyecto+")");
+        borrar("proyectos_cliente","propuesta_id=?1");
+      }
+      stmts.push(db.prepare("DELETE FROM quiz_propuestas WHERE id=?1 AND "+desbloqueada).bind(id));
+      const resultados=await db.batch(stmts);
+      if(!resultados[resultados.length-1].meta.changes)return error("Solicitud protegida con candado o ya eliminada.",409);
+      const limpieza=await Promise.allSettled([...new Set(claves)].map(k=>env.COTIZACIONES_R2.delete(k)));
       const pendientes=limpieza.filter(x=>x.status==="rejected").length;
-      if(pendientes)console.error("Limpieza R2 pendiente para solicitud",propuesta[1],pendientes);
+      if(pendientes)console.error("Limpieza R2 pendiente para solicitud",id,pendientes);
       return json({ok:true,imagenes_pendientes:pendientes});
     }
     if(path==="/api/admin/diagnosticos" && request.method==="GET") {
