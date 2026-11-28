@@ -140,3 +140,35 @@ html:has(.whatsapp-flotante){scroll-padding-bottom:calc(84px + env(safe-area-ins
 .inicio-catalogo .comparativa-precios-lista dd{margin:5px 0 0;color:#16203a;font-size:1rem;line-height:1.5;overflow-wrap:break-word}
 .inicio-catalogo .comparativa-lectura .nota{color:#46536d;line-height:1.5}
 @media(max-width:700px){.inicio-catalogo .comparativa-precios-lista{grid-template-columns:minmax(0,1fr)}}
+
+/* Servicios físicos: precios legibles y guía de cotización compacta. */
+#impresion-resina .resina-acabados{padding:14px;border:1px solid #a9c2e8;border-radius:10px;background:#edf3ff;color:#16203a;line-height:1.55}
+#impresion-resina .resina-acabados strong{display:block;color:#174ab8;margin-bottom:4px}
+#impresion-resina .resina-paquete{background:#edf3ff;border-color:#c6d4ee;min-width:0;color:#16203a;padding:16px}
+#impresion-resina .resina-paquete h4,#impresion-resina .resina-precio strong{color:#174ab8}
+#impresion-resina .resina-unitario{color:#304a78;font-weight:650}
+#impresion-resina .resina-paquete-destacado{background:#dce8fa;border:2px solid #174ab8;padding:15px}
+#impresion-resina .resina-nota-volumen{color:#174ab8}
+#impresion-resina .resina-escalas{display:grid;gap:12px;padding:0;border:0;background:transparent}
+#impresion-resina .resina-escalas>div{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:8px 16px;padding:16px;margin:0;border:1px solid var(--borde);border-radius:12px;background:var(--tarjeta)}
+#impresion-resina .resina-escalas dt{font-size:1.1rem;color:var(--titulo)}
+#impresion-resina .resina-escalas .resina-desde{grid-column:1/-1;padding-top:8px;border-top:1px solid var(--borde);line-height:1.55}
+#impresion-resina .resina-ahorro{line-height:1.55}
+#impresion-resina .accion-cotizar,#piezas-a-medida .accion-cotizar{min-height:52px;font-weight:800}
+#piezas-a-medida .piezas-presentacion{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start;margin-bottom:20px}
+#piezas-a-medida .piezas-presentacion .servicio-ejemplo{max-width:100%;margin:0}
+#piezas-a-medida .piezas-usos{list-style:none;padding:0;margin:12px 0 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#piezas-a-medida .piezas-usos li{padding:10px;background:#edf3ff;border:1px solid #c6d4ee;border-radius:8px;color:#174ab8;font-weight:700;overflow-wrap:anywhere}
+#piezas-a-medida .pasos-cotizar{list-style:none;counter-reset:paso;display:grid;gap:12px;padding:0;margin:16px 0 20px}
+#piezas-a-medida .pasos-cotizar li{counter-increment:paso;display:grid;grid-template-columns:32px minmax(0,1fr);align-items:start;gap:12px;line-height:1.55}
+#piezas-a-medida .pasos-cotizar li::before{content:counter(paso);display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#dce8fa;color:#174ab8;font-weight:800}
+@media(max-width:700px){
+ #impresion-resina .resina-paquetes{grid-template-columns:minmax(0,1fr);gap:10px}
+ #impresion-resina .resina-paquete{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 10px}
+ #impresion-resina .resina-precio{margin:0;text-align:right;white-space:nowrap}
+ #impresion-resina .resina-precio strong{font-size:clamp(1.4rem,5.5vw,1.8rem)}
+ #impresion-resina .resina-unitario,#impresion-resina .resina-nota-volumen{grid-column:1/-1;margin:0}
+ #impresion-resina .resina-escalas>div{grid-template-columns:minmax(0,1fr);padding:14px}
+ #piezas-a-medida .piezas-presentacion{grid-template-columns:minmax(0,1fr)}
+ #impresion-resina .accion-cotizar,#piezas-a-medida .accion-cotizar{width:100%}
+}
