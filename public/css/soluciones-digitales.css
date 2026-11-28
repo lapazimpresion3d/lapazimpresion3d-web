@@ -248,5 +248,30 @@
 #paginas-web .demos-generales .accion{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:center}
 
 /* Identidad del taller, sin alterar la jerarquía visual de P3. */
-#paginas-web [data-negocio="auto-servicio-bahia"] .demo-logo{background:#25292f;outline:1px solid #ed8b36}
-#paginas-web [data-negocio="auto-servicio-bahia"] .demo-lema{font-size:.8rem;font-weight:600;color:var(--texto);line-height:1.35}
+#paginas-web [data-negocio="torque-automotriz"] .demo-logo{background:#25292f;outline:1px solid #ed8b36}
+#paginas-web [data-negocio="torque-automotriz"] .demo-lema{font-size:.8rem;font-weight:600;color:var(--texto);line-height:1.35}
+
+/* Explorador de 24 combinaciones: controles nativos de radio y tarjetas compactas. */
+#paginas-web #demo-controles[hidden]{display:none!important}
+#paginas-web .selector-intro{color:var(--texto);margin:0 0 18px}
+#paginas-web .demo-grupo{min-width:0;border:0;padding:0;margin:0 0 20px}
+#paginas-web .demo-grupo legend{font-weight:750;color:var(--texto);margin-bottom:12px;padding:0}
+#paginas-web .demo-negocios-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#paginas-web .demo-paquetes-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#paginas-web .demo-opcion{position:relative;display:flex;min-width:0;cursor:pointer}
+#paginas-web .demo-opcion input{position:absolute;top:8px;left:8px;width:18px;height:18px;margin:0;accent-color:#174ab8;z-index:1}
+#paginas-web .demo-opcion-contenido{display:flex;flex-direction:column;min-width:0;width:100%;overflow:hidden;border:2px solid #c6d4ee;border-radius:12px;background:#fff;color:#16203a;overflow-wrap:anywhere}
+#paginas-web .demo-opcion input:checked+.demo-opcion-contenido{border-color:#174ab8;background:#eaf1ff;box-shadow:inset 0 0 0 1px #174ab8}
+#paginas-web .demo-opcion input:focus-visible+.demo-opcion-contenido{outline:3px solid #174ab8;outline-offset:3px}
+#paginas-web .negocio-opcion img{display:block;width:100%;aspect-ratio:16/7;object-fit:cover}
+#paginas-web .demo-opcion-texto{display:grid;gap:3px;padding:9px}
+#paginas-web .demo-opcion small{display:block;color:#46536d;font-size:.82rem;line-height:1.35}
+#paginas-web .paquete-opcion .demo-opcion-contenido{padding:9px 10px 10px 34px;gap:5px}
+#paginas-web .demo-resumen{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:14px;align-items:center}
+#paginas-web .demo-resumen-foto{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px}
+#paginas-web .demo-resumen-info{min-width:0;overflow-wrap:anywhere}
+#paginas-web .demo-resumen-info p{margin:4px 0}
+#paginas-web #demo-resumen-plan,#paginas-web #demo-resumen-precio{font-weight:750;color:#174ab8}
+#paginas-web .demo-enlaces-extra{font-size:.9rem;line-height:1.7;overflow-wrap:anywhere}
+@media(max-width:650px){#paginas-web .demo-negocios-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#paginas-web .demo-resumen{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:370px){#paginas-web .demo-paquetes-grid{grid-template-columns:minmax(0,1fr)}#paginas-web .demo-opcion-texto{padding:7px}}

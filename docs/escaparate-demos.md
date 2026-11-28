@@ -43,3 +43,6 @@ El taller representativo P3 cambia de nombre a Torque Automotriz en las dos pág
 
 ## Enlaces comerciales de Torque
 Por indicación del usuario de que la identidad se actualizó en el proyecto independiente, se sustituyen los destinos HTML y el generador central por /torque-automotriz y /torque-automotriz/panel, preservando plan explícito e identificador interno. No se certifica publicación HTTP. No se toca el repo de demos ni se cambia el selector de paquetes.
+
+## Explorador comercial de 24 combinaciones
+Tarjetas de radio nativas, seis negocios y cuatro paquetes libres. Cambio de negocio selecciona su representante; cambio de paquete conserva negocio. Precios tomados de LP_ORIENTACION_WEB, resumen, imágenes locales y enlaces públicos en pestañas nuevas. Torque usa identificador público; el nombre antiguo queda únicamente en recursos gráficos. Comparador acepta negocio público y plan según código de demos cf19117b38f7cf8fac199c4d6d1c539f569ccff4. Se conservan las seis fichas. No se reproducen reglas operativas ni se modifica el repo de demos. Pruebas HTTP y navegador pendientes de comprobar. Script GET ampliado a 48 rutas y dos accesos generales.
