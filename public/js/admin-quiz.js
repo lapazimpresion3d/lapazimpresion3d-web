@@ -157,35 +157,61 @@ async function cargarProyectos(){
    select.value=p.estado;select.addEventListener("change",async()=>{select.disabled=true;try{await req(`/api/admin/proyectos/${encodeURIComponent(p.id)}`,{method:"PATCH",body:JSON.stringify({estado:select.value})});await cargarProyectos();}catch(e){estadoProyectos.textContent=e.message;select.value=p.estado;}finally{select.disabled=false;}});
    label.append(select);art.append(label);
    const acciones=elem("div","acciones");
-   const generar=elem("button","secundario","Generar enlace privado");
-   generar.type="button";
-   generar.disabled=["finalizado","cancelado"].includes(p.estado);
-   const revocar=elem("button","secundario","Revocar enlace");
-   revocar.type="button";
+   const acceso=elem("section","materiales-administracion");
+   const estadoAcceso=elem("p","metadatos"),detalleAcceso=elem("p","metadatos");
+   const generar=elem("button","secundario"),revocar=elem("button","secundario","Revocar enlace");
+   const prorrogar=elem("button","secundario","Prorrogar enlace"),dias=elem("select");
+   dias.setAttribute("aria-label","Días adicionales de acceso");
+   for(const n of [30,60,90]){const o=elem("option",null,n+" días adicionales");o.value=String(n);dias.append(o);}
+   dias.value="90";
+   generar.type=revocar.type=prorrogar.type="button";
+   let ocupado=false;
+   function pintarAcceso(){
+     const cerrado=["finalizado","cancelado"].includes(p.estado);
+     const vigente=!!p.tiene_acceso&&!p.acceso_revocado&&Date.parse(p.acceso_expira)>Date.now();
+     const nombre=p.estado==="cancelado"?"Bloqueado por cancelación":p.acceso_revocado?"Revocado":!p.tiene_acceso?"Sin generar":vigente?"Activo":"Vencido";
+     estadoAcceso.textContent="Acceso privado: "+nombre+(p.estado==="finalizado"&&vigente?" · solo consulta":"");
+     detalleAcceso.textContent=p.acceso_expira?"Vencimiento: "+new Date(p.acceso_expira).toLocaleString("es-MX"):"No hay fecha de vencimiento.";
+     generar.textContent=p.tiene_acceso&&!p.acceso_revocado?"Regenerar enlace (invalida el anterior)":"Generar enlace privado";
+     generar.disabled=ocupado||cerrado;revocar.disabled=ocupado||!p.tiene_acceso||!!p.acceso_revocado;
+     prorrogar.disabled=dias.disabled=ocupado||cerrado||!vigente;
+   }
+   const normales=elem("div","acciones");normales.append(dias,prorrogar);
+   const seguridad=elem("details"),resumen=elem("summary",null,"Administrar enlace: generar, sustituir o revocar");
+   const sensibles=elem("div","acciones");sensibles.append(generar,revocar);
+   seguridad.append(resumen,elem("p","metadatos","No sustituyas el enlace si el cliente ya lo tiene. Prorrogar conserva el mismo enlace. Revocar impide el acceso."),sensibles);
+   if(!p.tiene_acceso||p.acceso_revocado)seguridad.open=true;
+   acceso.append(elem("h4",null,"Acceso del cliente"),estadoAcceso,detalleAcceso,normales,seguridad);art.append(acceso);pintarAcceso();
+   const rutaAcceso="/api/admin/proyectos/"+encodeURIComponent(p.id)+"/acceso";
    generar.addEventListener("click",async()=>{
-     if(!confirm("¿Generar un nuevo enlace para "+p.folio+"? Cualquier enlace anterior dejará de funcionar."))return;
-     generar.disabled=true;
+     const sustituir=!!p.tiene_acceso&&!p.acceso_revocado;
+     if(!confirm(sustituir?"El enlace anterior dejará de funcionar. ¿Continuar?":"¿Generar enlace privado por 90 días?"))return;
+     if(sustituir&&prompt("Para invalidar el enlace anterior, escribe REGENERAR")!=="REGENERAR")return;
+     ocupado=true;pintarAcceso();
      try{
-       const resultado=await req("/api/admin/proyectos/"+encodeURIComponent(p.id)+"/acceso",{method:"POST",body:"{}"});
+       const resultado=await req(rutaAcceso,{method:"POST",body:JSON.stringify(sustituir?{confirmacion:"REGENERAR"}:{})});
+       p.tiene_acceso=1;p.acceso_revocado=0;p.acceso_expira=resultado.expira;
        const caja=elem("div","enlace-cliente");
-       caja.append(elem("p",null,"Enlace privado (válido hasta "+new Date(resultado.expira).toLocaleString("es-MX")+") · solo se mostrará esta vez:"));
+       caja.append(elem("p",null,"Copia y conserva este enlace privado. Solo se muestra al generarlo."));
        const url=elem("input");url.type="text";url.readOnly=true;url.value=resultado.url;url.setAttribute("aria-label","Enlace privado del cliente");
        const copiar=elem("button","secundario","Copiar enlace");copiar.type="button";
-       copiar.addEventListener("click",async()=>{
-         try{await navigator.clipboard.writeText(resultado.url);copiar.textContent="Copiado";}catch(e){url.focus();url.select();copiar.textContent="Seleccionado: usa Ctrl+C";}
-       });
-       caja.append(url,copiar);
-       art.querySelector(".enlace-cliente")?.remove();
-       art.append(caja);
-       estadoProyectos.textContent="Enlace generado. Compártelo únicamente con el cliente. No se envía automáticamente.";
-     }catch(e){estadoProyectos.textContent=e.message;}
-     finally{generar.disabled=false;}
+       copiar.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(resultado.url);copiar.textContent="Copiado";}catch(e){url.focus();url.select();copiar.textContent="Seleccionado: usa Ctrl+C";}});
+       caja.append(url,copiar);acceso.querySelector(".enlace-cliente")?.remove();acceso.append(caja);
+       estadoProyectos.textContent="Enlace generado. Compártelo únicamente con el cliente.";
+     }catch(e){estadoProyectos.textContent=e.message;}finally{ocupado=false;pintarAcceso();}
+   });
+   prorrogar.addEventListener("click",async()=>{
+     if(!confirm("¿Añadir "+dias.value+" días al vencimiento actual sin cambiar el enlace?"))return;
+     ocupado=true;pintarAcceso();
+     try{const d=await req(rutaAcceso,{method:"PATCH",body:JSON.stringify({dias:Number(dias.value)})});p.acceso_expira=d.expira;estadoProyectos.textContent="Acceso prorrogado. El mismo enlace sigue funcionando.";}
+     catch(e){estadoProyectos.textContent=e.message;}finally{ocupado=false;pintarAcceso();}
    });
    revocar.addEventListener("click",async()=>{
      if(!confirm("¿Revocar el acceso del cliente al proyecto "+p.folio+"?"))return;
-     revocar.disabled=true;
-     try{await req("/api/admin/proyectos/"+encodeURIComponent(p.id)+"/acceso",{method:"DELETE",body:"{}"});art.querySelector(".enlace-cliente")?.remove();estadoProyectos.textContent="Acceso revocado. El cliente ya no podrá utilizar su enlace.";await cargarProyectos();}
-     catch(e){estadoProyectos.textContent=e.message;}finally{revocar.disabled=false;}
+     if(prompt("Para impedir el acceso, escribe REVOCAR")!=="REVOCAR")return;
+     ocupado=true;pintarAcceso();
+     try{await req(rutaAcceso,{method:"DELETE",body:JSON.stringify({confirmacion:"REVOCAR"})});p.acceso_revocado=1;p.tiene_acceso=0;acceso.querySelector(".enlace-cliente")?.remove();estadoProyectos.textContent="Acceso revocado. El cliente ya no podrá utilizar su enlace.";}
+     catch(e){estadoProyectos.textContent=e.message;}finally{ocupado=false;pintarAcceso();}
    });
    const revisar=elem("button","secundario","Ver materiales recibidos");
    revisar.type="button";
@@ -223,7 +249,7 @@ async function cargarProyectos(){
        art.append(caja);
      }catch(e){estadoProyectos.textContent=e.message;}finally{revisar.disabled=false;}
    });
-   acciones.append(generar,revocar,revisar);art.append(acciones);globalThis.LP_ADMIN_ENTREGA?.agregar(art,p);listaProyectos.append(art);
+   acciones.append(revisar);art.append(acciones);globalThis.LP_ADMIN_ENTREGA?.agregar(art,p);listaProyectos.append(art);
   }
  }catch(e){estadoProyectos.textContent="Proyectos no disponibles: "+e.message+". Comprueba que la migración 0004 esté aplicada a D1.";}
 }
