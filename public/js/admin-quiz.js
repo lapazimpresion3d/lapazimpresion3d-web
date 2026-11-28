@@ -134,7 +134,7 @@ busqueda.addEventListener("input",()=>{
   const esReferencia=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(texto);
   if(esReferencia || (ultimaConsulta && !esReferencia)) { ultimaConsulta=esReferencia?texto:""; cargar(); }
   else filtrarBusqueda();
-});document.querySelector("#salir").addEventListener("click",async()=>{await req("/api/admin/salir",{method:"POST",body:"{}"}).catch(()=>{});panel.hidden=true;acceso.hidden=false;lista.replaceChildren();listaPropuestas.replaceChildren();listaProyectos.replaceChildren();propuestasVisibles=[];actualizarSeleccion();});
+});document.querySelector("#salir").addEventListener("click",async()=>{await req("/api/admin/salir",{method:"POST",body:"{}"}).catch(()=>{});panel.hidden=true;acceso.hidden=false;lista.replaceChildren();listaPropuestas.replaceChildren();listaProyectos.replaceChildren();resumenProyectos.replaceChildren();resultadosProyectos.textContent="";buscarProyectos.value="";filtroProyectos.value="";propuestasVisibles=[];actualizarSeleccion();});
 req("/api/admin/sesion").then(()=>{acceso.hidden=true;panel.hidden=false;abrirSeccion(location.hash.slice(1),false);return Promise.all([cargar(),cargarPropuestas(),cargarProyectos(),globalThis.LP_ADMIN_ALERTAS?.cargar()]);}).catch(()=>{});
 
 const listaProyectos=document.querySelector("#lista-proyectos"),estadoProyectos=document.querySelector("#estado-proyectos");
@@ -159,23 +159,38 @@ function controlRevisionMaterial(p,a,tipo){
  });
  return fila;
 }
+const buscarProyectos=document.querySelector("#buscar-proyectos"),filtroProyectos=document.querySelector("#filtro-proyectos"),resumenProyectos=document.querySelector("#resumen-proyectos"),resultadosProyectos=document.querySelector("#proyectos-resultados");
+const normalizarProyecto=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+function filtrarProyectos(){
+ const q=normalizarProyecto(buscarProyectos.value.trim()),estado=filtroProyectos.value,tarjetas=[...listaProyectos.querySelectorAll(".proyecto-ficha")];let visibles=0;
+ for(const art of tarjetas){const coincide=(!q||art.dataset.busqueda.includes(q))&&(!estado||(estado==="activos"?!["cancelado","finalizado"].includes(art.dataset.estado):art.dataset.estado===estado));art.hidden=!coincide;if(coincide)visibles++;}
+ resultadosProyectos.textContent=visibles+" de "+tarjetas.length+" proyectos visibles"+(tarjetas.length&&!visibles?" · Sin coincidencias":"");
+ for(const b of resumenProyectos.querySelectorAll("button"))b.setAttribute("aria-pressed",String(b.dataset.filtro===estado));
+}
+buscarProyectos.addEventListener("input",filtrarProyectos);filtroProyectos.addEventListener("change",filtrarProyectos);
+function pintarResumenProyectos(items){
+ resumenProyectos.replaceChildren();
+ for(const [f,t,n] of [["","Total",items.length],["activos","Activos",items.filter(p=>!["finalizado","cancelado"].includes(p.estado)).length],["en_revision","En revisión",items.filter(p=>p.estado==="en_revision").length],["finalizado","Finalizados",items.filter(p=>p.estado==="finalizado").length]]){
+  const b=elem("button","proyectos-metrica");b.type="button";b.dataset.filtro=f;b.append(elem("strong",null,String(n)),elem("span",null,t));b.addEventListener("click",()=>{filtroProyectos.value=f;filtrarProyectos();});resumenProyectos.append(b);
+ }
+}
 async function cargarProyectos(){
  estadoProyectos.textContent="Cargando proyectos…";
  try {
   const d=await req("/api/admin/proyectos");
   const abiertos=abiertosRegistros(listaProyectos);listaProyectos.replaceChildren();
   estadoProyectos.textContent=`${d.items.length} proyecto(s) registrado(s). Los enlaces privados se generan individualmente.`;
-  if(!d.items.length){listaProyectos.append(elem("p",null,"Todavía no hay proyectos aceptados."));return;}
+  pintarResumenProyectos(d.items);
+  if(!d.items.length){listaProyectos.append(elem("p",null,"Todavía no hay proyectos aceptados."));filtrarProyectos();return;}
   for(const p of d.items){
-   const art=elem("article","registro");
-   art.append(elem("h3",null,`${p.folio} · ${p.nombre}`),elem("p","metadatos",`Proyecto: ${p.proyecto||"Sin nombre"} · Actualizado: ${new Date(p.fecha_actualizacion).toLocaleString("es-MX")}`));
+   const art=elem("article","registro proyecto-ficha");art.dataset.estado=p.estado;art.dataset.busqueda=normalizarProyecto([p.folio,p.nombre,p.proyecto].join(" "));
+   const cabeceraProyecto=elem("div","proyecto-cabecera");const identidadProyecto=elem("div");identidadProyecto.append(elem("h3",null,p.nombre||"Cliente"),elem("p","metadatos",`Folio: ${p.folio} · Actualizado: ${new Date(p.fecha_actualizacion).toLocaleString("es-MX",{timeZone:"America/Mazatlan"})}`));cabeceraProyecto.append(identidadProyecto);art.append(cabeceraProyecto);
    const label=elem("label",null,"Estado del proyecto "),select=elem("select");
    select.setAttribute("aria-label",`Estado del proyecto ${p.folio}`);
    for(const [id,nombre] of Object.entries(estadosProyecto)){const option=elem("option",null,nombre);option.value=id;select.append(option);}
    select.value=p.estado;select.addEventListener("change",async()=>{select.disabled=true;try{await req(`/api/admin/proyectos/${encodeURIComponent(p.id)}`,{method:"PATCH",body:JSON.stringify({estado:select.value})});await cargarProyectos();}catch(e){estadoProyectos.textContent=e.message;select.value=p.estado;}finally{select.disabled=false;}});
-   label.append(select);art.append(label);
-   const acciones=elem("div","acciones");
-   const acceso=elem("section","materiales-administracion");
+   label.className="proyecto-estado-control";label.append(select);cabeceraProyecto.append(label);
+   const accesoDetalle=elem("details","proyecto-bloque acceso-proyecto"),accesoResumen=elem("summary",null,"Acceso privado del cliente");const acceso=elem("section","materiales-administracion proyecto-bloque-cuerpo");accesoDetalle.append(accesoResumen,acceso);
    const estadoAcceso=elem("p","metadatos"),detalleAcceso=elem("p","metadatos");
    const generar=elem("button","secundario"),revocar=elem("button","secundario","Revocar enlace");
    const prorrogar=elem("button","secundario","Prorrogar enlace"),dias=elem("select");
@@ -188,6 +203,7 @@ async function cargarProyectos(){
      const cerrado=["finalizado","cancelado"].includes(p.estado);
      const vigente=!!p.tiene_acceso&&!p.acceso_revocado&&Date.parse(p.acceso_expira)>Date.now();
      const nombre=p.estado==="cancelado"?"Bloqueado por cancelación":p.acceso_revocado?"Revocado":!p.tiene_acceso?"Sin generar":vigente?"Activo":"Vencido";
+     accesoResumen.textContent="Acceso privado del cliente · "+nombre;
      estadoAcceso.textContent="Acceso privado: "+nombre+(p.estado==="finalizado"&&vigente?" · solo consulta":"");
      detalleAcceso.textContent=p.acceso_expira?"Vencimiento: "+new Date(p.acceso_expira).toLocaleString("es-MX"):"No hay fecha de vencimiento.";
      generar.textContent=p.tiene_acceso&&!p.acceso_revocado?"Regenerar enlace (invalida el anterior)":"Generar enlace privado";
@@ -199,7 +215,7 @@ async function cargarProyectos(){
    const sensibles=elem("div","acciones");sensibles.append(generar,revocar);
    seguridad.append(resumen,elem("p","metadatos","No sustituyas el enlace si el cliente ya lo tiene. Prorrogar conserva el mismo enlace. Revocar impide el acceso."),sensibles);
    if(!p.tiene_acceso||p.acceso_revocado)seguridad.open=true;
-   acceso.append(elem("h4",null,"Acceso del cliente"),estadoAcceso,detalleAcceso,normales,seguridad);art.append(acceso);pintarAcceso();
+   acceso.append(estadoAcceso,detalleAcceso,normales,seguridad);pintarAcceso();
    const rutaAcceso="/api/admin/proyectos/"+encodeURIComponent(p.id)+"/acceso";
    generar.addEventListener("click",async()=>{
      const sustituir=!!p.tiene_acceso&&!p.acceso_revocado;
@@ -231,7 +247,7 @@ async function cargarProyectos(){
      try{await req(rutaAcceso,{method:"DELETE",body:JSON.stringify({confirmacion:"REVOCAR"})});p.acceso_revocado=1;p.tiene_acceso=0;acceso.querySelector(".enlace-cliente")?.remove();estadoProyectos.textContent="Acceso revocado. El cliente ya no podrá utilizar su enlace.";}
      catch(e){estadoProyectos.textContent=e.message;}finally{ocupado=false;pintarAcceso();}
    });
-   const materiales=elem("details","materiales-desplegables"), resumenMateriales=elem("summary",null,"Materiales del proyecto");
+   const materiales=elem("details","materiales-desplegables proyecto-bloque"), resumenMateriales=elem("summary",null,"Materiales del proyecto");
    const caja=elem("section","materiales-administracion materiales-recibidos");
    materiales.append(resumenMateriales,caja);
    let materialesCargados=false,materialesCargando=false;
@@ -297,8 +313,9 @@ async function cargarProyectos(){
    }
    revisar.addEventListener("click",()=>{if(!materialesCargados||confirm("¿Actualizar materiales? Se descartarán las indicaciones que no hayas guardado."))cargarMateriales();});
    materiales.addEventListener("toggle",()=>{if(materiales.open&&!materialesCargados)cargarMateriales();});
-   art.append(materiales);globalThis.LP_ADMIN_SEGUIMIENTO?.agregar(art,p);globalThis.LP_ADMIN_ENTREGA?.agregar(art,p);plegarRegistro(art,p.id,p.proyecto||p.nombre,p.folio+" · "+p.nombre,estadosProyecto[p.estado]||p.estado,abiertos.has(p.id));listaProyectos.append(art);
+   globalThis.LP_ADMIN_SEGUIMIENTO?.agregar(art,p);art.append(materiales);globalThis.LP_ADMIN_ENTREGA?.agregar(art,p);art.append(accesoDetalle);plegarRegistro(art,p.id,p.proyecto||p.nombre,p.folio+" · "+p.nombre,estadosProyecto[p.estado]||p.estado,abiertos.has(p.id));listaProyectos.append(art);
   }
+  filtrarProyectos();
  }catch(e){estadoProyectos.textContent="Proyectos no disponibles: "+e.message+". Comprueba que la migración 0004 esté aplicada a D1.";}
 }
 document.querySelector("#actualizar-proyectos").addEventListener("click",cargarProyectos);

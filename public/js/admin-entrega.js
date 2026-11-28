@@ -7,13 +7,13 @@ async function api(path,method="GET",body){const res=await fetch(path,{method,cr
 const estados={pendiente:"Pendiente de aprobación",aprobado:"Aprobada",requiere_cambios:"Requiere cambios"};
 function enlace(url,t){const a=el("a",t,"boton-enlace");a.href=url;a.target="_blank";a.rel="noopener noreferrer";return a;}
 function agregar(art,p){
- const abrir=btn("Entrega y publicación"),caja=el("section",undefined,"economica-panel");caja.hidden=true;
+ const detalle=el("details",undefined,"proyecto-bloque entrega-admin"),abrir=el("summary","Revisión, entrega y publicación"),caja=el("section",undefined,"economica-panel proyecto-bloque-cuerpo");detalle.append(abrir,caja);
  const ruta="/api/admin/proyectos/"+encodeURIComponent(p.id)+"/entrega";
- let ocupado=false;
- async function cargar(){if(ocupado)return;ocupado=true;abrir.disabled=true;caja.hidden=false;caja.replaceChildren(el("p","Cargando…"));try{pintar(await api(ruta));}catch(e){caja.replaceChildren(el("p","No se pudo consultar la entrega: "+e.message+". Comprueba la migración 0007."));}finally{ocupado=false;abrir.disabled=false;}}
+ let ocupado=false,cargado=false;
+ async function cargar(){if(ocupado)return;ocupado=true;caja.replaceChildren(el("p","Cargando…"));try{pintar(await api(ruta));cargado=true;}catch(e){const b=btn("Reintentar");b.addEventListener("click",cargar);caja.replaceChildren(el("p","No se pudo consultar la entrega: "+e.message+". Comprueba la migración 0007."),b);}finally{ocupado=false;}}
  function pintar(d){
   const q=d.entrega,cerrado=["finalizado","cancelado"].includes(p.estado);
-  caja.replaceChildren(el("h3","Entrega y publicación · "+p.folio));
+  const actualizar=btn("Actualizar revisión y entrega");actualizar.addEventListener("click",()=>{if(confirm("¿Actualizar? Se descartarán los cambios no guardados."))cargar();});caja.replaceChildren(el("h3","Entrega y publicación · "+p.folio),actualizar);
   const msg=el("p","","metadatos");msg.setAttribute("role","status");caja.append(msg);
   async function guardar(b,path,metodo,payload){b.disabled=true;msg.textContent="Guardando…";try{await api(path,metodo,payload);await cargar();art.dispatchEvent(new Event("lp:entrega-actualizada"));}catch(e){msg.textContent=e.message;b.disabled=false;}}
   if(!q?.fecha_entrega&&!cerrado){
@@ -54,7 +54,7 @@ function agregar(art,p){
    if(!d.cambios.length)caja.append(el("p","No hay modificaciones registradas."));
   }
  }
- abrir.addEventListener("click",()=>{if(!caja.hidden){caja.hidden=true;return;}cargar();});art.addEventListener("lp:abrir-entrega",()=>{if(caja.hidden)cargar();abrir.scrollIntoView({block:"nearest"});});art.append(abrir,caja);
+ detalle.addEventListener("toggle",()=>{if(detalle.open&&!cargado)cargar();});art.addEventListener("lp:abrir-entrega",()=>{detalle.open=true;if(!cargado)cargar();abrir.scrollIntoView({block:"nearest"});abrir.focus({preventScroll:true});});art.append(detalle);
 }
 globalThis.LP_ADMIN_ENTREGA=Object.freeze({agregar});
 })();
