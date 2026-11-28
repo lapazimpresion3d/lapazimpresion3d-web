@@ -1,3 +1,4 @@
+import {resumenPortal} from "./portal-servicio.mjs";
 import {proyectarInforme} from "./informes-mantenimiento.mjs";
 import {proyectarNovedad} from "./novedades.mjs";
 import {WorkerEntrypoint} from "cloudflare:workers";
@@ -197,6 +198,7 @@ export async function listarInformesPrivados(env,empresa){
  return {ok:true,version:1,informes:r.results.slice(0,100).map(proyectarInforme),limitado:r.results.length>100};
 }
 export class IntegracionComercial extends WorkerEntrypoint {
+ async consultarPortal(empresa){try{return await resumenPortal(this.env,empresa,{contexto:contextoSoporte,vigente:sigueVinculado,suscripcion:consultarSuscripcionPrivada,soporte:listarSoportePrivado,novedades:listarNovedadesPrivadas,informes:listarInformesPrivados});}catch{return {ok:false,error:"no_disponible"};}}
  async listarInformes(empresa){try{return await listarInformesPrivados(this.env,empresa);}catch{return {ok:false,error:"no_disponible"};}}
  async listarNovedades(empresa){try{return await listarNovedadesPrivadas(this.env,empresa);}catch{return {ok:false,error:"no_disponible"};}}
  async decidirSolucion(empresa,ticket,datos){try{return await decidirSolucionPrivada(this.env,empresa,ticket,datos);}catch{return {ok:false,error:'no_disponible'};}}
