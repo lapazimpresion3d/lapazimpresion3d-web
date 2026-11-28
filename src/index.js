@@ -286,6 +286,23 @@ const ESTADOS_REVISION_MATERIAL = new Set(["recibido","requiere_correccion","apr
 function revisionMaterialValida(data,esTexto) {
   return !!data && ESTADOS_REVISION_MATERIAL.has(data.estado) && (!esTexto || (typeof data.version==="string" && data.version.length<=35 && Number.isFinite(Date.parse(data.version))));
 }
+// Formato versionado dentro de la columna TEXT existente; conserva las notas anteriores.
+const PREFIJO_INDICACIONES="LP_INDICACIONES_V1:";
+const COLORES_INDICACIONES=new Set(["rojo","amarillo","verde","azul"]);
+function indicacionesValidas(items){
+ return Array.isArray(items)&&items.length<=10&&items.every(x=>x&&typeof x==="object"&&COLORES_INDICACIONES.has(x.color)&&typeof x.texto==="string"&&x.texto.trim().length>0&&x.texto.length<=2000)&&items.reduce((n,x)=>n+x.texto.length,0)<=10000;
+}
+function leerIndicaciones(valor){
+ if(typeof valor!=="string"||!valor.trim())return [];
+ if(valor.startsWith(PREFIJO_INDICACIONES)){
+  try{const items=JSON.parse(valor.slice(PREFIJO_INDICACIONES.length));if(indicacionesValidas(items))return items;}catch{}
+ }
+ return [{color:"rojo",texto:valor}];
+}
+function datosIndicaciones(valor){
+ const indicaciones=leerIndicaciones(valor);
+ return {indicaciones,instrucciones:indicaciones.map(x=>x.texto).join("\n\n")};
+}
 async function proyectoDeCliente(request,env,tokenExplicito) {
   const cookie=(request.headers.get("Cookie")||"").split(";").map(x=>x.trim()).find(x=>x.startsWith("lp3d_cliente="));
   const token=tokenExplicito||cookie?.slice("lp3d_cliente=".length);
@@ -642,7 +659,7 @@ async function api(request,env,ctx) {
       const cotizacion=ficha.tipo_documento==="solicitud_servicio"
         ?{campos:ficha.campos&&typeof ficha.campos==="object"?ficha.campos:{},fecha_deseada:ficha.fecha_deseada||"",detalles:ficha.detalles||"",contexto:ficha.contexto||"",fecha_prioritaria:ficha.fecha_prioritaria||""}
         :null;
-      return json({proyecto:{folio:p.folio,nombre:p.nombre,proyecto:p.proyecto,estado:p.estado,categoria,instrucciones:p.instrucciones||""},cotizacion,secciones:secciones.results,archivos:archivos.results});
+      return json({proyecto:{folio:p.folio,nombre:p.nombre,proyecto:p.proyecto,estado:p.estado,categoria,...datosIndicaciones(p.instrucciones)},cotizacion,secciones:secciones.results,archivos:archivos.results});
     }
     if(path==="/api/cliente/entrega"&&request.method==="GET"){
       const entrega=await env.QUIZ_DB.prepare("SELECT modalidad,revision,vista_previa,notas_revision,version,decision,comentario,fecha_decision,tipo_dominio,url_final,fecha_entrega,fecha_publicacion,garantia_hasta FROM proyecto_entregas WHERE proyecto_id=?1").bind(p.id).first();
@@ -784,7 +801,7 @@ async function api(request,env,ctx) {
       if(!p)return error("Proyecto no encontrado",404);
       const sec=await env.QUIZ_DB.prepare("SELECT clave,contenido,estado,fecha_actualizacion FROM proyecto_secciones WHERE proyecto_id=?1").bind(p.id).all();
       const archivos=await env.QUIZ_DB.prepare("SELECT id,nombre_original,tipo_mime,tamano_bytes,fecha_subida,estado FROM proyecto_archivos WHERE proyecto_id=?1 ORDER BY fecha_subida DESC").bind(p.id).all();
-      return json({folio:p.folio,instrucciones:p.instrucciones||"",secciones:sec.results,archivos:archivos.results});
+      return json({folio:p.folio,...datosIndicaciones(p.instrucciones),secciones:sec.results,archivos:archivos.results});
     }
     // Revisión de entregas: sesión administrativa, origen y ámbito del proyecto.
     const revisionTexto=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/materiales\/secciones\/(datos_negocio|servicios_productos|horarios_contacto|indicaciones)$/i);
@@ -803,10 +820,12 @@ async function api(request,env,ctx) {
     }
     if(materialesAdmin && request.method==="PATCH"){
       if(!sameOrigin(request))return error("Origen no autorizado",403);
-      const data=await leerJson(request,18000);
-      if(typeof data?.instrucciones!=="string"||data.instrucciones.length>2000)return error("Las indicaciones deben tener máximo 2,000 caracteres",400);
-      const result=await env.QUIZ_DB.prepare("UPDATE proyectos_cliente SET instrucciones=?1,fecha_actualizacion=?2 WHERE id=?3 AND estado NOT IN ('finalizado','cancelado')").bind(data.instrucciones.trim(),new Date().toISOString(),materialesAdmin[1]).run();
-      return result.meta.changes?json({ok:true,instrucciones:data.instrucciones.trim()}):error("Proyecto no encontrado o cerrado",409);
+      const data=await leerJson(request,65000);
+      if(!indicacionesValidas(data?.indicaciones))return error("Usa hasta 10 indicaciones, 2,000 caracteres por mensaje y 10,000 en total. Actualiza el panel si usas una versión anterior.",400);
+      const items=data.indicaciones.map(x=>({color:x.color,texto:x.texto.trim()}));
+      const valor=items.length?PREFIJO_INDICACIONES+JSON.stringify(items):"";
+      const result=await env.QUIZ_DB.prepare("UPDATE proyectos_cliente SET instrucciones=?1,fecha_actualizacion=?2 WHERE id=?3 AND estado NOT IN ('finalizado','cancelado')").bind(valor,new Date().toISOString(),materialesAdmin[1]).run();
+      return result.meta.changes?json({ok:true,...datosIndicaciones(valor)}):error("Proyecto no encontrado o cerrado",409);
     }
     const imagenAdmin=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/archivos\/([0-9a-f-]{36})$/i);
     if(imagenAdmin && request.method==="GET"){
