@@ -25,8 +25,8 @@ function pintar(){
   const art=e("article",undefined,"registro alerta-registro");art.dataset.prioridad=x.prioridad;
   art.append(e("h3",x.titulo+(x.servicio?" · "+x.servicio:"")),e("p",x.folio+" · "+x.nombre+(x.proyecto?" · "+x.proyecto:"")),e("p",(x.prioridad==="alta"?"Prioritaria · ":"")+x.fecha,"metadatos"));
   const acciones=e("div",undefined,"acciones"),ir=e("button","Ver solicitud","secundario");ir.type="button";
-  ir.addEventListener("click",()=>{$("filtro-propuestas").value="";$("buscar-propuestas").value=x.folio;$("actualizar-propuestas").click();$("titulo-solicitudes").scrollIntoView({block:"start"});});acciones.append(ir);
-  if(x.seccion!=="solicitudes"){const link=e("a",x.seccion==="proyectos"?"Ir a proyectos":"Ir a mensualidades","boton-enlace");link.href=x.seccion==="proyectos"?"#titulo-proyectos":"#titulo-mensualidades";acciones.append(link);}
+  ir.addEventListener("click",()=>{$("filtro-propuestas").value="";$("buscar-propuestas").value=x.folio;$("actualizar-propuestas").click();globalThis.LP_ADMIN_NAVEGACION?.abrirSeccion("titulo-solicitudes");});acciones.append(ir);
+  if(x.seccion!=="solicitudes"){const link=e("a",x.seccion==="proyectos"?"Ir a proyectos":"Ir a mensualidades","boton-enlace");link.href=x.seccion==="proyectos"?"#titulo-proyectos":"#titulo-mensualidades";link.addEventListener("click",e=>{e.preventDefault();globalThis.LP_ADMIN_NAVEGACION?.abrirSeccion(link.hash.slice(1));});acciones.append(link);}
   const tel=String(x.telefono||"").replace(/\D/g,"");if(Object.hasOwn(mensajes,x.tipo)&&/^\d{10}$/.test(tel)){
    const wa=e("a","Preparar mensaje por WhatsApp","boton-enlace");wa.href="https://wa.me/52"+tel+"?text="+encodeURIComponent("Hola "+x.nombre+", te escribimos de Lapazimpresion3d sobre "+x.folio+". "+mensajes[x.tipo]);wa.target="_blank";wa.rel="noopener noreferrer";acciones.append(wa);
   }
