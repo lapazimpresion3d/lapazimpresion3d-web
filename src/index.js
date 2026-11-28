@@ -1,3 +1,4 @@
+import {respaldosHabilitados,ejecutarRespaldos} from "./respaldos-programados.mjs";
 import {sitioPermitido,ejecutarMonitoreo} from "./monitoreo-programado.mjs";
 import {guardarEvidencia,tablaEvidencias,uuidEvidencia,proyectarEvidencia,valoresEvidencia} from "./evidencias-soporte.mjs";
 // Lapazimpresion3d: sitio estático + recepción de diagnósticos + panel privado.
@@ -1347,6 +1348,16 @@ async function api(request,env,ctx) {
       }
       return error("Método no permitido",405);
     }
+    const ejecuciones=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/ejecuciones-respaldos$/i);
+    if(ejecuciones&&request.method==="GET"){
+      const pid=ejecuciones[1],db=env.QUIZ_DB;
+      if(!ID_UUID.test(pid))return error("Identificador inválido",400);
+      const e=await db.prepare("SELECT propuesta_id FROM propuestas_economicas WHERE propuesta_id=?1 AND fecha_aceptacion IS NOT NULL AND mensualidad>0 AND paquete<>'solo_fisico'").bind(pid).first();
+      if(!e)return error("Servicio no encontrado",404);
+      if(!await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='servicio_ejecuciones_respaldos'").first())return error("Ejecuciones de respaldos pendientes (0022)",503);
+      const r=await db.prepare("SELECT id,alcance,fecha_programada,estado,intentos,fecha_creacion,fecha_actualizacion,referencia,observaciones FROM servicio_ejecuciones_respaldos WHERE propuesta_id=?1 ORDER BY fecha_creacion DESC,id DESC LIMIT 101").bind(pid).all();
+      return json({ejecutor_habilitado:respaldosHabilitados(env),items:r.results.slice(0,100),limitado:r.results.length>100});
+    }
     const politica=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/politicas-respaldos$/i);
     if(politica){
       const pid=politica[1],db=env.QUIZ_DB,hoy=hoyMensualidad(),ahora=new Date().toISOString();
@@ -1357,7 +1368,7 @@ async function api(request,env,ctx) {
       if(tablas.n!==2)return error("Políticas de respaldos pendientes (0017 y 0020)",503);
       if(request.method==="GET"){
         const rows=await db.prepare("SELECT p.*,(SELECT MAX(r.fecha_respaldo) FROM servicio_respaldos r WHERE r.propuesta_id=p.propuesta_id AND r.alcance=p.alcance AND r.resultado='correcto' AND r.fecha_respaldo>=p.inicio AND r.fecha_respaldo<=?2) AS ultimo_correcto,(SELECT r.resultado FROM servicio_respaldos r WHERE r.propuesta_id=p.propuesta_id AND r.alcance=p.alcance AND r.fecha_respaldo>=p.inicio AND r.fecha_respaldo<=?2 ORDER BY r.fecha_respaldo DESC,r.fecha_registro DESC,r.id DESC LIMIT 1) AS ultimo_resultado FROM servicio_politicas_respaldos p WHERE p.propuesta_id=?1 ORDER BY p.alcance").bind(pid,hoy).all();
-        return json({hoy,items:rows.results.map(p=>({...p,...estadoPoliticaRespaldo(p,hoy)})),ejecucion_automatica:false});
+        return json({hoy,items:rows.results.map(p=>({...p,...estadoPoliticaRespaldo(p,hoy)})),ejecucion_automatica:respaldosHabilitados(env)});
       }
       if(request.method==="PUT"){
         const d=await leerJson(request,3000);
@@ -1664,6 +1675,7 @@ async function api(request,env,ctx) {
       if(tablas.has("servicio_respaldos"))borrar("servicio_pruebas_restauracion","respaldo_id IN (SELECT id FROM servicio_respaldos WHERE propuesta_id=?1)");
       borrar("servicio_respaldos","propuesta_id=?1");
       borrar("servicio_politicas_respaldos","propuesta_id=?1");
+      borrar("servicio_ejecuciones_respaldos","propuesta_id=?1");
       borrar("servicio_actualizaciones","propuesta_id=?1");
       borrar("servicio_monitoreo","propuesta_id=?1");
       borrar("servicio_monitoreo_programado","propuesta_id=?1");
@@ -1712,7 +1724,7 @@ async function api(request,env,ctx) {
   }
   return error("Ruta no encontrada",404);
 }
-export default { async scheduled(controller,env,ctx) { try{await ejecutarMonitoreo(env);}catch(e){console.error("Monitoreo programado no disponible",e?.name||"Error");} }, async fetch(request,env,ctx) {
+export default { async scheduled(controller,env,ctx) { await Promise.allSettled([ejecutarMonitoreo(env).catch(e=>console.error("Monitoreo programado no disponible",e?.name||"Error")),ejecutarRespaldos(env).catch(e=>console.error("Respaldos programados no disponibles",e?.name||"Error"))]); }, async fetch(request,env,ctx) {
   const path=new URL(request.url).pathname;
   try {
     if(path.startsWith("/api/")) {
