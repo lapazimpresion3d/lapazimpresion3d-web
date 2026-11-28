@@ -1,0 +1,37 @@
+{
+  "name": "lapazimpresion3d-web-pruebas",
+  "compatibility_date": "2026-11-03",
+  "main": "../src/index.js",
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    "directory": "../public",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/*"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "QUIZ_DB",
+      "database_name": "lapazimpresion3d-quiz-pruebas",
+      "database_id": "REEMPLAZAR_UUID_D1_PRUEBAS",
+      "migrations_dir": "../migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "COTIZACIONES_R2",
+      "bucket_name": "lapazimpresion3d-cotizaciones-pruebas"
+    }
+  ],
+  "vars": {
+    "ADMIN_TURNSTILE": "true",
+    "INTEGRACION_COMERCIAL_HABILITADA": "no",
+    "MONITOREO_AUTOMATICO_HABILITADO": "no",
+    "RESPALDOS_AUTOMATICOS_HABILITADOS": "no",
+    "RECONCILIACION_RESPALDOS_HABILITADA": "no",
+    "MONITOREO_SITIOS_AUTORIZADOS": "[]",
+    "RESPALDOS_NEGOCIOS_AUTORIZADOS": "[]"
+  }
+}
