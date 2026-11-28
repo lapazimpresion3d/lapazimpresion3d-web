@@ -1227,6 +1227,30 @@ async function api(request,env,ctx) {
       const r=await db.prepare(sql+"SELECT * FROM pendientes WHERE "+filtros[filtro]+" ORDER BY CASE prioridad WHEN 'critica' THEN 0 WHEN 'alta' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,CASE WHEN ultimo_autor='cliente' THEN 0 ELSE 1 END,fecha_actualizacion ASC,ticket_id LIMIT 101").all();
       return json({resumen,items:r.results.slice(0,100),limitado:r.results.length>100,mensajes_disponibles:mensajes,origen_disponible:cliente,consultado:new Date().toISOString()});
     }
+    const actualizacion=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/actualizaciones$/i);
+    if(actualizacion){
+      const pid=actualizacion[1],db=env.QUIZ_DB,hoy=hoyMensualidad(),ahora=new Date().toISOString();
+      if(!ID_UUID.test(pid))return error("Identificador inválido",400);
+      const e=await db.prepare("SELECT propuesta_id FROM propuestas_economicas WHERE propuesta_id=?1 AND fecha_aceptacion IS NOT NULL AND mensualidad>0 AND paquete<>'solo_fisico'").bind(pid).first();
+      if(!e)return error("Servicio contratado no encontrado",404);
+      if(!await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='servicio_actualizaciones'").first())return error("Historial de actualizaciones pendiente (0018)",503);
+      if(request.method==="GET"){
+        const resumen=await db.prepare("SELECT COUNT(*) AS total,COALESCE(SUM(resultado='correcto'),0) AS correctas,COALESCE(SUM(resultado<>'correcto'),0) AS incidencias,MAX(CASE WHEN categoria='seguridad' AND resultado='correcto' THEN fecha_aplicacion END) AS ultima_seguridad FROM servicio_actualizaciones WHERE propuesta_id=?1").bind(pid).first();
+        const ultima=await db.prepare("SELECT version_nueva,fecha_aplicacion FROM servicio_actualizaciones WHERE propuesta_id=?1 AND resultado='correcto' ORDER BY fecha_aplicacion DESC,fecha_registro DESC,id DESC LIMIT 1").bind(pid).first();
+        const r=await db.prepare("SELECT * FROM servicio_actualizaciones WHERE propuesta_id=?1 ORDER BY fecha_aplicacion DESC,fecha_registro DESC,id DESC LIMIT 101").bind(pid).all();
+        return json({hoy,resumen,ultima,items:r.results.slice(0,100),limitado:r.results.length>100});
+      }
+      if(request.method==="POST"){
+        const d=await leerJson(request,18000);
+        if(!d||typeof d.id!=="string"||!ID_UUID.test(d.id)||!fechaMensualidad(d.fecha_aplicacion)||d.fecha_aplicacion>hoy||!textoEntrega(d.version_anterior,0,80)||!textoEntrega(d.version_nueva,1,80)||!["seguridad","correccion","mejora","funcionalidad","compatibilidad","reversion"].includes(d.categoria)||!textoEntrega(d.titulo,3,120)||!textoEntrega(d.descripcion,3,2000)||!["correcto","parcial","fallido"].includes(d.resultado)||!["incluido","adicional","sin_cargo"].includes(d.alcance)||!textoEntrega(d.autorizacion,0,500)||!textoEntrega(d.observaciones,0,2000)||!textoEntrega(d.resumen_cliente,0,2000)||(d.alcance==="adicional"&&!textoEntrega(d.autorizacion,3,500))||(d.resultado!=="correcto"&&!textoEntrega(d.observaciones,3,2000)))return error("Revisa los datos, resultado y autorización de la actualización",400);
+        const vals=[d.fecha_aplicacion,d.version_anterior.trim(),d.version_nueva.trim(),d.categoria,d.titulo.trim(),d.descripcion.trim(),d.resultado,d.alcance,d.alcance==="adicional"?d.autorizacion.trim():"",d.observaciones.trim(),d.resumen_cliente.trim()];
+        const r=await db.prepare("INSERT INTO servicio_actualizaciones(id,propuesta_id,fecha_aplicacion,version_anterior,version_nueva,categoria,titulo,descripcion,resultado,alcance,autorizacion,observaciones,resumen_cliente,fecha_registro) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14) ON CONFLICT(id) DO NOTHING").bind(d.id,pid,...vals,ahora).run();
+        if(r.meta.changes)return json({ok:true},201);
+        const p=await db.prepare("SELECT * FROM servicio_actualizaciones WHERE id=?1 AND propuesta_id=?2").bind(d.id,pid).first();
+        return p&&[p.fecha_aplicacion,p.version_anterior,p.version_nueva,p.categoria,p.titulo,p.descripcion,p.resultado,p.alcance,p.autorizacion,p.observaciones,p.resumen_cliente].every((v,i)=>v===vals[i])?json({ok:true,repetido:true}):error("Identificador en conflicto",409);
+      }
+      return error("Método no permitido",405);
+    }
     const respaldo=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/respaldos(?:\/([0-9a-f-]{36})\/pruebas)?$/i);
     if(respaldo){
       const [,pid,rid]=respaldo,db=env.QUIZ_DB,hoy=hoyMensualidad(),ahora=new Date().toISOString();
@@ -1523,6 +1547,7 @@ async function api(request,env,ctx) {
       borrar("servicio_soporte","propuesta_id=?1");
       if(tablas.has("servicio_respaldos"))borrar("servicio_pruebas_restauracion","respaldo_id IN (SELECT id FROM servicio_respaldos WHERE propuesta_id=?1)");
       borrar("servicio_respaldos","propuesta_id=?1");
+      borrar("servicio_actualizaciones","propuesta_id=?1");
       borrar("servicio_vinculos","propuesta_id=?1");
       borrar("pagos_mensualidad","propuesta_id=?1");
       borrar("suscripciones_cliente","propuesta_id=?1");

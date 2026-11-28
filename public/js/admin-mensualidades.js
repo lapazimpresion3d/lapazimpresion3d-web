@@ -45,7 +45,7 @@ function pintar(){
   art.append(info);
   const b=boton("Gestionar renovación"),caja=el("section",undefined,"economica-panel");caja.hidden=true;
   b.addEventListener("click",()=>{if(!caja.hidden){caja.hidden=true;return;}detalle(x,caja,b);});
-  art.append(b,caja);globalThis.LP_VINCULOS?.agregar(art,x);globalThis.LP_SOPORTE?.agregar(art,x);globalThis.LP_RESPALDOS?.agregar(art,x);lista.append(art);
+  art.append(b,caja);globalThis.LP_VINCULOS?.agregar(art,x);globalThis.LP_SOPORTE?.agregar(art,x);globalThis.LP_RESPALDOS?.agregar(art,x);globalThis.LP_ACTUALIZACIONES?.agregar(art,x);lista.append(art);
  }
  if(!visibles.length)lista.append(el("p","No hay servicios con este filtro."));
 }
