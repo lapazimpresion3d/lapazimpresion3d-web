@@ -2,7 +2,7 @@
 (()=>{
 'use strict';
 const sitekey='0x4AAAAAAGWpaj6C2ok-6hpD';
-const actions=new Set(['cotizacion_web','cotizacion_impresion','cotizacion_quiz']);
+const actions=new Set(['cotizacion_web','cotizacion_impresion','cotizacion_quiz','admin_login']);
 let loading;
 function load(){
  if(globalThis.turnstile?.render)return Promise.resolve(globalThis.turnstile);
