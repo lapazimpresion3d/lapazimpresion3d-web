@@ -8,11 +8,12 @@
   <link rel="icon" href="favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="css/cabecera-fotografica.css">
   <link rel="stylesheet" href="css/inicio.css?v=20261127-3">
-  <link rel="stylesheet" href="css/cotizacion-web.css?v=2">
+  <link rel="stylesheet" href="css/cotizacion-web.css?v=20261128-catalogo2">
   <link rel="stylesheet" href="css/soluciones-digitales.css?v=18">
-  <script src="js/orientacion-web.js?v=4" defer></script>
+  <script src="js/orientacion-web.js?v=5" defer></script>
+  <script src="js/demos-config.js?v=7" defer></script>
   <script src="js/turnstile.js?v=1" defer></script>
-  <script src="js/cotizacion-web.js?v=20261128-giro1" defer></script>
+  <script src="js/cotizacion-web.js?v=20261128-catalogo2" defer></script>
 <link rel="stylesheet" href="css/catalogo-colapsable.css?v=16">
 <link rel="canonical" href="https://lapazimpresion3d.com/cotizacion-web.html">
 <link rel="stylesheet" href="css/analytics-publico.css?v=1">
@@ -66,83 +67,100 @@
         </div>
       <fieldset id="funciones-web" hidden>
         <legend id="leyenda-funciones-web">Características y funciones del proyecto</legend>
-        <p id="orientacion-paquete-web" class="ayuda-cotizacion" hidden>Selecciona las funciones que necesita tu negocio. Al marcar o desmarcar opciones se ajusta el paquete al que cubre tus necesidades, sin marcar otras funciones automáticamente. Si eliges otro paquete directamente en la tabla o cambias a un giro reconocido, se carga su selección inicial adaptada al giro. Puedes personalizarla. Proyecto a medida conserva la cotización personalizada.</p>
+        <p id="orientacion-paquete-web" class="ayuda-cotizacion" hidden>Selecciona las funciones que necesita tu negocio. Al marcar o desmarcar opciones se ajusta el paquete al que cubre tus necesidades, sin marcar otras funciones automáticamente. Si eliges otro paquete en la tabla se carga su selección inicial. Si cambias de giro se conservan tus elecciones y se indican las que requieren adaptación. Proyecto a medida conserva la cotización personalizada.</p>
         <p id="ayuda-pedidos" class="ayuda-cotizacion" hidden>Las funciones que requieren carrito lo seleccionan automáticamente. Si desmarcas el carrito, se desmarcan también sus funciones dependientes.</p>
         <h3 id="titulo-funciones-plan" hidden>Funciones del paquete</h3>
         <p id="conteo-funciones-plan" class="nota" hidden></p>
         <p id="aviso-ajuste-paquete" class="aviso-ajuste-paquete" role="status" aria-live="polite" hidden></p>
-        <div id="funciones-plan">
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Página comercial personalizada"><span>Página comercial personalizada<small>Presentación del negocio, identidad y servicios.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Información de contacto y horarios"><span>Información de contacto y horarios<small>WhatsApp, redes, ubicación y horarios.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Menú digital"><span>Menú digital<small>Platillos, bebidas, fotografías y precios por categoría.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Catálogo de productos"><span>Catálogo de productos<small>Artículos, fotografías, precios y variantes según el proyecto.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion>
+        <div class="filtros-funciones"><label>Buscar funcionalidades<input id="buscar-funciones" type="search" placeholder="Ej. boletos, caja, inventario"></label><label>Paquete mínimo<select id="filtrar-nivel"><option value="">Todos</option><option value="1">P1</option><option value="2">P2</option><option value="3">P3</option><option value="4">P4</option><option value="extra">Sujeto a cotización</option></select></label><label>Categoría<select id="filtrar-categoria"><option value="">Todas</option><option value="0">Página web y presencia digital</option><option value="1">Catálogos y administración de contenido</option><option value="2">Pedidos y atención al cliente</option><option value="3">Citas, agendas y reservaciones</option><option value="4">Turismo, experiencias y eventos</option><option value="5">Ventas y punto de venta</option><option value="6">Inventario, almacenes y compras</option><option value="7">Cotizaciones y órdenes de servicio</option><option value="8">Recursos y operación del negocio</option><option value="9">Finanzas, costos y rentabilidad</option><option value="10">Marketing y fidelización</option><option value="11">Personal, sucursales y permisos</option><option value="12">Integraciones y automatizaciones</option><option value="13">Servicios adicionales y personalizaciones</option></select></label><label class="filtro-adicionales"><input type="checkbox" id="mostrar-adicionales"> Mostrar otros giros y personalizaciones</label></div><p id="resumen-funciones-elegidas" class="nota" aria-live="polite"></p><div id="enlaces-demo-cotizacion" class="acciones" hidden><a id="demo-cotizacion-publica" class="accion secundaria" rel="noopener noreferrer">Explorar página web</a><a id="demo-cotizacion-panel" class="accion secundaria" target="_blank" rel="noopener noreferrer">Explorar panel administrativo</a></div><div id="funciones-plan"><details class="grupo-funciones" data-categoria="0" open><summary>Página web y presencia digital <span class="grupo-conteo"></span></summary><div><label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Página comercial personalizada"><span>Página comercial personalizada<small>Presentación del negocio, identidad y servicios.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Información de contacto y horarios"><span>Información de contacto y horarios<small>WhatsApp, redes, ubicación y horarios.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Página turística bilingüe"><span>Página turística bilingüe<small>Presentación de experiencias en español e inglés.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Página bilingüe para otros giros"><span>Página bilingüe para otros giros<small>Adaptación de contenidos en dos idiomas; alcance y traducciones por confirmar.</small><small class="nivel-funcion" hidden></small></span></label></div></details>
+<details class="grupo-funciones" data-categoria="1"><summary>Catálogos y administración de contenido <span class="grupo-conteo"></span></summary><div><label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Menú digital"><span>Menú digital<small>Platillos, bebidas, fotografías y precios por categoría.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Catálogo de productos"><span>Catálogo de productos<small>Artículos, fotografías, precios y variantes según el proyecto.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion>
+          <input type="checkbox" name="funciones" value="Panel privado">
+          <span>Panel privado<small>Edita contenido, precios, horarios o disponibilidad según tu página.</small><small class="nivel-funcion" hidden></small></span>
+        </label></div></details>
+<details class="grupo-funciones" data-categoria="2"><summary>Pedidos y atención al cliente <span class="grupo-conteo"></span></summary><div><label class="opcion" data-funcion>
           <input type="checkbox" id="pedidos-web" name="funciones" value="Carrito y pedidos desde la página">
           <span>Carrito y pedidos desde la página<small>El cliente agrega artículos, elige cantidades y confirma su pedido en el sitio. El negocio recibe el pedido registrado.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-funcion>
+<label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Pedidos por WhatsApp">
           <span>Pedidos por WhatsApp<small>El cliente abre el chat con su solicitud y el negocio confirma el pedido por WhatsApp. Puedes elegir esta opción por sí sola o junto al carrito.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-funcion data-requiere="pedidos-web">
-          <input type="checkbox" name="funciones" value="Efectivo y transferencias con registro manual">
-          <span>Efectivo y transferencias<small>Muestra las instrucciones de pago. El encargado verifica las transferencias o registra el cobro en efectivo. Requiere carrito.</small><small class="nivel-funcion" hidden></small></span>
-        </label>
-        <label class="opcion" data-funcion data-requiere="pedidos-web">
-          <input type="checkbox" name="funciones" value="Cotizar integración de pagos en línea con tarjeta">
-          <span>Pagos en línea con tarjeta<small>Solicita cotización para integrar una plataforma de pagos. Requiere carrito y una cuenta del negocio con el proveedor de pagos.</small><small class="nivel-funcion" hidden></small></span>
-        </label>
-        <label class="opcion" data-funcion data-requiere="pedidos-web">
+<label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Pedidos para recoger o a domicilio">
           <span>Pedidos para recoger o a domicilio<small>Dirección y costo de envío. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-funcion data-requiere="pedidos-web">
+<label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Pedidos desde las mesas">
           <span>Pedidos desde las mesas<small>QR por mesa. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-funcion>
+<label class="opcion" data-funcion data-requiere="pedidos-web">
+          <input type="checkbox" name="funciones" value="Seguimiento de pedidos">
+          <span>Seguimiento de pedidos<small>Estado de preparación, entrega y pago por folio. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
+        </label></div></details>
+<details class="grupo-funciones" data-categoria="3"><summary>Citas, agendas y reservaciones <span class="grupo-conteo"></span></summary><div><label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Reservaciones y agenda">
           <span>Agenda y reservaciones de citas<small>Para dentistas, estilistas, barberías, consultorios y servicios profesionales. Los clientes pueden solicitar una fecha y hora; el negocio organiza la disponibilidad y confirma las citas.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-funcion>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Calendario básico de actividades"><span>Calendario básico de actividades<small>Consulta de actividades y enlace para agregar una reservación al calendario personal; no sincroniza automáticamente.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Calendario avanzado y conflictos externos"><span>Calendario avanzado y conflictos externos<small>Bloqueos y conflictos con eventos externos de ejemplo; sincronización real no incluida.</small><small class="nivel-funcion" hidden></small></span></label></div></details>
+<details class="grupo-funciones" data-categoria="4"><summary>Turismo, experiencias y eventos <span class="grupo-conteo"></span></summary><div><label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Reservaciones de tours y pases turísticos">
-          <span>Reservaciones de tours, actividades y pases turísticos<small>Para excursiones, paseos y experiencias. Permite solicitar fecha, horario y número de personas, consultar cupos y gestionar confirmaciones. Los pagos en línea se cotizan según el proyecto.</small><small class="nivel-funcion" hidden></small></span>
+          <span>Reservaciones de tours, actividades y pases turísticos<small>Cupos, fecha y horario, reservas individuales o grupales, cotización por pasajeros, consulta, reprogramación, cancelación y liberación de cupos.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Página turística bilingüe"><span>Página turística bilingüe<small>Presentación de experiencias en español e inglés.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Catálogo de experiencias turísticas"><span>Catálogo de experiencias turísticas<small>Tours, tarifas, horarios y fotografías.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Boletos digitales con QR"><span>Boletos digitales con QR<small>Boletos grupales e individuales para reservaciones confirmadas; descarga e impresión.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Gestión de salidas y recursos turísticos"><span>Gestión de salidas y recursos turísticos<small>Calendario, guías, embarcaciones y asignación de recursos.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Control de asistencia y abordaje con QR"><span>Control de asistencia y abordaje con QR<small>Verificación de boletos y registro de pasajeros en la salida.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Anticipos, saldos y caja turística"><span>Anticipos, saldos y caja turística<small>Registro de anticipos, liquidaciones y devoluciones.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Reportes turísticos"><span>Reportes turísticos<small>Pasajeros, ventas y saldos por salida.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Rentabilidad, comisiones y promociones turísticas"><span>Rentabilidad, comisiones y promociones turísticas<small>Costos de experiencias, intermediarios y promociones.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Cotizaciones y órdenes de servicio"><span>Cotizaciones y órdenes de servicio<small>Presupuestos, trabajos y estados según el giro.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion>
-          <input type="checkbox" name="funciones" value="Panel privado">
-          <span>Panel privado<small>Edita contenido, precios, horarios o disponibilidad según tu página.</small><small class="nivel-funcion" hidden></small></span>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Catálogo de experiencias turísticas"><span>Catálogo de experiencias turísticas<small>Editor de experiencias bilingües: fotos, horarios, duración, tarifas adultos/menores y temporadas, modalidad privada o compartida, publicación, itinerarios, incluidos, extras, requisitos, punto de encuentro y cancelación.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Boletos digitales con QR"><span>Boletos digitales con QR<small>Comprobantes y boletos grupales o individuales para reservas confirmadas, descarga e impresión; no incluye registro de abordaje en P2.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Gestión de pasajeros y manifiestos básicos"><span>Gestión de pasajeros y manifiestos básicos<small>Registro de pasajeros y manifiesto básico de reservaciones.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Listas de espera y control de ocupación"><span>Listas de espera y control de ocupación<small>Control de solicitudes en espera, cupos y conversión a reservaciones confirmadas.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Boletos QR y asistencia para eventos o academias"><span>Boletos QR y asistencia para eventos o academias<small>Adaptación del módulo turístico a accesos y asistencia de otros giros.</small><small class="nivel-funcion" hidden></small></span></label></div></details>
+<details class="grupo-funciones" data-categoria="5"><summary>Ventas y punto de venta <span class="grupo-conteo"></span></summary><div><label class="opcion" data-funcion data-requiere="pedidos-web">
+          <input type="checkbox" name="funciones" value="Efectivo y transferencias con registro manual">
+          <span>Efectivo y transferencias<small>Muestra las instrucciones de pago. El encargado verifica las transferencias o registra el cobro en efectivo. Requiere carrito.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-funcion data-requiere="pedidos-web">
-          <input type="checkbox" name="funciones" value="Pantalla de cocina y comandas">
-          <span>Pantalla de cocina y comandas<small>Preparación y comandas imprimibles. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
-        </label>
-        <label class="opcion" data-funcion data-requiere="pedidos-web">
-          <input type="checkbox" name="funciones" value="Seguimiento de pedidos">
-          <span>Seguimiento de pedidos<small>Estado de preparación, entrega y pago por folio. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
-        </label>
-        <label class="opcion" data-funcion data-requiere="pedidos-web">
+<label class="opcion" data-funcion data-requiere="pedidos-web">
           <input type="checkbox" name="funciones" value="Reportes de pedidos y cobros">
           <span>Reportes de pedidos y cobros<small>Exportación en CSV. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
         </label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Punto de venta y caja"><span>Punto de venta y caja<small>Registro de ventas y control de caja.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Inventario básico"><span>Inventario básico<small>Existencias de productos y movimientos básicos.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Tickets"><span>Tickets<small>Emisión de comprobantes internos de operación, no facturas fiscales.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Inventario avanzado"><span>Inventario avanzado<small>Control avanzado de existencias y movimientos.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Costos y proveedores"><span>Costos y proveedores<small>Organización de costos y proveedores.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Fidelización"><span>Fidelización<small>Herramientas para atención y fidelización de clientes.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Administración avanzada"><span>Administración avanzada<small>Herramientas adicionales de administración según el giro.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Automatizaciones"><span>Automatizaciones<small>Automatización de tareas según el alcance acordado.</small><small class="nivel-funcion" hidden></small></span></label>
-        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Reportes avanzados"><span>Reportes avanzados<small>Indicadores y reportes de operación según el giro.</small><small class="nivel-funcion" hidden></small></span></label>
-        </div>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Punto de venta y caja"><span>Punto de venta y caja<small>Registro de ventas y control de caja.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Tickets"><span>Tickets<small>Emisión de comprobantes internos de operación, no facturas fiscales.</small><small class="nivel-funcion" hidden></small></span></label></div></details>
+<details class="grupo-funciones" data-categoria="6"><summary>Inventario, almacenes y compras <span class="grupo-conteo"></span></summary><div><label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Inventario básico"><span>Inventario básico<small>Existencias de productos y movimientos básicos.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Inventario avanzado"><span>Inventario avanzado<small>Control avanzado de existencias y movimientos.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Almacenes, traspasos y compras"><span>Almacenes, traspasos y compras<small>Movimientos de almacén, órdenes de compra y proveedores según el módulo.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Recetas e insumos"><span>Recetas e insumos<small>Insumos, rendimientos, mermas y consumo asociado a ventas.</small><small class="nivel-funcion" hidden></small></span></label></div></details>
+<details class="grupo-funciones" data-categoria="7"><summary>Cotizaciones y órdenes de servicio <span class="grupo-conteo"></span></summary><div><label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Cotizaciones y órdenes de servicio"><span>Cotizaciones y órdenes de servicio<small>Presupuestos, trabajos y estados según el giro.</small><small class="nivel-funcion" hidden></small></span></label></div></details>
+<details class="grupo-funciones" data-categoria="8"><summary>Recursos y operación del negocio <span class="grupo-conteo"></span></summary><div><label class="opcion" data-funcion data-requiere="pedidos-web">
+          <input type="checkbox" name="funciones" value="Pantalla de cocina y comandas">
+          <span>Pantalla de cocina y comandas<small>Preparación y comandas imprimibles. Requiere pedidos desde la página.</small><small class="nivel-funcion" hidden></small></span>
+        </label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Gestión de salidas y recursos turísticos"><span>Gestión de salidas y recursos turísticos<small>Calendario operativo, guías, embarcaciones, asignaciones, conflictos, bloqueos por mantenimiento y suspensión de salidas.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Control de asistencia y abordaje con QR"><span>Control de asistencia y abordaje con QR<small>Manifiestos operativos, verificación de códigos, presencia, abordaje, pendientes y ausentes; no promete lectura por cámara.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Gestión de recursos y listas de espera para otros giros"><span>Gestión de recursos y listas de espera para otros giros<small>Adaptar disponibilidad, bloqueos y listas de espera a la operación del negocio.</small><small class="nivel-funcion" hidden></small></span></label></div></details>
+<details class="grupo-funciones" data-categoria="9"><summary>Finanzas, costos y rentabilidad <span class="grupo-conteo"></span></summary><div><label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Anticipos, saldos y caja turística"><span>Anticipos, saldos y caja turística<small>Anticipos, liquidaciones, devoluciones, recibos, fondo inicial, entradas y gastos, arqueos, cortes, conciliación e historial. Registro administrativo, no cobro electrónico.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Reportes turísticos"><span>Reportes turísticos<small>Pasajeros, ventas, ocupación, saldos y reportes CSV disponibles.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Rentabilidad, comisiones y promociones turísticas"><span>Rentabilidad, comisiones y promociones turísticas<small>Costos estimados y efectivos (combustible, transporte, mantenimiento, tripulación y otros), márgenes por salida/experiencia/transporte, agencias y hoteles, comisiones, liquidación registrada y códigos promocionales.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Costos y proveedores"><span>Costos y proveedores<small>Organización de costos y proveedores.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Reportes avanzados"><span>Reportes avanzados<small>Indicadores y reportes de operación según el giro.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Rentabilidad por servicio e intermediarios"><span>Rentabilidad por servicio e intermediarios<small>Adaptar costos, márgenes y comisiones a servicios no turísticos.</small><small class="nivel-funcion" hidden></small></span></label></div></details>
+<details class="grupo-funciones" data-categoria="10"><summary>Marketing y fidelización <span class="grupo-conteo"></span></summary><div><label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Fidelización"><span>Fidelización<small>Herramientas para atención y fidelización de clientes.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Alertas operativas turísticas"><span>Alertas operativas turísticas<small>Alertas internas de baja ocupación o margen estimado negativo, sin envío automático.</small><small class="nivel-funcion" hidden></small></span></label></div></details>
+<details class="grupo-funciones" data-categoria="11"><summary>Personal, sucursales y permisos <span class="grupo-conteo"></span></summary><div><label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Administración avanzada"><span>Administración avanzada<small>Herramientas adicionales de administración según el giro.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Personal, sucursales y permisos específicos"><span>Personal, sucursales y permisos específicos<small>Roles y cupos se confirman en propuesta; configuración especial sujeta a revisión.</small><small class="nivel-funcion" hidden></small></span></label></div></details>
+<details class="grupo-funciones" data-categoria="12"><summary>Integraciones y automatizaciones <span class="grupo-conteo"></span></summary><div><label class="opcion" data-funcion data-requiere="pedidos-web">
+          <input type="checkbox" name="funciones" value="Cotizar integración de pagos en línea con tarjeta">
+          <span>Pagos en línea con tarjeta<small>Solicita cotización para integrar una plataforma de pagos. Requiere carrito y una cuenta del negocio con el proveedor de pagos.</small><small class="nivel-funcion" hidden></small></span>
+        </label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Automatizaciones"><span>Automatizaciones<small>Automatización de tareas según el alcance acordado.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Sincronización con Google Calendar"><span>Sincronización con Google Calendar<small>Cuenta, permisos y API externa; no equivale a abrir un enlace de calendario.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Integración WhatsApp Business"><span>Integración WhatsApp Business<small>Requiere cuenta y configuración del proveedor; no equivale a un enlace de chat.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Notificaciones automáticas por correo"><span>Notificaciones automáticas por correo<small>Proveedor, remitente y automatización sujetos a cotización.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Google Analytics y Meta Pixel"><span>Google Analytics y Meta Pixel<small>Configuración de cuentas, consentimiento y medición según alcance.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Mapas e integraciones de reservación"><span>Mapas e integraciones de reservación<small>Servicios externos, permisos y posibles costos del proveedor.</small><small class="nivel-funcion" hidden></small></span></label>
+<label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Integraciones contables, APIs y webhooks"><span>Integraciones contables, APIs y webhooks<small>Análisis de sistemas y desarrollo de conectores.</small><small class="nivel-funcion" hidden></small></span></label></div></details>
+<details class="grupo-funciones" data-categoria="13"><summary>Servicios adicionales y personalizaciones <span class="grupo-conteo"></span></summary><div><label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Desarrollo y personalización especial"><span>Desarrollo y personalización especial<small>Requerimientos específicos sujetos a evaluación y presupuesto.</small><small class="nivel-funcion" hidden></small></span></label></div></details></div>
         <p class="nota">El alcance definitivo de las funciones y su precio se acuerdan en la propuesta, según el giro de tu negocio.</p>
       </fieldset>
 
@@ -198,7 +216,7 @@
         <legend>Datos de tu negocio</legend>
         <label>Tu nombre <input name="nombre" autocomplete="name" maxlength="100" required></label>
         <label>Nombre del negocio <input name="negocio" autocomplete="organization" maxlength="100" required></label>
-        <label>Giro comercial <input name="giro" maxlength="80" placeholder="Ej. cafetería" required></label>
+        <label>Giro comercial <input name="giro" list="giros-comerciales-web" maxlength="80" placeholder="Ej. cafetería" required></label><datalist id="giros-comerciales-web"><option value="Restaurante / taquería"></option><option value="Cafetería"></option><option value="Barbería / estética"></option><option value="Tienda de mascotas"></option><option value="Comercio / tienda"></option><option value="Servicios profesionales"></option><option value="Taller / servicios automotrices"></option><option value="Turismo y actividades"></option><option value="Hoteles y alojamientos"></option><option value="Eventos y espectáculos"></option><option value="Academias y capacitación"></option><option value="Otro giro"></option></datalist>
         <label>WhatsApp de contacto <input type="tel" name="telefono" autocomplete="tel" maxlength="25" pattern="\+?[0-9](?:[0-9\s.\(\)\-]*[0-9])?" aria-describedby="ayuda-telefono" required></label>
         <small id="ayuda-telefono">Escribe tu número de México a 10 dígitos; puedes anteponer +52.</small>
         <label>Preferencia de inversión (opcional)

@@ -1,5 +1,5 @@
 {
-  "version": "2026-11-28",
+  "version": "2026-11-28-catalogo2",
   "moneda": "MXN",
   "iva_incluido": false,
   "precios": "comerciales confirmados",
@@ -96,5 +96,732 @@
     "Validar módulos y cupos en repositorio de desarrollo",
     "Definir límites de almacenamiento, retención y recuperación",
     "Unificar catálogo contractual externo sin alterar acuerdos aceptados"
-  ]
+  ],
+  "fuente_demo": "4fcdaa79d6f89144d838115af55e69d6aeceeb79",
+  "categorias": [
+    "Página web y presencia digital",
+    "Catálogos y administración de contenido",
+    "Pedidos y atención al cliente",
+    "Citas, agendas y reservaciones",
+    "Turismo, experiencias y eventos",
+    "Ventas y punto de venta",
+    "Inventario, almacenes y compras",
+    "Cotizaciones y órdenes de servicio",
+    "Recursos y operación del negocio",
+    "Finanzas, costos y rentabilidad",
+    "Marketing y fidelización",
+    "Personal, sucursales y permisos",
+    "Integraciones y automatizaciones",
+    "Servicios adicionales y personalizaciones"
+  ],
+  "funciones": [
+    {
+      "id": "historico-1",
+      "nombre": "Página comercial personalizada",
+      "categoria": 0,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 1,
+      "giros": [],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-2",
+      "nombre": "Información de contacto y horarios",
+      "categoria": 0,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 1,
+      "giros": [],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-3",
+      "nombre": "Menú digital",
+      "categoria": 1,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 1,
+      "giros": [
+        "restaurante",
+        "cafeteria"
+      ],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-4",
+      "nombre": "Catálogo de productos",
+      "categoria": 1,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 1,
+      "giros": [
+        "mascotas",
+        "comercio",
+        "taller",
+        "barberia",
+        "servicios"
+      ],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-5",
+      "nombre": "Panel privado",
+      "categoria": 1,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 2,
+      "giros": [],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-6",
+      "nombre": "Carrito y pedidos desde la página",
+      "categoria": 2,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 2,
+      "giros": [
+        "restaurante",
+        "cafeteria",
+        "mascotas",
+        "comercio"
+      ],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-7",
+      "nombre": "Pedidos por WhatsApp",
+      "categoria": 2,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 1,
+      "giros": [],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-8",
+      "nombre": "Pedidos para recoger o a domicilio",
+      "categoria": 2,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 2,
+      "giros": [
+        "restaurante",
+        "cafeteria",
+        "mascotas",
+        "comercio"
+      ],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-9",
+      "nombre": "Pedidos desde las mesas",
+      "categoria": 2,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 2,
+      "giros": [
+        "restaurante"
+      ],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-10",
+      "nombre": "Seguimiento de pedidos",
+      "categoria": 2,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 2,
+      "giros": [
+        "restaurante",
+        "cafeteria",
+        "mascotas",
+        "comercio"
+      ],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-11",
+      "nombre": "Pantalla de cocina y comandas",
+      "categoria": 8,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 2,
+      "giros": [
+        "restaurante",
+        "cafeteria"
+      ],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-12",
+      "nombre": "Reservaciones y agenda",
+      "categoria": 3,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 2,
+      "giros": [
+        "restaurante",
+        "barberia",
+        "taller",
+        "servicios"
+      ],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-13",
+      "nombre": "Reservaciones de tours y pases turísticos",
+      "categoria": 4,
+      "descripcion": "Cupos, fecha y horario, reservas individuales o grupales, cotización por pasajeros, consulta, reprogramación, cancelación y liberación de cupos.",
+      "minimo": 2,
+      "giros": [
+        "turismo"
+      ],
+      "estado": "demo",
+      "condiciones": "Validación de demostración local; producción según propuesta.",
+      "referencia": "https://demos.lapazimpresion3d.com/bahia-tours?plan=p2"
+    },
+    {
+      "id": "historico-14",
+      "nombre": "Página turística bilingüe",
+      "categoria": 0,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 1,
+      "giros": [
+        "turismo"
+      ],
+      "estado": "demo",
+      "condiciones": "Validación de demostración local; producción según propuesta.",
+      "referencia": "https://demos.lapazimpresion3d.com/bahia-tours?plan=p1"
+    },
+    {
+      "id": "historico-15",
+      "nombre": "Catálogo de experiencias turísticas",
+      "categoria": 4,
+      "descripcion": "Editor de experiencias bilingües: fotos, horarios, duración, tarifas adultos/menores y temporadas, modalidad privada o compartida, publicación, itinerarios, incluidos, extras, requisitos, punto de encuentro y cancelación.",
+      "minimo": 1,
+      "giros": [
+        "turismo"
+      ],
+      "estado": "demo",
+      "condiciones": "Validación de demostración local; producción según propuesta.",
+      "referencia": "https://demos.lapazimpresion3d.com/bahia-tours?plan=p1"
+    },
+    {
+      "id": "historico-16",
+      "nombre": "Boletos digitales con QR",
+      "categoria": 4,
+      "descripcion": "Comprobantes y boletos grupales o individuales para reservas confirmadas, descarga e impresión; no incluye registro de abordaje en P2.",
+      "minimo": 2,
+      "giros": [
+        "turismo"
+      ],
+      "estado": "demo",
+      "condiciones": "Validación de demostración local; producción según propuesta.",
+      "referencia": "https://demos.lapazimpresion3d.com/bahia-tours?plan=p2"
+    },
+    {
+      "id": "historico-17",
+      "nombre": "Gestión de salidas y recursos turísticos",
+      "categoria": 8,
+      "descripcion": "Calendario operativo, guías, embarcaciones, asignaciones, conflictos, bloqueos por mantenimiento y suspensión de salidas.",
+      "minimo": 3,
+      "giros": [
+        "turismo"
+      ],
+      "estado": "demo",
+      "condiciones": "Validación de demostración local; producción según propuesta.",
+      "referencia": "https://demos.lapazimpresion3d.com/bahia-tours?plan=p3"
+    },
+    {
+      "id": "historico-18",
+      "nombre": "Control de asistencia y abordaje con QR",
+      "categoria": 8,
+      "descripcion": "Manifiestos operativos, verificación de códigos, presencia, abordaje, pendientes y ausentes; no promete lectura por cámara.",
+      "minimo": 3,
+      "giros": [
+        "turismo"
+      ],
+      "estado": "demo",
+      "condiciones": "Validación de demostración local; producción según propuesta.",
+      "referencia": "https://demos.lapazimpresion3d.com/bahia-tours?plan=p3"
+    },
+    {
+      "id": "historico-19",
+      "nombre": "Anticipos, saldos y caja turística",
+      "categoria": 9,
+      "descripcion": "Anticipos, liquidaciones, devoluciones, recibos, fondo inicial, entradas y gastos, arqueos, cortes, conciliación e historial. Registro administrativo, no cobro electrónico.",
+      "minimo": 3,
+      "giros": [
+        "turismo"
+      ],
+      "estado": "demo",
+      "condiciones": "Validación de demostración local; producción según propuesta.",
+      "referencia": "https://demos.lapazimpresion3d.com/bahia-tours?plan=p3"
+    },
+    {
+      "id": "historico-20",
+      "nombre": "Reportes turísticos",
+      "categoria": 9,
+      "descripcion": "Pasajeros, ventas, ocupación, saldos y reportes CSV disponibles.",
+      "minimo": 3,
+      "giros": [
+        "turismo"
+      ],
+      "estado": "demo",
+      "condiciones": "Validación de demostración local; producción según propuesta.",
+      "referencia": "https://demos.lapazimpresion3d.com/bahia-tours?plan=p3"
+    },
+    {
+      "id": "historico-21",
+      "nombre": "Rentabilidad, comisiones y promociones turísticas",
+      "categoria": 9,
+      "descripcion": "Costos estimados y efectivos (combustible, transporte, mantenimiento, tripulación y otros), márgenes por salida/experiencia/transporte, agencias y hoteles, comisiones, liquidación registrada y códigos promocionales.",
+      "minimo": 4,
+      "giros": [
+        "turismo"
+      ],
+      "estado": "demo",
+      "condiciones": "Validación de demostración local; producción según propuesta.",
+      "referencia": "https://demos.lapazimpresion3d.com/bahia-tours?plan=p4"
+    },
+    {
+      "id": "historico-22",
+      "nombre": "Cotizaciones y órdenes de servicio",
+      "categoria": 7,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 3,
+      "giros": [
+        "taller",
+        "barberia",
+        "mascotas",
+        "comercio"
+      ],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-23",
+      "nombre": "Efectivo y transferencias con registro manual",
+      "categoria": 5,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 3,
+      "giros": [
+        "restaurante",
+        "cafeteria",
+        "mascotas",
+        "comercio"
+      ],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-24",
+      "nombre": "Cotizar integración de pagos en línea con tarjeta",
+      "categoria": 12,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": null,
+      "giros": [],
+      "estado": "externa",
+      "condiciones": "Sujeto a cotización.",
+      "referencia": null
+    },
+    {
+      "id": "historico-25",
+      "nombre": "Reportes de pedidos y cobros",
+      "categoria": 5,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 3,
+      "giros": [
+        "restaurante",
+        "cafeteria",
+        "mascotas",
+        "comercio"
+      ],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-26",
+      "nombre": "Punto de venta y caja",
+      "categoria": 5,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 3,
+      "giros": [],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-27",
+      "nombre": "Tickets",
+      "categoria": 5,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 3,
+      "giros": [],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-28",
+      "nombre": "Inventario básico",
+      "categoria": 6,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 3,
+      "giros": [],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-29",
+      "nombre": "Inventario avanzado",
+      "categoria": 6,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 4,
+      "giros": [],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-30",
+      "nombre": "Costos y proveedores",
+      "categoria": 9,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 4,
+      "giros": [],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-31",
+      "nombre": "Fidelización",
+      "categoria": 10,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 4,
+      "giros": [],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-32",
+      "nombre": "Administración avanzada",
+      "categoria": 11,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 4,
+      "giros": [],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-33",
+      "nombre": "Automatizaciones",
+      "categoria": 12,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 4,
+      "giros": [],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "historico-34",
+      "nombre": "Reportes avanzados",
+      "categoria": 9,
+      "descripcion": "Alcance según ficha y propuesta.",
+      "minimo": 4,
+      "giros": [],
+      "estado": "alcance_comercial",
+      "condiciones": "Alcance comercial según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "turismo-pasajeros",
+      "nombre": "Gestión de pasajeros y manifiestos básicos",
+      "categoria": 4,
+      "minimo": 2,
+      "giros": [
+        "turismo"
+      ],
+      "descripcion": "Registro de pasajeros y manifiesto básico de reservaciones.",
+      "estado": "demo",
+      "condiciones": "Validación de demostración local; producción según propuesta.",
+      "referencia": "https://demos.lapazimpresion3d.com/bahia-tours?plan=p2"
+    },
+    {
+      "id": "turismo-espera",
+      "nombre": "Listas de espera y control de ocupación",
+      "categoria": 4,
+      "minimo": 3,
+      "giros": [
+        "turismo"
+      ],
+      "descripcion": "Control de solicitudes en espera, cupos y conversión a reservaciones confirmadas.",
+      "estado": "demo",
+      "condiciones": "Validación de demostración local; producción según propuesta.",
+      "referencia": "https://demos.lapazimpresion3d.com/bahia-tours?plan=p3"
+    },
+    {
+      "id": "calendario-basico",
+      "nombre": "Calendario básico de actividades",
+      "categoria": 3,
+      "minimo": 2,
+      "giros": [
+        "turismo"
+      ],
+      "descripcion": "Consulta de actividades y enlace para agregar una reservación al calendario personal; no sincroniza automáticamente.",
+      "estado": "demo",
+      "condiciones": "Validación de demostración local; producción según propuesta.",
+      "referencia": "https://demos.lapazimpresion3d.com/bahia-tours?plan=p2"
+    },
+    {
+      "id": "calendario-avanzado",
+      "nombre": "Calendario avanzado y conflictos externos",
+      "categoria": 3,
+      "minimo": 4,
+      "giros": [
+        "turismo"
+      ],
+      "descripcion": "Bloqueos y conflictos con eventos externos de ejemplo; sincronización real no incluida.",
+      "estado": "demo",
+      "condiciones": "Validación de demostración local; producción según propuesta.",
+      "referencia": "https://demos.lapazimpresion3d.com/bahia-tours?plan=p4"
+    },
+    {
+      "id": "turismo-alertas",
+      "nombre": "Alertas operativas turísticas",
+      "categoria": 10,
+      "minimo": 4,
+      "giros": [
+        "turismo"
+      ],
+      "descripcion": "Alertas internas de baja ocupación o margen estimado negativo, sin envío automático.",
+      "estado": "demo",
+      "condiciones": "Validación de demostración local; producción según propuesta.",
+      "referencia": "https://demos.lapazimpresion3d.com/bahia-tours?plan=p4"
+    },
+    {
+      "id": "almacenes",
+      "nombre": "Almacenes, traspasos y compras",
+      "categoria": 6,
+      "minimo": 3,
+      "giros": [
+        "restaurante",
+        "cafeteria",
+        "mascotas",
+        "comercio",
+        "taller",
+        "barberia"
+      ],
+      "descripcion": "Movimientos de almacén, órdenes de compra y proveedores según el módulo.",
+      "estado": "demo",
+      "condiciones": "Validación de demostración local; producción según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "recetas",
+      "nombre": "Recetas e insumos",
+      "categoria": 6,
+      "minimo": 4,
+      "giros": [
+        "restaurante",
+        "cafeteria"
+      ],
+      "descripcion": "Insumos, rendimientos, mermas y consumo asociado a ventas.",
+      "estado": "demo",
+      "condiciones": "Validación de demostración local; producción según propuesta.",
+      "referencia": null
+    },
+    {
+      "id": "bilingue-adaptado",
+      "nombre": "Página bilingüe para otros giros",
+      "categoria": 0,
+      "minimo": null,
+      "giros": [
+        "hotel",
+        "restaurante",
+        "comercio",
+        "servicios",
+        "eventos",
+        "academia"
+      ],
+      "descripcion": "Adaptación de contenidos en dos idiomas; alcance y traducciones por confirmar.",
+      "estado": "adaptacion",
+      "condiciones": "Sujeto a cotización.",
+      "referencia": null
+    },
+    {
+      "id": "recursos-adaptados",
+      "nombre": "Gestión de recursos y listas de espera para otros giros",
+      "categoria": 8,
+      "minimo": null,
+      "giros": [
+        "hotel",
+        "taller",
+        "barberia",
+        "servicios",
+        "eventos",
+        "academia"
+      ],
+      "descripcion": "Adaptar disponibilidad, bloqueos y listas de espera a la operación del negocio.",
+      "estado": "adaptacion",
+      "condiciones": "Sujeto a cotización.",
+      "referencia": null
+    },
+    {
+      "id": "qr-adaptado",
+      "nombre": "Boletos QR y asistencia para eventos o academias",
+      "categoria": 4,
+      "minimo": null,
+      "giros": [
+        "eventos",
+        "academia",
+        "hotel"
+      ],
+      "descripcion": "Adaptación del módulo turístico a accesos y asistencia de otros giros.",
+      "estado": "adaptacion",
+      "condiciones": "Sujeto a cotización.",
+      "referencia": null
+    },
+    {
+      "id": "rentabilidad-adaptada",
+      "nombre": "Rentabilidad por servicio e intermediarios",
+      "categoria": 9,
+      "minimo": null,
+      "giros": [
+        "taller",
+        "servicios",
+        "hotel",
+        "eventos",
+        "academia"
+      ],
+      "descripcion": "Adaptar costos, márgenes y comisiones a servicios no turísticos.",
+      "estado": "adaptacion",
+      "condiciones": "Sujeto a cotización.",
+      "referencia": null
+    },
+    {
+      "id": "personal",
+      "nombre": "Personal, sucursales y permisos específicos",
+      "categoria": 11,
+      "minimo": null,
+      "giros": [],
+      "descripcion": "Roles y cupos se confirman en propuesta; configuración especial sujeta a revisión.",
+      "estado": "adaptacion",
+      "condiciones": "Sujeto a cotización.",
+      "referencia": null
+    },
+    {
+      "id": "calendar-sync",
+      "nombre": "Sincronización con Google Calendar",
+      "categoria": 12,
+      "minimo": null,
+      "giros": [],
+      "descripcion": "Cuenta, permisos y API externa; no equivale a abrir un enlace de calendario.",
+      "estado": "externa",
+      "condiciones": "Sujeto a cotización.",
+      "referencia": null
+    },
+    {
+      "id": "whatsapp-api",
+      "nombre": "Integración WhatsApp Business",
+      "categoria": 12,
+      "minimo": null,
+      "giros": [],
+      "descripcion": "Requiere cuenta y configuración del proveedor; no equivale a un enlace de chat.",
+      "estado": "externa",
+      "condiciones": "Sujeto a cotización.",
+      "referencia": null
+    },
+    {
+      "id": "correo",
+      "nombre": "Notificaciones automáticas por correo",
+      "categoria": 12,
+      "minimo": null,
+      "giros": [],
+      "descripcion": "Proveedor, remitente y automatización sujetos a cotización.",
+      "estado": "externa",
+      "condiciones": "Sujeto a cotización.",
+      "referencia": null
+    },
+    {
+      "id": "analytics",
+      "nombre": "Google Analytics y Meta Pixel",
+      "categoria": 12,
+      "minimo": null,
+      "giros": [],
+      "descripcion": "Configuración de cuentas, consentimiento y medición según alcance.",
+      "estado": "externa",
+      "condiciones": "Sujeto a cotización.",
+      "referencia": null
+    },
+    {
+      "id": "mapas",
+      "nombre": "Mapas e integraciones de reservación",
+      "categoria": 12,
+      "minimo": null,
+      "giros": [],
+      "descripcion": "Servicios externos, permisos y posibles costos del proveedor.",
+      "estado": "externa",
+      "condiciones": "Sujeto a cotización.",
+      "referencia": null
+    },
+    {
+      "id": "contabilidad",
+      "nombre": "Integraciones contables, APIs y webhooks",
+      "categoria": 12,
+      "minimo": null,
+      "giros": [],
+      "descripcion": "Análisis de sistemas y desarrollo de conectores.",
+      "estado": "externa",
+      "condiciones": "Sujeto a cotización.",
+      "referencia": null
+    },
+    {
+      "id": "personalizacion",
+      "nombre": "Desarrollo y personalización especial",
+      "categoria": 13,
+      "minimo": null,
+      "giros": [],
+      "descripcion": "Requerimientos específicos sujetos a evaluación y presupuesto.",
+      "estado": "personalizado",
+      "condiciones": "Sujeto a cotización.",
+      "referencia": null
+    }
+  ],
+  "giros": {
+    "restaurante": "Restaurante / taquería",
+    "cafeteria": "Cafetería",
+    "barberia": "Barbería / estética",
+    "mascotas": "Tienda de mascotas",
+    "comercio": "Comercio / tienda",
+    "servicios": "Servicios profesionales",
+    "taller": "Taller / servicios automotrices",
+    "turismo": "Turismo y actividades",
+    "hotel": "Hoteles y alojamientos",
+    "eventos": "Eventos y espectáculos",
+    "academia": "Academias y capacitación",
+    "otro": "Otro giro"
+  }
 }
