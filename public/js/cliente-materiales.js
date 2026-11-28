@@ -131,7 +131,17 @@ async function iniciar(){
   if(token){history.replaceState(null,"",location.pathname+location.search);await api("/api/cliente/iniciar","POST",{token});}
   const data=await api("/api/cliente/materiales"),p=data.proyecto;
   estadoProyecto=p.estado;
-  const indicaciones=document.querySelector("#indicaciones-revision");indicaciones.hidden=!p.instrucciones;document.querySelector("#texto-indicaciones").textContent=p.instrucciones||"";
+  const indicaciones=document.querySelector("#indicaciones-revision"),listaIndicaciones=document.querySelector("#texto-indicaciones");
+  const mensajes=Array.isArray(p.indicaciones)?p.indicaciones:(p.instrucciones?[{color:"rojo",texto:p.instrucciones}]:[]);
+  const tipos={rojo:["Importante · requiere atención","!"],amarillo:["Duda o información pendiente","?"],verde:["Confirmación","✓"],azul:["Información y avances","i"]};
+  listaIndicaciones.replaceChildren();
+  for(const m of mensajes){
+   const color=Object.hasOwn(tipos,m.color)?m.color:"rojo",tarjeta=document.createElement("article"),titulo=document.createElement("h3"),texto=document.createElement("p");
+   tarjeta.className="indicacion-cliente";tarjeta.dataset.color=color;
+   titulo.textContent=tipos[color].join(" · ");texto.textContent=m.texto;
+   tarjeta.append(titulo,texto);listaIndicaciones.append(tarjeta);
+  }
+  indicaciones.hidden=!mensajes.length;
   const config=configuraciones[p.categoria]||configuraciones.web;
   document.querySelector("#folio").textContent=p.folio;
   document.querySelector("#nombre-proyecto").textContent=p.proyecto||"Proyecto de "+p.nombre;
