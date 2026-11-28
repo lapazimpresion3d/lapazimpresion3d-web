@@ -1,3 +1,4 @@
+import {calcularRentabilidad} from "./rentabilidad.mjs";
 import {respaldosHabilitados,ejecutarRespaldos} from "./respaldos-programados.mjs";
 import {sitioPermitido,ejecutarMonitoreo} from "./monitoreo-programado.mjs";
 import {guardarEvidencia,tablaEvidencias,uuidEvidencia,proyectarEvidencia,valoresEvidencia} from "./evidencias-soporte.mjs";
@@ -1230,6 +1231,39 @@ async function api(request,env,ctx) {
       const hoy=hoyMensualidad();
       return json({hoy,limitado:rows.results.length>200,entregas_disponibles:conEntrega,items:rows.results.slice(0,200).map(q=>({...q,...estadoMensualidad(q,q.ultimo_fin?{fin:q.ultimo_fin}:null,hoy)}))});
     }
+    const rentabilidad=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/rentabilidad(?:\/(costos|configuracion))?$/i);
+    if(rentabilidad){
+      const [,pid,accion]=rentabilidad,db=env.QUIZ_DB,hoy=hoyMensualidad(),ahora=new Date().toISOString(),mes=url.searchParams.get("mes")||hoy.slice(0,7);
+      if(!ID_UUID.test(pid)||!/^\d{4}-(0[1-9]|1[0-2])$/.test(mes)||mes<"2000-01"||mes>hoy.slice(0,7))return error("Servicio o mes inválido",400);
+      const e=await db.prepare("SELECT mensualidad,total_mensual FROM propuestas_economicas WHERE propuesta_id=?1 AND fecha_aceptacion IS NOT NULL AND mensualidad>0 AND paquete<>'solo_fisico'").bind(pid).first();
+      if(!e)return error("Servicio contratado no encontrado",404);
+      const tablas=await db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('servicio_costos','servicio_costeo_mensual','servicio_soporte','servicio_intervenciones','pagos_mensualidad')").first();
+      if(tablas.n!==5)return error("Rentabilidad pendiente de habilitar (0006, 0011 y 0023)",503);
+      if(!accion&&request.method==="GET"){
+        const pagos=await db.prepare("SELECT COALESCE(SUM(importe),0) AS importe,COUNT(*) AS cantidad FROM pagos_mensualidad WHERE propuesta_id=?1 AND substr(fecha,1,7)=?2").bind(pid,mes).first();
+        const costos=await db.prepare("SELECT COALESCE(SUM(importe),0) AS importe,COUNT(*) AS cantidad FROM servicio_costos WHERE propuesta_id=?1 AND substr(fecha,1,7)=?2").bind(pid,mes).first();
+        const desglose=await db.prepare("SELECT categoria,SUM(importe) AS importe FROM servicio_costos WHERE propuesta_id=?1 AND substr(fecha,1,7)=?2 GROUP BY categoria").bind(pid,mes).all();
+        const tiempo=await db.prepare("SELECT COALESCE(SUM(i.minutos),0) AS minutos FROM servicio_intervenciones i JOIN servicio_soporte t ON t.id=i.soporte_id WHERE t.propuesta_id=?1 AND substr(i.fecha_trabajo,1,7)=?2").bind(pid,mes).first();
+        const config=await db.prepare("SELECT tarifa_hora,minutos_extra,version FROM servicio_costeo_mensual WHERE propuesta_id=?1 AND mes=?2").bind(pid,mes).first();
+        const r=await db.prepare("SELECT id,fecha,categoria,importe,descripcion FROM servicio_costos WHERE propuesta_id=?1 AND substr(fecha,1,7)=?2 ORDER BY fecha DESC,fecha_registro DESC,id DESC LIMIT 101").bind(pid,mes).all();
+        return json({hoy,mes,acuerdo:e,pagos:pagos.cantidad,config,resultado:calcularRentabilidad(pagos.importe,costos.importe,tiempo.minutos,config),desglose:desglose.results,items:r.results.slice(0,100),limitado:r.results.length>100});
+      }
+      if(accion==="costos"&&request.method==="POST"){
+        const d=await leerJson(request,5000);
+        if(!d||typeof d.id!=="string"||!ID_UUID.test(d.id)||!fechaMensualidad(d.fecha)||d.fecha>hoy||d.fecha.slice(0,7)!==mes||!["alojamiento","dominio","almacenamiento","licencias","comisiones","otros"].includes(d.categoria)||!Number.isSafeInteger(d.importe)||d.importe<1||d.importe>100000000||!textoEntrega(d.descripcion,3,500))return error("Revisa fecha, categoría, importe y descripción",400);
+        const r=await db.prepare("INSERT INTO servicio_costos(id,propuesta_id,fecha,categoria,importe,descripcion,fecha_registro) VALUES(?1,?2,?3,?4,?5,?6,?7) ON CONFLICT(id) DO NOTHING").bind(d.id,pid,d.fecha,d.categoria,d.importe,d.descripcion.trim(),ahora).run();
+        if(r.meta.changes)return json({ok:true},201);
+        const p=await db.prepare("SELECT * FROM servicio_costos WHERE id=?1 AND propuesta_id=?2").bind(d.id,pid).first();
+        return p&&p.fecha===d.fecha&&p.categoria===d.categoria&&p.importe===d.importe&&p.descripcion===d.descripcion.trim()?json({ok:true,repetido:true}):error("Identificador en conflicto",409);
+      }
+      if(accion==="configuracion"&&request.method==="PUT"){
+        const d=await leerJson(request,2000);
+        if(!d||!Number.isSafeInteger(d.tarifa_hora)||d.tarifa_hora<0||d.tarifa_hora>10000000||!Number.isSafeInteger(d.minutos_extra)||d.minutos_extra<0||d.minutos_extra>44640||!Number.isSafeInteger(d.version)||d.version<0)return error("Revisa tarifa interna y minutos adicionales",400);
+        const r=d.version===0?await db.prepare("INSERT INTO servicio_costeo_mensual(propuesta_id,mes,tarifa_hora,minutos_extra,fecha_actualizacion) VALUES(?1,?2,?3,?4,?5) ON CONFLICT(propuesta_id,mes) DO NOTHING").bind(pid,mes,d.tarifa_hora,d.minutos_extra,ahora).run():await db.prepare("UPDATE servicio_costeo_mensual SET tarifa_hora=?3,minutos_extra=?4,fecha_actualizacion=?5,version=version+1 WHERE propuesta_id=?1 AND mes=?2 AND version=?6").bind(pid,mes,d.tarifa_hora,d.minutos_extra,ahora,d.version).run();
+        return r.meta.changes?json({ok:true}):error("La configuración cambió. Actualiza.",409);
+      }
+      return error("Método no permitido",405);
+    }
     const vinculo=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/vinculos(?:\/([0-9a-f-]{36}))?$/i);
     if(vinculo){
       const db=env.QUIZ_DB,[,pid,vid]=vinculo,ahora=new Date().toISOString();
@@ -1679,6 +1713,8 @@ async function api(request,env,ctx) {
       borrar("servicio_actualizaciones","propuesta_id=?1");
       borrar("servicio_monitoreo","propuesta_id=?1");
       borrar("servicio_monitoreo_programado","propuesta_id=?1");
+      borrar("servicio_costos","propuesta_id=?1");
+      borrar("servicio_costeo_mensual","propuesta_id=?1");
       borrar("servicio_vinculos","propuesta_id=?1");
       borrar("pagos_mensualidad","propuesta_id=?1");
       borrar("suscripciones_cliente","propuesta_id=?1");
