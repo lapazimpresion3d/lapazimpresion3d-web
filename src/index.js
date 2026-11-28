@@ -232,6 +232,11 @@ function garantiaEntrega(fecha){const d=new Date(fecha+"T00:00:00Z");d.setUTCDat
 
 // Alertas calculadas, no obligaciones ni cobros. Los umbrales son orientativos.
 function desplazarDiaAlerta(fecha,n){const d=new Date(fecha+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
+function estadoPoliticaRespaldo(p,hoy){
+ const proxima=p.ultimo_correcto?desplazarDiaAlerta(p.ultimo_correcto,p.frecuencia_dias):p.inicio;
+ const estado=!p.habilitada?"pausada":hoy<p.inicio?"programada":p.ultimo_resultado&&p.ultimo_resultado!=="correcto"?"incidencia":hoy>=proxima?"pendiente":"al_corriente";
+ return {proxima,estado};
+}
 const TIPOS_ALERTA=Object.freeze({
  nueva:["Nueva solicitud","alta","solicitudes"],
  seguimiento:["Solicitud por dar seguimiento","normal","solicitudes"],
@@ -248,7 +253,9 @@ const TIPOS_ALERTA=Object.freeze({
  vence:["Renovación en los próximos 7 días","normal","mensualidades"],
  garantia:["Garantía de desarrollo termina en los próximos 7 días","normal","proyectos"],
  monitoreo_fallo:["Última comprobación: sitio no disponible","alta","mensualidades"],
- monitoreo_degradado:["Última comprobación: sitio degradado","normal","mensualidades"]
+ monitoreo_degradado:["Última comprobación: sitio degradado","normal","mensualidades"],
+ respaldo_pendiente:["Respaldo programado pendiente de registro","alta","mensualidades"],
+ respaldo_incidencia:["Último respaldo parcial o fallido","alta","mensualidades"]
 });
 async function alertasComerciales(env,hoy=hoyMensualidad()){
  const db=env.QUIZ_DB,items=[],avisos=[];
@@ -299,6 +306,15 @@ async function alertasComerciales(env,hoy=hoyMensualidad()){
    }catch{avisos.push(grupo+": no se pudo consultar "+TIPOS_ALERTA[tipo][0]+". Comprueba las migraciones y D1.");}
   }
  }
+ // Policies calculate administrative deadlines from observed successful backups only.
+ try{
+  const existe=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='servicio_politicas_respaldos'").first();
+  if(existe){
+   const rows=await db.prepare("SELECT p.*,q.folio,q.nombre,q.proyecto,(SELECT MAX(r.fecha_respaldo) FROM servicio_respaldos r WHERE r.propuesta_id=p.propuesta_id AND r.alcance=p.alcance AND r.resultado='correcto' AND r.fecha_respaldo>=p.inicio AND r.fecha_respaldo<=?1) AS ultimo_correcto,(SELECT r.resultado FROM servicio_respaldos r WHERE r.propuesta_id=p.propuesta_id AND r.alcance=p.alcance AND r.fecha_respaldo>=p.inicio AND r.fecha_respaldo<=?1 ORDER BY r.fecha_respaldo DESC,r.fecha_registro DESC,r.id DESC LIMIT 1) AS ultimo_resultado,(SELECT r.id FROM servicio_respaldos r WHERE r.propuesta_id=p.propuesta_id AND r.alcance=p.alcance AND r.fecha_respaldo>=p.inicio AND r.fecha_respaldo<=?1 ORDER BY r.fecha_respaldo DESC,r.fecha_registro DESC,r.id DESC LIMIT 1) AS ultimo_id FROM servicio_politicas_respaldos p JOIN quiz_propuestas q ON q.id=p.propuesta_id JOIN propuestas_economicas e ON e.propuesta_id=p.propuesta_id WHERE p.habilitada=1 AND p.inicio<=?1 AND e.fecha_aceptacion IS NOT NULL AND e.mensualidad>0 AND e.paquete<>'solo_fisico' ORDER BY p.propuesta_id,p.alcance LIMIT 501").bind(hoy).all();
+   if(rows.results.length>500)avisos.push("Respaldos: consulta limitada a 500 políticas.");
+   for(const p of rows.results.slice(0,500)){const s=estadoPoliticaRespaldo(p,hoy);if(!["pendiente","incidencia"].includes(s.estado))continue;const tipo=s.estado==="incidencia"?"respaldo_incidencia":"respaldo_pendiente",[titulo,prioridad,seccion]=TIPOS_ALERTA[tipo];items.push({folio:p.folio,nombre:p.nombre,proyecto:p.proyecto,tipo,titulo,prioridad,seccion,servicio:"Respaldo · "+p.alcance,fecha:s.proxima,evento_id:p.alcance+":"+p.version+":"+(p.ultimo_id||"sin-registro")});}
+  }
+ }catch{avisos.push("Políticas de respaldos: consulta no disponible. Comprueba D1 y migraciones.");}
  // Only report the most recent recorded observation for the current registered URL.
  try{
   const existe=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='servicio_monitoreo'").first();
@@ -1309,6 +1325,26 @@ async function api(request,env,ctx) {
       }
       return error("Método no permitido",405);
     }
+    const politica=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/politicas-respaldos$/i);
+    if(politica){
+      const pid=politica[1],db=env.QUIZ_DB,hoy=hoyMensualidad(),ahora=new Date().toISOString();
+      if(!ID_UUID.test(pid))return error("Identificador inválido",400);
+      const e=await db.prepare("SELECT propuesta_id FROM propuestas_economicas WHERE propuesta_id=?1 AND fecha_aceptacion IS NOT NULL AND mensualidad>0 AND paquete<>'solo_fisico'").bind(pid).first();
+      if(!e)return error("Servicio contratado no encontrado",404);
+      const tablas=await db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('servicio_politicas_respaldos','servicio_respaldos')").first();
+      if(tablas.n!==2)return error("Políticas de respaldos pendientes (0017 y 0020)",503);
+      if(request.method==="GET"){
+        const rows=await db.prepare("SELECT p.*,(SELECT MAX(r.fecha_respaldo) FROM servicio_respaldos r WHERE r.propuesta_id=p.propuesta_id AND r.alcance=p.alcance AND r.resultado='correcto' AND r.fecha_respaldo>=p.inicio AND r.fecha_respaldo<=?2) AS ultimo_correcto,(SELECT r.resultado FROM servicio_respaldos r WHERE r.propuesta_id=p.propuesta_id AND r.alcance=p.alcance AND r.fecha_respaldo>=p.inicio AND r.fecha_respaldo<=?2 ORDER BY r.fecha_respaldo DESC,r.fecha_registro DESC,r.id DESC LIMIT 1) AS ultimo_resultado FROM servicio_politicas_respaldos p WHERE p.propuesta_id=?1 ORDER BY p.alcance").bind(pid,hoy).all();
+        return json({hoy,items:rows.results.map(p=>({...p,...estadoPoliticaRespaldo(p,hoy)})),ejecucion_automatica:false});
+      }
+      if(request.method==="PUT"){
+        const d=await leerJson(request,3000);
+        if(!d||!["datos","archivos","completo","configuracion"].includes(d.alcance)||!Number.isSafeInteger(d.frecuencia_dias)||d.frecuencia_dias<1||d.frecuencia_dias>365||!Number.isSafeInteger(d.retencion_dias)||d.retencion_dias<d.frecuencia_dias||d.retencion_dias>3650||!fechaMensualidad(d.inicio)||d.inicio<"2000-01-01"||d.inicio>"2100-12-31"||typeof d.habilitada!=="boolean"||!Number.isSafeInteger(d.version)||d.version<0)return error("Revisa frecuencia, retención, inicio y versión",400);
+        const r=d.version===0?await db.prepare("INSERT INTO servicio_politicas_respaldos(propuesta_id,alcance,frecuencia_dias,retencion_dias,inicio,habilitada,fecha_actualizacion) VALUES(?1,?2,?3,?4,?5,?6,?7) ON CONFLICT(propuesta_id,alcance) DO NOTHING").bind(pid,d.alcance,d.frecuencia_dias,d.retencion_dias,d.inicio,Number(d.habilitada),ahora).run():await db.prepare("UPDATE servicio_politicas_respaldos SET frecuencia_dias=?3,retencion_dias=?4,inicio=?5,habilitada=?6,fecha_actualizacion=?7,version=version+1 WHERE propuesta_id=?1 AND alcance=?2 AND version=?8").bind(pid,d.alcance,d.frecuencia_dias,d.retencion_dias,d.inicio,Number(d.habilitada),ahora,d.version).run();
+        return r.meta.changes?json({ok:true}):error("La política cambió. Actualiza antes de guardar.",409);
+      }
+      return error("Método no permitido",405);
+    }
     const respaldo=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/respaldos(?:\/([0-9a-f-]{36})\/pruebas)?$/i);
     if(respaldo){
       const [,pid,rid]=respaldo,db=env.QUIZ_DB,hoy=hoyMensualidad(),ahora=new Date().toISOString();
@@ -1605,6 +1641,7 @@ async function api(request,env,ctx) {
       borrar("servicio_soporte","propuesta_id=?1");
       if(tablas.has("servicio_respaldos"))borrar("servicio_pruebas_restauracion","respaldo_id IN (SELECT id FROM servicio_respaldos WHERE propuesta_id=?1)");
       borrar("servicio_respaldos","propuesta_id=?1");
+      borrar("servicio_politicas_respaldos","propuesta_id=?1");
       borrar("servicio_actualizaciones","propuesta_id=?1");
       borrar("servicio_monitoreo","propuesta_id=?1");
       borrar("servicio_vinculos","propuesta_id=?1");
