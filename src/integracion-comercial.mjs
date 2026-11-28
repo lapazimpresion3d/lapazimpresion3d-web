@@ -88,7 +88,10 @@ export async function consultarConversacionPrivada(env,empresa,ticket){
  if(!q)return {ok:false,error:"no_autorizado"};
  const r=await db.prepare("SELECT m.id,m.autor,m.texto,m.fecha_registro"+joinsTicket+"JOIN servicio_soporte_mensajes m ON m.soporte_id=t.id WHERE "+guardiaTicket+" ORDER BY m.fecha_registro DESC,m.id DESC LIMIT 201").bind(...args).all();
  if(!await sigueVinculado(db,v,empresa))return {ok:false,error:"no_autorizado"};
- return {ok:true,version:1,solicitud:proyectarSolicitud(q),mensajes:r.results.slice(0,200).reverse().map(m=>({id:m.id,autor:m.autor,texto:m.texto,fecha_registro:m.fecha_registro})),limitado:r.results.length>200};
+ const disponible=await resolucionesDisponibles(db);
+ const resoluciones=disponible?(await db.prepare("SELECT z.version_solucion,z.solucion,z.fecha_solucion,z.decision,z.comentario,z.fecha_decision"+joinsTicket+"JOIN servicio_soporte_resoluciones z ON z.soporte_id=t.id WHERE "+guardiaTicket+" ORDER BY z.version_solucion DESC LIMIT 100").bind(...args).all()).results:[];
+ if(!await sigueVinculado(db,v,empresa))return {ok:false,error:"no_autorizado"};
+ return {ok:true,version:1,solicitud:proyectarSolicitud(q),mensajes:r.results.slice(0,200).reverse().map(m=>({id:m.id,autor:m.autor,texto:m.texto,fecha_registro:m.fecha_registro})),limitado:r.results.length>200,resoluciones,resoluciones_disponibles:disponible};
 }
 export async function enviarMensajePrivado(env,empresa,ticket,d){
  const ctx=await contextoSoporte(env,empresa);if(ctx.error)return {ok:false,error:ctx.error};
@@ -152,7 +155,31 @@ export async function adjuntarEvidenciaPrivada(env,empresa,ticket,d){
  if(!await sigueVinculado(db,v,empresa))return {ok:false,error:"no_autorizado"};
  return {...r,version:1};
 }
+export function decisionSolucionValida(d){
+ return !!d&&typeof d==="object"&&!Array.isArray(d)&&Object.keys(d).every(k=>["id","version_solucion","decision","comentario"].includes(k))&&typeof d.id==="string"&&UUID.test(d.id)&&Number.isSafeInteger(d.version_solucion)&&d.version_solucion>0&&["confirmada","reabierta"].includes(d.decision)&&texto(d.comentario,d.decision==="reabierta"?3:0,2000);
+}
+async function resolucionesDisponibles(db){return !!await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='servicio_soporte_resoluciones'").first();}
+export async function decidirSolucionPrivada(env,empresa,ticket,d){
+ const ctx=await contextoSoporte(env,empresa);if(ctx.error)return {ok:false,error:ctx.error};
+ if(typeof ticket!=="string"||!UUID.test(ticket)||!decisionSolucionValida(d))return {ok:false,error:"datos_invalidos"};
+ const {db,v}=ctx,args=[PLATAFORMA,empresa,v.id,ticket],ahora=new Date().toISOString();
+ if(!await resolucionesDisponibles(db))return {ok:false,error:"no_disponible"};
+ const q=await db.prepare("SELECT t.estado,t.version"+joinsTicket+"WHERE "+guardiaTicket).bind(...args).first();
+ if(!q)return {ok:false,error:"no_autorizado"};
+ const anterior=()=>db.prepare("SELECT r.version_solucion,r.decision,r.comentario,r.fecha_decision"+joinsTicket+"JOIN servicio_soporte_resoluciones r ON r.soporte_id=t.id WHERE "+guardiaTicket+" AND r.decision_id=?5").bind(...args,d.id).first();
+ const respuesta=p=>p.version_solucion===d.version_solucion&&p.decision===d.decision&&p.comentario===d.comentario.trim()?{ok:true,version:1,decision:p.decision,fecha_decision:p.fecha_decision,repetido:true}:{ok:false,error:"conflicto"};
+ const previo=await anterior();if(previo)return await sigueVinculado(db,v,empresa)?respuesta(previo):{ok:false,error:"no_autorizado"};
+ if(q.estado!=="resuelto")return {ok:false,error:"solicitud_no_resuelta"};
+ const r=await db.batch([
+  db.prepare("UPDATE servicio_soporte_resoluciones SET decision=?6,comentario=?7,fecha_decision=?8,decision_id=?9 WHERE soporte_id=?4 AND version_solucion=?5 AND decision IS NULL AND version_solucion=(SELECT MAX(z.version_solucion) FROM servicio_soporte_resoluciones z WHERE z.soporte_id=?4) AND EXISTS(SELECT 1"+joinsTicket+"WHERE "+guardiaTicket+" AND t.estado='resuelto' AND t.version>=?5) AND NOT EXISTS(SELECT 1 FROM servicio_soporte_resoluciones z WHERE z.decision_id=?9)").bind(...args,d.version_solucion,d.decision,d.comentario.trim(),ahora,d.id),
+  db.prepare("UPDATE servicio_soporte SET estado=CASE WHEN ?6='reabierta' THEN 'abierto' ELSE estado END,version=version+1,fecha_actualizacion=?8 WHERE id=?4 AND estado='resuelto' AND changes()=1 AND EXISTS(SELECT 1"+joinsTicket+"JOIN servicio_soporte_resoluciones r ON r.soporte_id=t.id WHERE "+guardiaTicket+" AND r.version_solucion=?5 AND r.decision=?6 AND r.comentario=?7 AND r.fecha_decision=?8 AND r.decision_id=?9)").bind(...args,d.version_solucion,d.decision,d.comentario.trim(),ahora,d.id)
+ ]);
+ if(!await sigueVinculado(db,v,empresa))return {ok:false,error:"no_autorizado"};
+ if(r[0].meta.changes===1&&r[1].meta.changes===1)return {ok:true,version:1,decision:d.decision,fecha_decision:ahora};
+ const p=await anterior();return p?respuesta(p):{ok:false,error:"conflicto"};
+}
 export class IntegracionComercial extends WorkerEntrypoint {
+ async decidirSolucion(empresa,ticket,datos){try{return await decidirSolucionPrivada(this.env,empresa,ticket,datos);}catch{return {ok:false,error:'no_disponible'};}}
  async listarEvidencias(empresa,ticket){try{return await listarEvidenciasPrivadas(this.env,empresa,ticket);}catch{return {ok:false,error:"no_disponible"};}}
  async leerEvidencia(empresa,ticket,id){try{return await leerEvidenciaPrivada(this.env,empresa,ticket,id);}catch{return {ok:false,error:"no_disponible"};}}
  async adjuntarEvidencia(empresa,ticket,datos){try{return await adjuntarEvidenciaPrivada(this.env,empresa,ticket,datos);}catch{return {ok:false,error:"no_disponible"};}}

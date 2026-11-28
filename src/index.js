@@ -1304,10 +1304,24 @@ async function api(request,env,ctx) {
       if(!accion&&request.method==="GET"){
         const r=await db.prepare("SELECT * FROM servicio_intervenciones WHERE soporte_id=?1 ORDER BY fecha_trabajo DESC,fecha_registro DESC LIMIT 201").bind(tid).all();
         const cliente=clienteSoporte?await db.prepare("SELECT categoria,modulo,impacto,fecha_registro FROM servicio_soporte_cliente WHERE soporte_id=?1").bind(tid).first():null;
-        return json({solicitud:t,cliente,intervenciones:r.results.slice(0,200),limitado:r.results.length>200,hoy});
+        const disponible=!!await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='servicio_soporte_resoluciones'").first();
+        const resoluciones=disponible?(await db.prepare("SELECT version_solucion,solucion,fecha_solucion,decision,comentario,fecha_decision FROM servicio_soporte_resoluciones WHERE soporte_id=?1 ORDER BY version_solucion DESC LIMIT 100").bind(tid).all()).results:[];
+        return json({solicitud:t,cliente,intervenciones:r.results.slice(0,200),limitado:r.results.length>200,hoy,resoluciones,resoluciones_disponibles:disponible});
       }
       if(!accion&&request.method==="PATCH"){
-        const d=await leerJson(request,500);if(!d||!SOPORTE_ESTADOS.includes(d.estado)||!SOPORTE_PRIORIDADES.includes(d.prioridad)||!Number.isSafeInteger(d.version))return error("Estado, prioridad o versión inválidos",400);
+        const d=await leerJson(request,10000);if(!d||!SOPORTE_ESTADOS.includes(d.estado)||!SOPORTE_PRIORIDADES.includes(d.prioridad)||!Number.isSafeInteger(d.version))return error("Estado, prioridad o versión inválidos",400);
+        if(d.estado==="resuelto"&&t.estado!=="resuelto"){
+          const externo=clienteSoporte&&await db.prepare("SELECT soporte_id FROM servicio_soporte_cliente WHERE soporte_id=?1").bind(tid).first();
+          if(externo){
+            if(!textoEntrega(d.solucion,3,2000))return error("Describe la solución visible para el cliente",400);
+            if(!await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='servicio_soporte_resoluciones'").first())return error("Resoluciones pendientes de habilitar (0016)",503);
+            const rr=await db.batch([
+              db.prepare("INSERT INTO servicio_soporte_resoluciones(soporte_id,version_solucion,solucion,fecha_solucion) SELECT id,version+1,?1,?2 FROM servicio_soporte WHERE id=?3 AND propuesta_id=?4 AND version=?5 AND estado<>'resuelto'").bind(d.solucion.trim(),ahora,tid,pid,d.version),
+              db.prepare("UPDATE servicio_soporte SET estado='resuelto',prioridad=?1,version=version+1,fecha_actualizacion=?2 WHERE id=?3 AND propuesta_id=?4 AND version=?5 AND EXISTS(SELECT 1 FROM servicio_soporte_resoluciones WHERE soporte_id=?3 AND version_solucion=?5+1)").bind(d.prioridad,ahora,tid,pid,d.version)
+            ]);
+            return rr[0].meta.changes===1&&rr[1].meta.changes===1?json({ok:true}):error("La solicitud cambió. Actualiza.",409);
+          }
+        }
         const r=await db.prepare("UPDATE servicio_soporte SET estado=?1,prioridad=?2,version=version+1,fecha_actualizacion=?3 WHERE id=?4 AND propuesta_id=?5 AND version=?6").bind(d.estado,d.prioridad,ahora,tid,pid,d.version).run();
         return r.meta.changes?json({ok:true}):error("La solicitud cambió. Actualiza.",409);
       }
@@ -1464,6 +1478,7 @@ async function api(request,env,ctx) {
       if(tieneEvidencias){indiceEvidencias=stmts.length;stmts.push(db.prepare("DELETE FROM servicio_soporte_evidencias WHERE soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1) AND "+guardia+" RETURNING clave_r2").bind(id));}
       if(tablas.has("servicio_soporte")){borrar("servicio_soporte_mensajes","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");borrar("servicio_intervenciones","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");}
       if(tablas.has("servicio_soporte"))borrar("servicio_soporte_cliente","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");
+      if(tablas.has("servicio_soporte"))borrar("servicio_soporte_resoluciones","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");
       borrar("servicio_soporte","propuesta_id=?1");
       borrar("servicio_vinculos","propuesta_id=?1");
       borrar("pagos_mensualidad","propuesta_id=?1");
