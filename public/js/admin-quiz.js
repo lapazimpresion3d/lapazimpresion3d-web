@@ -413,6 +413,36 @@ function calcularDescuentoPropuesta(d){
  const detalle=v.inicial||v.mensual?{version:1,bruto,inicial:v.inicial,mensual:v.mensual,motivo:v.motivo.trim()}:null;
  return {neto,detalle,rebajaInicial:suma-neto.implementacion-neto.fabricacion-neto.extras,rebajaMensual:bruto.mensualidad-neto.mensualidad};
 }
+// Los importes de referencia no se guardan hasta que el administrador aprueba el borrador.
+function referenciaEconomica(paquete){
+ const p=globalThis.LP_ORIENTACION_WEB?.planes?.[paquete];
+ return p&&Number.isSafeInteger(p.implementacionReferencia)&&Number.isSafeInteger(p.mensualidadReferencia)?{implementacion:p.implementacionReferencia,mensualidad:p.mensualidadReferencia}:null;
+}
+function alcanceDesdeSolicitud(ficha){
+ if(!ficha||ficha.tipo_documento!=="solicitud_web")return "";
+ const lineas=[];
+ if(ficha.giro)lineas.push("Giro: "+ficha.giro);
+ if(ficha.paquete_base&&ficha.paquete_base!==ficha.paquete)lineas.push("Paquete inicial solicitado: "+ficha.paquete_base);
+ if(ficha.paquete)lineas.push("Paquete de interés: "+ficha.paquete);
+ if(Array.isArray(ficha.funciones)&&ficha.funciones.length)lineas.push("Funciones solicitadas (pendientes de confirmar):\n"+ficha.funciones.map(x=>"• "+x).join("\n"));
+ if(Array.isArray(ficha.complementos)&&ficha.complementos.length)lineas.push("Complementos solicitados:\n"+ficha.complementos.map(x=>"• "+x).join("\n"));
+ if(ficha.detalles)lineas.push("Descripción del cliente:\n"+ficha.detalles);
+ return lineas.join("\n\n");
+}
+function controlesDescuento(campo,guardado={},bloqueado=false){
+ const aplicar=campo("Aplicar descuento a este cliente");aplicar.type="checkbox";aplicar.checked=!!(guardado.inicial||guardado.mensual);aplicar.disabled=bloqueado;
+ const inicial=campo("Descuento sobre pago inicial (%)"),mensual=campo("Descuento sobre mensualidad (%)"),motivo=campo("Motivo del descuento (interno)");
+ for(const [v,max,n] of [[inicial,100,guardado.inicial],[mensual,99.99,guardado.mensual]]){v.type="number";v.min="0";v.max=String(max);v.step="0.01";v.value=((n||0)/100).toFixed(2);}
+ motivo.maxLength=240;motivo.value=guardado.motivo||"";
+ return {valor:()=>({inicial:aplicar.checked?centavosEconomicos(inicial.value):0,mensual:aplicar.checked?centavosEconomicos(mensual.value):0,motivo:aplicar.checked?motivo.value:""}),
+ actualizar(fisico=false,activo=true){aplicar.disabled=bloqueado||!activo;for(const v of [inicial,mensual,motivo]){v.parentElement.hidden=!aplicar.checked;v.disabled=bloqueado||!activo||!aplicar.checked;}if(fisico&&!bloqueado)mensual.value="0.00";mensual.disabled=fisico||bloqueado||!activo||!aplicar.checked;motivo.required=activo&&aplicar.checked&&!bloqueado;},
+ reset(){aplicar.checked=false;inicial.value=mensual.value="0.00";motivo.value="";}};
+}
+function textoTotalDescuento(bruto,descuento){
+ const d=calcularDescuentoPropuesta({...bruto,descuento}),n=d.neto,subtotal=n.implementacion+n.fabricacion+n.extras,iva=x=>Math.floor((x*16+50)/100);
+ return "Subtotal inicial antes de descuento: "+dineroEconomico(bruto.implementacion+bruto.fabricacion+bruto.extras)+" · Descuento inicial: −"+dineroEconomico(d.rebajaInicial)+" · Subtotal neto: "+dineroEconomico(subtotal)+" · IVA 16%: "+dineroEconomico(iva(subtotal))+" · Total inicial: "+dineroEconomico(subtotal+iva(subtotal))+" · Descuento mensual: −"+dineroEconomico(d.rebajaMensual)+" · Mensualidad con IVA: "+dineroEconomico(n.mensualidad+iva(n.mensualidad));
+}
+
 function agregarEconomica(art,x){
  const abrir=elem("button","secundario","Propuesta económica y pagos");abrir.type="button";
  const panel=elem("section","economica-panel");panel.hidden=true;
@@ -439,20 +469,23 @@ function agregarEconomica(art,x){
   const importes={};for(const [k,t] of [["implementacion","Implementación web"],["fabricacion","Fabricación / productos físicos"],["extras","Extras de pago único"],["mensualidad","Mensualidad"]]){
     const v=campo(t+" (MXN antes de IVA)");v.type="number";v.min="0";v.max="1000000";v.step="0.01";v.required=true;v.value=((bruto?.[k]||0)/100).toFixed(2);importes[k]=v;
   }
-  const aplicar=campo("Aplicar descuento a este cliente");aplicar.type="checkbox";aplicar.checked=!!(guardado.inicial||guardado.mensual);aplicar.disabled=aceptada;
-  const descInicial=campo("Descuento sobre pago inicial (%)"),descMensual=campo("Descuento sobre mensualidad (%)"),motivo=campo("Motivo del descuento (interno)");
-  for(const [v,max,n] of [[descInicial,100,guardado.inicial],[descMensual,99.99,guardado.mensual]]){v.type="number";v.min="0";v.max=String(max);v.step="0.01";v.value=((n||0)/100).toFixed(2);}
-  motivo.maxLength=240;motivo.value=guardado.motivo||"";
-  const descuentoActual=()=>({inicial:aplicar.checked?centavosEconomicos(descInicial.value):0,mensual:aplicar.checked?centavosEconomicos(descMensual.value):0,motivo:aplicar.checked?motivo.value:""});
+  const descuento=controlesDescuento(campo,guardado,aceptada);
+  const descuentoActual=descuento.valor;
+  if(!aceptada){
+    const copiar=elem("button","secundario","Cargar alcance solicitado");copiar.type="button";
+    const sugerir=elem("button","secundario","Cargar tarifas de referencia");sugerir.type="button";
+    const texto=alcanceDesdeSolicitud(x.ficha);
+    copiar.hidden=!texto;copiar.addEventListener("click",()=>{if(texto.length>alcance.maxLength){msg.textContent="El alcance solicitado excede el límite. Revisa las funciones y copia únicamente el alcance que vas a acordar.";return;}if(alcance.value.trim()&&!confirm("¿Reemplazar el texto del alcance por lo solicitado por el cliente?"))return;alcance.value=texto;msg.textContent="Revisa el alcance antes de guardar.";});
+    sugerir.addEventListener("click",()=>{const tarifa=referenciaEconomica(paquete.value);if(!tarifa){msg.textContent="Este paquete no tiene tarifa estándar.";return;}if((Number(importes.implementacion.value)||Number(importes.mensualidad.value))&&!confirm("¿Reemplazar implementación y mensualidad por las tarifas de referencia?"))return;for(const k of ["implementacion","mensualidad"])importes[k].value=(tarifa[k]/100).toFixed(2);actualizar();msg.textContent="Tarifas orientativas cargadas. Ajusta los importes al alcance real antes de guardar."});
+    form.append(copiar,sugerir,elem("p","metadatos","El alcance solicitado y las tarifas son referencias editables; no se consideran acordadas ni se guardan automáticamente."));
+  }
   form.append(elem("p","metadatos","Descuento antes de IVA, exclusivo de esta propuesta. Si se descuenta la mensualidad, la tarifa neta será la acordada para los periodos futuros. No modifica otros clientes."));
   const resumen=elem("p","economica-total");
   function actualizar(){
     const fisico=paquete.value==="solo_fisico";
     for(const k of ["implementacion","mensualidad"]){if(fisico&&!aceptada)importes[k].value="0.00";importes[k].disabled=fisico||aceptada;}
-    for(const v of [descInicial,descMensual,motivo]){v.parentElement.hidden=!aplicar.checked;v.disabled=!aplicar.checked||aceptada;}
-    if(fisico&&!aceptada)descMensual.value="0.00";descMensual.disabled=fisico||!aplicar.checked||aceptada;
-    motivo.required=aplicar.checked;
-    try{const bruto=Object.fromEntries(Object.entries(importes).map(([k,v])=>[k,centavosEconomicos(v.value)])),d=calcularDescuentoPropuesta({...bruto,descuento:descuentoActual()}),n=d.neto;const inicial=n.implementacion+n.fabricacion+n.extras,iva=Math.floor((inicial*16+50)/100),m=n.mensualidad+Math.floor((n.mensualidad*16+50)/100);resumen.textContent="Subtotal inicial antes de descuento: "+dineroEconomico(bruto.implementacion+bruto.fabricacion+bruto.extras)+" · Descuento inicial: −"+dineroEconomico(d.rebajaInicial)+" · Subtotal neto: "+dineroEconomico(inicial)+" · IVA 16%: "+dineroEconomico(iva)+" · Total inicial: "+dineroEconomico(inicial+iva)+" · Descuento mensual: −"+dineroEconomico(d.rebajaMensual)+" · Mensualidad con IVA: "+dineroEconomico(m);}catch(e){resumen.textContent=e.message;}
+    descuento.actualizar(fisico);
+    try{const bruto=Object.fromEntries(Object.entries(importes).map(([k,v])=>[k,centavosEconomicos(v.value)]));resumen.textContent=textoTotalDescuento(bruto,descuentoActual());}catch(e){resumen.textContent=e.message;}
 
   }
   form.append(resumen,elem("p","metadatos","Sin cobro automático. La mensualidad se informa por separado; los pagos registrados aquí corresponden únicamente al total inicial. IVA general del 16%."));
@@ -560,17 +593,26 @@ function iniciarRegistroManual(){
  const ec=(t,tag="input")=>{const l=elem("label",null,t),n=elem(tag);l.append(n);econ.append(l);return n;};
  const paquete=ec("Paquete","select");opciones(paquete,{"solo_fisico":"Fabricación física","presencia-digital":"Presencia digital","negocio-interactivo":"Negocio interactivo","gestion-comercial":"Gestión comercial","gestion-profesional":"Gestión profesional","a-medida":"A medida"});
  const importes={};for(const [k,t] of Object.entries({implementacion:"Implementación web",fabricacion:"Fabricación",extras:"Extras",mensualidad:"Mensualidad"})){const n=ec(t);n.type="number";n.min="0";n.max="1000000";n.step="0.01";n.value="0";importes[k]=n;}
- const fecha=ec("Fecha real de aceptación");fecha.type="date";const total=elem("p","metadatos");econ.append(total);
+ const descuento=controlesDescuento(ec);const fecha=ec("Fecha real de aceptación");fecha.type="date";const total=elem("p","metadatos");econ.append(total);
  const aviso=elem("p","metadatos","El registro rápido crea solicitud, cotización aceptada y proyecto. No registra pagos ni genera acceso privado.");f.append(aviso);
  const boton=elem("button",null,"Registrar solicitud"),msg=elem("p","metadatos");boton.type="submit";msg.setAttribute("role","status");f.append(boton,msg);
  let id=null;
- function ajustar(){econ.hidden=!aceptada.checked;fecha.required=aceptada.checked;const fisica=["llaveros","soporte_qr","fdm_medida","resina"].includes(servicio.value);if(fisica)paquete.value="solo_fisico";else if(paquete.value==="solo_fisico")paquete.value="a-medida";paquete.disabled=fisica;for(const k of ["implementacion","mensualidad"]){if(paquete.value==="solo_fisico")importes[k].value="0";importes[k].disabled=paquete.value==="solo_fisico";}const n=k=>Math.round(Number(importes[k].value||0)*100),a=n("implementacion")+n("fabricacion")+n("extras"),m=n("mensualidad");total.textContent="Total inicial con IVA: "+((a+Math.floor((a*16+50)/100))/100).toFixed(2)+" MXN · Mensualidad con IVA: "+((m+Math.floor((m*16+50)/100))/100).toFixed(2)+" MXN";boton.textContent=aceptada.checked?"Registrar pedido aceptado y crear proyecto":"Registrar solicitud";}
+ function ajustar(){
+  econ.hidden=!aceptada.checked;fecha.required=aceptada.checked;fecha.disabled=!aceptada.checked;
+  const fisica=["llaveros","soporte_qr","fdm_medida","resina"].includes(servicio.value);
+  if(fisica)paquete.value="solo_fisico";else if(paquete.value==="solo_fisico")paquete.value="a-medida";
+  paquete.disabled=fisica||!aceptada.checked;
+  for(const [k,v] of Object.entries(importes)){const noWeb=paquete.value==="solo_fisico"&&["implementacion","mensualidad"].includes(k);if(noWeb)v.value="0";v.disabled=noWeb||!aceptada.checked;}
+  descuento.actualizar(paquete.value==="solo_fisico",aceptada.checked);
+  try{total.textContent=textoTotalDescuento(Object.fromEntries(Object.entries(importes).map(([k,v])=>[k,centavosEconomicos(v.value)])),descuento.valor());}catch(e){total.textContent=e.message;}
+  boton.textContent=aceptada.checked?"Registrar pedido aceptado y crear proyecto":"Registrar solicitud";
+ }
  aceptada.addEventListener("change",ajustar);servicio.addEventListener("change",ajustar);paquete.addEventListener("change",ajustar);econ.addEventListener("input",ajustar);ajustar();
  f.addEventListener("submit",async e=>{e.preventDefault();if(boton.disabled)return;const archivos=[...fotos.files];if(archivos.length>3||archivos.some(a=>a.size>4*1024*1024)){msg.textContent="Máximo 3 imágenes de 4 MB.";return;}if(aceptada.checked&&!confirm("¿Confirmas que el cliente aceptó los importes indicados en esa fecha?"))return;
   id=id||crypto.randomUUID();const d={id,origen:canal.value,nombre:nombre.value,telefono:telefono.value,proyecto:proyecto.value,servicio:servicio.value,detalles:descripcion.value,privacidad:privacidad.checked,aceptada:aceptada.checked};
-  if(d.aceptada){d.fecha_aceptacion=fecha.value;d.economica={version:0,paquete:paquete.value,alcance:descripcion.value,...Object.fromEntries(Object.entries(importes).map(([k,n])=>[k,Math.round(Number(n.value||0)*100)]))};}
+  if(d.aceptada){d.fecha_aceptacion=fecha.value;try{d.economica={version:0,paquete:paquete.value,alcance:descripcion.value,descuento:descuento.valor(),...Object.fromEntries(Object.entries(importes).map(([k,n])=>[k,centavosEconomicos(n.value)]))};calcularDescuentoPropuesta(d.economica);}catch(e){msg.textContent=e.message;return;}}
   const body=new FormData();body.append("solicitud",JSON.stringify(d));for(const a of archivos)body.append("imagenes",a);boton.disabled=true;msg.textContent="Guardando…";
-  try{const r=await fetch("/api/admin/propuestas/manual",{method:"POST",credentials:"same-origin",body}),v=await r.json();if(!r.ok)throw Error(v.error||"No se pudo registrar");id=null;f.reset();ajustar();filtroPropuestas.value="";buscarPropuestas.value=v.folio;await cargarPropuestas();if(v.proyecto_id)await cargarProyectos();msg.textContent="Registrado: "+v.folio+(v.proyecto_id?" · Proyecto creado. Registra los pagos por separado.":" · Prepara la cotización.");}
+  try{const r=await fetch("/api/admin/propuestas/manual",{method:"POST",credentials:"same-origin",body}),v=await r.json();if(!r.ok)throw Error(v.error||"No se pudo registrar");id=null;f.reset();descuento.reset();ajustar();filtroPropuestas.value="";buscarPropuestas.value=v.folio;await cargarPropuestas();if(v.proyecto_id)await cargarProyectos();msg.textContent="Registrado: "+v.folio+(v.proyecto_id?" · Proyecto creado. Registra los pagos por separado.":" · Prepara la cotización.");}
   catch(e){msg.textContent=e.message;}finally{boton.disabled=false;}
  });
 }
@@ -609,7 +651,7 @@ async function cargarPropuestas(){
    } else if(esWeb){
      box.append(elem("p","resultado-etiqueta","COTIZACIÓN WEB · SOLICITUD DIRECTA"),elem("h3",null,x.ficha.paquete||x.ficha.tipo_pagina||"Proyecto a medida"));
      const detWeb=elem("dl");
-     for(const [t,v] of [["Paquete de interés",x.ficha.paquete||"Proyecto a medida"],...(x.ficha.tipo_pagina?[["Tipo de página (solicitud anterior)",x.ficha.tipo_pagina]]:[]),["Giro",x.ficha.giro],["Preferencia de inversión / presupuesto",etiquetasPresupuesto[x.ficha.presupuesto]||"Sin indicar"],["Funciones solicitadas",(x.ficha.funciones||[]).join(" · ")||"Ninguna"],["Complementos",(x.ficha.complementos||[]).join(" · ")||"Ninguno"]]) detWeb.append(elem("dt",null,t),elem("dd",null,v));
+     for(const [t,v] of [["Paquete de interés",x.ficha.paquete||"Proyecto a medida"],...(x.ficha.paquete_base&&x.ficha.paquete_base!==x.ficha.paquete?[["Paquete inicial",x.ficha.paquete_base]]:[]),...(x.ficha.tipo_pagina?[["Tipo de página (solicitud anterior)",x.ficha.tipo_pagina]]:[]),["Giro",x.ficha.giro],["Preferencia de inversión / presupuesto",etiquetasPresupuesto[x.ficha.presupuesto]||"Sin indicar"],["Funciones solicitadas",(x.ficha.funciones||[]).join(" · ")||"Ninguna"],["Complementos",(x.ficha.complementos||[]).join(" · ")||"Ninguno"]]) detWeb.append(elem("dt",null,t),elem("dd",null,v));
      box.append(detWeb);
    } else {
      const rec=x.ficha?.recomendacion||{};

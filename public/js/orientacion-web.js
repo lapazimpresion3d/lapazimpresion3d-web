@@ -4,6 +4,8 @@
 const planes={
   "presencia-digital": {
     "nombre": "Presencia digital",
+    "implementacionReferencia": 75000,
+    "mensualidadReferencia": 14900,
     "precio": "Implementación desde $750 MXN · $149 MXN al mes + IVA",
     "alcance": "Página comercial con identidad, horarios, ubicación y contacto. Menú o catálogo básico, según el tipo de negocio. Acceso desde QR/NFC y consultas por WhatsApp.",
     "funciones": [
@@ -18,6 +20,8 @@ const planes={
   },
   "negocio-interactivo": {
     "nombre": "Negocio interactivo",
+    "implementacionReferencia": 150000,
+    "mensualidadReferencia": 24900,
     "precio": "Implementación desde $1,500 MXN · $249 MXN al mes + IVA",
     "alcance": "Funciones de presencia digital. Carrito, pedidos y seguimiento para menús o catálogos. Agenda o reservaciones según el giro. Panel privado; cocina básica y pedidos de mesa cuando corresponda.",
     "funciones": [
@@ -43,6 +47,8 @@ const planes={
   },
   "gestion-comercial": {
     "nombre": "Gestión comercial",
+    "implementacionReferencia": 250000,
+    "mensualidadReferencia": 34900,
     "precio": "Implementación desde $2,500 MXN · $349 MXN al mes + IVA",
     "alcance": "Funciones de Negocio interactivo, según el giro. Punto de venta, caja y registro de cobros. Inventario básico para productos; comandas o atención de servicios. Tickets y reportes de pedidos y cobros.",
     "funciones": [
@@ -79,6 +85,8 @@ const planes={
   },
   "gestion-profesional": {
     "nombre": "Gestión profesional",
+    "implementacionReferencia": 350000,
+    "mensualidadReferencia": 49900,
     "precio": "Implementación desde $3,500 MXN · $499 MXN al mes + IVA",
     "alcance": "Funciones de Gestión comercial, según el giro. Inventario avanzado, costos y proveedores. Fidelización y administración avanzada. Automatizaciones y reportes avanzados.",
     "funciones": [

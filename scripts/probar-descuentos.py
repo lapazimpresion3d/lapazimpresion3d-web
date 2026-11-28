@@ -8,7 +8,7 @@ db = sqlite3.connect(":memory:")
 db.execute("PRAGMA foreign_keys=ON")
 for filename in ("0003_propuestas.sql", "0005_control_economico.sql"):
     db.executescript((ROOT/"migrations"/filename).read_text(encoding="utf-8-sig"))
-for pid in ("hist", "draft"):
+for pid in ("hist", "draft", "manual"):
     db.execute("INSERT INTO quiz_propuestas(id,folio,fecha,nombre,telefono,servicio_id,ficha_json) VALUES (?,?,?,?,?,?,?)",
                (pid,pid,"2026-11-28","Prueba","0000000000","WEB","{}"))
 db.execute("INSERT INTO propuestas_economicas(propuesta_id,paquete,alcance,implementacion,fabricacion,extras,mensualidad,total_inicial,total_mensual,fecha_actualizacion,fecha_aceptacion) VALUES ('hist','presencia-digital','Prueba',75000,0,0,14900,87000,17284,'2026-11-28','2026-11-28')")
@@ -28,6 +28,11 @@ assert db.execute(update,args[:10]+(1,detalle)).rowcount == 0
 assert db.execute(update,("hist",)+args[1:10]+(1,detalle)).rowcount == 0
 assert db.execute("SELECT * FROM propuestas_economicas WHERE propuesta_id='hist'").fetchone() == original + ("{}",)
 assert db.execute("SELECT total_inicial,total_mensual,version,descuento_json FROM propuestas_economicas WHERE propuesta_id='draft'").fetchone() == (271440,38460,2,detalle)
+manual = "INSERT INTO propuestas_economicas(propuesta_id,paquete,alcance,implementacion,fabricacion,extras,mensualidad,total_inicial,total_mensual,fecha_actualizacion,fecha_aceptacion,descuento_json) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)"
+assert manual in source
+assert db.execute(manual, ("manual",)+args[1:10]+("2026-11-28",detalle)).rowcount == 1
+assert db.execute(update,("manual",)+args[1:10]+(1,detalle)).rowcount == 0
+assert db.execute("SELECT total_inicial,total_mensual,descuento_json FROM propuestas_economicas WHERE propuesta_id='manual'").fetchone() == (271440,38460,detalle)
 assert db.execute("PRAGMA foreign_key_check").fetchall() == []
 assert db.execute("PRAGMA integrity_check").fetchone() == ("ok",)
 print("OK: migración 0030, registros históricos, descuentos, versiones concurrentes e integridad.")

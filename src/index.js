@@ -173,7 +173,7 @@ function totalesEconomicos(d){
 const ORIGEN_SOLICITUD_MANUAL=new Set(["whatsapp","presencial","instagram","facebook","telefono","correo","otro"]);
 const SERVICIO_MANUAL={llaveros:"LLA",soporte_qr:"QR",fdm_medida:"FDM",resina:"RES",web:"WEB",combinado:"COM",otro:"OTR"};
 function solicitudManualValida(d){
- return !!d&&typeof d.id==="string"&&ID_UUID.test(d.id)&&ORIGEN_SOLICITUD_MANUAL.has(d.origen)&&Object.hasOwn(SERVICIO_MANUAL,d.servicio)&&textoWeb(d.nombre,2,100)&&textoWeb(d.proyecto,2,120)&&typeof d.telefono==="string"&&/^\d{10}$/.test(d.telefono)&&textoWeb(d.detalles,3,1200)&&typeof d.privacidad==="boolean"&&typeof d.aceptada==="boolean"&&(!d.aceptada||(propuestaEconomicaValida(d.economica)&&d.economica.descuento==null&&d.economica.version===0&&fechaEconomicaValida(d.fecha_aceptacion)&&d.fecha_aceptacion<=hoyMensualidad()&&(!Object.hasOwn(TIPOS_FISICOS,d.servicio)||d.economica.paquete==="solo_fisico")&&(!["web","combinado"].includes(d.servicio)||d.economica.paquete!=="solo_fisico")));
+ return !!d&&typeof d.id==="string"&&ID_UUID.test(d.id)&&ORIGEN_SOLICITUD_MANUAL.has(d.origen)&&Object.hasOwn(SERVICIO_MANUAL,d.servicio)&&textoWeb(d.nombre,2,100)&&textoWeb(d.proyecto,2,120)&&typeof d.telefono==="string"&&/^\d{10}$/.test(d.telefono)&&textoWeb(d.detalles,3,1200)&&typeof d.privacidad==="boolean"&&typeof d.aceptada==="boolean"&&(!d.aceptada||(propuestaEconomicaValida(d.economica)&&d.economica.version===0&&fechaEconomicaValida(d.fecha_aceptacion)&&d.fecha_aceptacion<=hoyMensualidad()&&(!Object.hasOwn(TIPOS_FISICOS,d.servicio)||d.economica.paquete==="solo_fisico")&&(!["web","combinado"].includes(d.servicio)||d.economica.paquete!=="solo_fisico")));
 }
 function propuestaEconomicaValida(d){
  try{calcularDescuentoPropuesta(d);}catch{return false;}
@@ -1225,6 +1225,11 @@ async function api(request,env,ctx) {
       const db=env.QUIZ_DB,id=d.id,fecha=new Date().toISOString(),prefijo=SERVICIO_MANUAL[d.servicio],folio=prefijo+"-"+id.replace(/-/g,"").slice(0,10).toUpperCase();
       const previo=await db.prepare("SELECT id,folio FROM quiz_propuestas WHERE id=?1").bind(id).first();
       if(previo)return error("Esta solicitud ya fue registrada. Busca el folio "+previo.folio+" antes de volver a intentar.",409);
+      const descuentoManual=d.aceptada?calcularDescuentoPropuesta(d.economica):null;
+      if(descuentoManual?.detalle){
+        const columnas=await db.prepare("PRAGMA table_info(propuestas_economicas)").all();
+        if(!columnas.results.some(c=>c.name==="descuento_json"))return error("Aplica la migración 0030 de descuentos antes de guardar.",503);
+      }
       const fotos=form.getAll("imagenes");
       if(fotos.length>3||fotos.some(a=>!(a instanceof File)||!Object.hasOwn(IMG_MIME,a.type)||a.size===0||a.size>IMG_MAX))return error("Máximo 3 JPG, PNG o WebP de hasta 4 MB",400);
       if(fotos.length&&!env.COTIZACIONES_R2)return error("Almacenamiento no disponible",503);
@@ -1233,7 +1238,14 @@ async function api(request,env,ctx) {
       const fisica=Object.hasOwn(TIPOS_FISICOS,d.servicio),ficha={tipo_documento:fisica?"solicitud_servicio":"solicitud_web",version_esquema:"1.0",id_solicitud:id,origen:"registro_manual",canal_contacto:d.origen,fecha_generacion:fecha,servicio:d.servicio,titulo_servicio:fisica?TIPOS_FISICOS[d.servicio]:d.servicio==="combinado"?"Proyecto combinado":d.servicio==="otro"?"Otro servicio":"Servicio digital",detalles:d.detalles.trim(),campos:{},funciones:[],complementos:[],imagenes,privacidad_registrada:d.privacidad};
       const stmts=[db.prepare("INSERT INTO quiz_propuestas(id,folio,fecha,nombre,proyecto,telefono,comentario,servicio_id,ficha_json,estado,privacidad_aceptada) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)").bind(id,folio,fecha,d.nombre.trim(),d.proyecto.trim(),d.telefono,d.detalles.trim(),prefijo,JSON.stringify(ficha),d.aceptada?"cotizado":"nueva",d.privacidad?1:0)];
       let proyectoId=null;
-      if(d.aceptada){const e=d.economica,t=totalesEconomicos(e);proyectoId=crypto.randomUUID();stmts.push(db.prepare("INSERT INTO propuestas_economicas(propuesta_id,paquete,alcance,implementacion,fabricacion,extras,mensualidad,total_inicial,total_mensual,fecha_actualizacion,fecha_aceptacion) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)").bind(id,e.paquete,e.alcance.trim(),e.implementacion,e.fabricacion,e.extras,e.mensualidad,t.total_inicial,t.total_mensual,fecha,d.fecha_aceptacion),db.prepare("INSERT INTO proyectos_cliente(id,propuesta_id,fecha_creacion,fecha_actualizacion,estado) VALUES (?1,?2,?3,?3,'preparacion')").bind(proyectoId,id,fecha));}
+      if(d.aceptada){
+        const e=d.economica,neto=descuentoManual.neto,t=totalesEconomicos(neto);proyectoId=crypto.randomUUID();
+        const args=[id,e.paquete,e.alcance.trim(),neto.implementacion,neto.fabricacion,neto.extras,neto.mensualidad,t.total_inicial,t.total_mensual,fecha,d.fecha_aceptacion];
+        const insercion=descuentoManual.detalle
+          ?db.prepare("INSERT INTO propuestas_economicas(propuesta_id,paquete,alcance,implementacion,fabricacion,extras,mensualidad,total_inicial,total_mensual,fecha_actualizacion,fecha_aceptacion,descuento_json) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)").bind(...args,JSON.stringify(descuentoManual.detalle))
+          :db.prepare("INSERT INTO propuestas_economicas(propuesta_id,paquete,alcance,implementacion,fabricacion,extras,mensualidad,total_inicial,total_mensual,fecha_actualizacion,fecha_aceptacion) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)").bind(...args);
+        stmts.push(insercion,db.prepare("INSERT INTO proyectos_cliente(id,propuesta_id,fecha_creacion,fecha_actualizacion,estado) VALUES (?1,?2,?3,?3,'preparacion')").bind(proyectoId,id,fecha));
+      }
       try{await db.batch(stmts);}catch(e){await limpiarImagenes(env,imagenes);throw e;}
       return json({ok:true,folio,id,proyecto_id:proyectoId},201);
     }
