@@ -20,5 +20,11 @@
     "EMAIL_FROM": "Lapazimpresion3d <notificaciones@lapazimpresion3d.com>",
     "NOTIFY_EMAIL": "lapazimpresion3d@gmail.com",
     "ADMIN_TURNSTILE": "true"
-  }
+  },
+  "r2_buckets": [
+    {
+      "binding": "COTIZACIONES_R2",
+      "bucket_name": "lapazimpresion3d-cotizaciones"
+    }
+  ]
 }
