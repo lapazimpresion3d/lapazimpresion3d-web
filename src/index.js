@@ -580,10 +580,18 @@ async function api(request,env,ctx) {
   }
   // La ruta histórica no crea prospectos identificables. Conservar solo consulta de registros anteriores.
   if(path==="/api/quiz/solicitudes" && request.method==="POST") return error("Este registro fue reemplazado por el formulario de propuestas",410);
+  // Activación explícita para evitar bloquear al administrador antes de comprobar el widget.
+  if(path==="/api/admin/login/config" && request.method==="GET"){
+    return json({turnstile:env.ADMIN_TURNSTILE==="true"});
+  }
   if(path==="/api/admin/login" && request.method==="POST") {
     if(!sameOrigin(request)) return error("Origen no autorizado",403);
     if(!env.ADMIN_PASSWORD || !env.SESSION_SECRET) return error("Acceso no configurado",503);
     if(!await verificarLimite(request,env,"login",5,900)) return error("Demasiados intentos. Intenta más tarde.",429);
+    if(env.ADMIN_TURNSTILE==="true"){
+      const rechazo=await verificarTurnstile(request,env,"admin_login");
+      if(rechazo)return rechazo;
+    }
     const data=await leerJson(request,512);
     const received=typeof data?.password==="string"?data.password:"";
     // La protección de intentos se debe reforzar con Cloudflare WAF Rate Limiting.
