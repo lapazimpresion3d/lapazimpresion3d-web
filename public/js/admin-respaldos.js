@@ -16,6 +16,7 @@ function agregar(art,x){
  const ref=boton("Actualizar registros");ref.addEventListener("click",()=>{if(confirm("¿Actualizar? Se perderán borradores no guardados."))cargar();});c.replaceChildren(el("p","Bitácora administrativa de operaciones realizadas. No crea, descarga ni restaura respaldos. No registra credenciales ni enlaces privados.","metadatos"),met,ref);
  politicas(c,x,vigente);
  ejecuciones(c,x,vigente);
+ globalThis.LP_CONSERVACION?.agregar(c,x,vigente);
  const f=el("form",undefined,"economica-form"),fecha=campo(f,"Fecha del respaldo"),a=sel(f,"Alcance",alcance),res=sel(f,"Resultado",resultados),m=sel(f,"Método",metodos),referencia=campo(f,"Referencia interna (sin credenciales ni URL privada)"),obs=campo(f,"Observaciones","textarea"),b=el("button","Registrar respaldo realizado"),msg=el("p",undefined,"metadatos");fecha.type="date";fecha.required=true;fecha.max=d.hoy;fecha.value=d.hoy;referencia.maxLength=200;obs.maxLength=2000;b.type="submit";msg.setAttribute("role","status");f.append(b,msg);
  const nuevo=el("details",undefined,"proyecto-bloque");nuevo.append(el("summary","+ Registrar respaldo"),f);c.append(nuevo);formGuardar(f,b,msg,()=>({fecha_respaldo:fecha.value,alcance:a.value,resultado:res.value,metodo:m.value,referencia:referencia.value,observaciones:obs.value}),async datos=>{await api(ruta,datos);if(vigente())await cargar();});
  if(d.limitado)c.append(el("p","Últimos 100 respaldos.","metadatos"));if(!d.items.length)c.append(el("p","Sin respaldos registrados. Esto no demuestra que no existan copias."));

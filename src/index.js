@@ -1,3 +1,4 @@
+import {evaluarRetencion} from "./retencion-copias.mjs";
 import {mesInformeValido,informeValido,datosInforme} from "./informes-mantenimiento.mjs";
 import {novedadValida} from "./novedades.mjs";
 import {correccionCostoValida} from "./correcciones-costos.mjs";
@@ -1532,6 +1533,50 @@ async function api(request,env,ctx) {
       }
       return error("Método no permitido",405);
     }
+    const conservacion=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/conservacion(?:\/([0-9a-f-]{36})(?:\/(proteccion|recuperaciones)(?:\/([0-9a-f-]{36}))?)?)?$/i);
+    if(conservacion){
+      const [,pid,bid,accion,rid]=conservacion,db=env.QUIZ_DB,hoy=hoyMensualidad(),ahora=new Date().toISOString();
+      if(!ID_UUID.test(pid)||(bid&&!ID_UUID.test(bid))||(rid&&(!ID_UUID.test(rid)||accion!=="recuperaciones")))return error("Identificador inválido",400);
+      const e=await db.prepare("SELECT propuesta_id FROM propuestas_economicas WHERE propuesta_id=?1 AND fecha_aceptacion IS NOT NULL AND mensualidad>0 AND paquete<>'solo_fisico'").bind(pid).first();
+      if(!e)return error("Servicio no encontrado",404);
+      const t=await db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('servicio_retencion_copias','servicio_recuperaciones','servicio_respaldos','servicio_politicas_respaldos','servicio_pruebas_restauracion')").first();
+      if(t.n!==5)return error("Conservación pendiente de habilitar (0028, 0020 y 0017)",503);
+      if(!bid&&request.method==="GET"){
+        const r=await db.prepare("SELECT b.id,b.fecha_respaldo,b.alcance,b.resultado,b.metodo,COALESCE(c.protegida,0) AS protegida,c.motivo,COALESCE(c.version,0) AS version,p.retencion_dias,p.habilitada,p.inicio,(SELECT COUNT(*) FROM servicio_recuperaciones z WHERE z.respaldo_id=b.id AND z.estado IN ('solicitada','en_revision')) AS pendientes FROM servicio_respaldos b LEFT JOIN servicio_retencion_copias c ON c.respaldo_id=b.id LEFT JOIN servicio_politicas_respaldos p ON p.propuesta_id=b.propuesta_id AND p.alcance=b.alcance WHERE b.propuesta_id=?1 ORDER BY b.fecha_respaldo DESC,b.id DESC LIMIT 101").bind(pid).all();
+        return json({hoy,items:r.results.slice(0,100).map(x=>({...x,retencion:evaluarRetencion(x,hoy)})),limitado:r.results.length>100});
+      }
+      if(!bid)return error("Método no permitido",405);
+      const b=await db.prepare("SELECT id,resultado FROM servicio_respaldos WHERE id=?1 AND propuesta_id=?2").bind(bid,pid).first();
+      if(!b)return error("Respaldo no encontrado",404);
+      if(accion==="proteccion"&&request.method==="PUT"){
+        const d=await leerJson(request,5000);
+        if(!d||typeof d.protegida!=="boolean"||!Number.isSafeInteger(d.version)||d.version<0||!textoEntrega(d.motivo,3,1000))return error("Revisa protección y motivo",400);
+        const r=d.version===0?await db.prepare("INSERT INTO servicio_retencion_copias(respaldo_id,protegida,motivo,fecha_actualizacion) VALUES(?1,?2,?3,?4) ON CONFLICT DO NOTHING").bind(bid,Number(d.protegida),d.motivo.trim(),ahora).run():await db.prepare("UPDATE servicio_retencion_copias SET protegida=?2,motivo=?3,fecha_actualizacion=?4,version=version+1 WHERE respaldo_id=?1 AND version=?5").bind(bid,Number(d.protegida),d.motivo.trim(),ahora,d.version).run();
+        return r.meta.changes?json({ok:true}):error("Protección modificada. Actualiza.",409);
+      }
+      if(accion==="recuperaciones"&&!rid&&request.method==="GET"){
+        const r=await db.prepare("SELECT id,motivo,estado,prueba_id,observaciones,version,fecha_registro,fecha_actualizacion FROM servicio_recuperaciones WHERE respaldo_id=?1 ORDER BY fecha_registro DESC,id DESC LIMIT 101").bind(bid).all();
+        const pruebas=await db.prepare("SELECT id,fecha_prueba,resultado FROM servicio_pruebas_restauracion WHERE respaldo_id=?1 ORDER BY fecha_prueba DESC,id DESC LIMIT 100").bind(bid).all();
+        return json({items:r.results.slice(0,100),limitado:r.results.length>100,pruebas:pruebas.results});
+      }
+      if(accion==="recuperaciones"&&!rid&&request.method==="POST"){
+        const d=await leerJson(request,8000);
+        if(!d||typeof d.id!=="string"||!ID_UUID.test(d.id)||!textoEntrega(d.motivo,3,2000)||b.resultado==="fallido")return error("Revisa solicitud; no se admite respaldo fallido",400);
+        const r=await db.prepare("INSERT INTO servicio_recuperaciones(id,respaldo_id,motivo,fecha_registro,fecha_actualizacion) VALUES(?1,?2,?3,?4,?4) ON CONFLICT DO NOTHING").bind(d.id,bid,d.motivo.trim(),ahora).run();
+        if(r.meta.changes)return json({ok:true},201);
+        const previo=await db.prepare("SELECT motivo FROM servicio_recuperaciones WHERE id=?1 AND respaldo_id=?2").bind(d.id,bid).first();
+        return previo?.motivo===d.motivo.trim()?json({ok:true,repetido:true}):error("Identificador en conflicto",409);
+      }
+      if(accion==="recuperaciones"&&rid&&request.method==="PATCH"){
+        const d=await leerJson(request,8000);
+        if(!d||!Number.isSafeInteger(d.version)||d.version<1||!["en_revision","prueba_registrada","cancelada"].includes(d.estado)||!textoEntrega(d.observaciones,3,2000))return error("Revisa estado y observaciones",400);
+        const prueba=d.estado==="prueba_registrada"?d.prueba_id:null;
+        if(d.estado==="prueba_registrada"&&(typeof prueba!=="string"||!ID_UUID.test(prueba)||!await db.prepare("SELECT id FROM servicio_pruebas_restauracion WHERE id=?1 AND respaldo_id=?2").bind(prueba,bid).first()))return error("Selecciona una prueba ya registrada de esta copia",400);
+        const r=await db.prepare("UPDATE servicio_recuperaciones SET estado=?1,prueba_id=?2,observaciones=?3,version=version+1,fecha_actualizacion=?4 WHERE id=?5 AND respaldo_id=?6 AND version=?7 AND estado IN ('solicitada','en_revision')").bind(d.estado,prueba,d.observaciones.trim(),ahora,rid,bid,d.version).run();
+        return r.meta.changes?json({ok:true}):error("Solicitud cerrada o modificada. Actualiza.",409);
+      }
+      return error("Método no permitido",405);
+    }
     const ejecuciones=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/ejecuciones-respaldos$/i);
     if(ejecuciones&&request.method==="GET"){
       const pid=ejecuciones[1],db=env.QUIZ_DB;
@@ -1856,6 +1901,7 @@ async function api(request,env,ctx) {
       if(tablas.has("servicio_soporte"))borrar("servicio_soporte_cliente","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");
       if(tablas.has("servicio_soporte"))borrar("servicio_soporte_resoluciones","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");
       borrar("servicio_soporte","propuesta_id=?1");
+      if(tablas.has("servicio_respaldos")){borrar("servicio_recuperaciones","respaldo_id IN (SELECT id FROM servicio_respaldos WHERE propuesta_id=?1)");borrar("servicio_retencion_copias","respaldo_id IN (SELECT id FROM servicio_respaldos WHERE propuesta_id=?1)");}
       if(tablas.has("servicio_respaldos"))borrar("servicio_pruebas_restauracion","respaldo_id IN (SELECT id FROM servicio_respaldos WHERE propuesta_id=?1)");
       borrar("servicio_respaldos","propuesta_id=?1");
       borrar("servicio_politicas_respaldos","propuesta_id=?1");
