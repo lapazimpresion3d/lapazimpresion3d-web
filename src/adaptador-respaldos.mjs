@@ -44,5 +44,17 @@ export async function crearRespaldoPrivado(env,d){
   return await verificarGuardado(await env.RESPALDOS_R2.get(objKey),d,key);
  }catch{return {ok:false,error:"no_verificable"};}
 }
-export class EjecutorRespaldos extends WorkerEntrypoint{async crearRespaldo(datos){return crearRespaldoPrivado(this.env,datos);}}
+export async function consultarRespaldoPrivado(env,d){
+ if(env.ADAPTADOR_RESPALDOS_HABILITADO!=="si"||!solicitudRespaldoValida(d)||!empresaAutorizada(env,d.empresa)||!env.RESPALDOS_R2)return {ok:false,error:"no_disponible"};
+ try{
+  const key=await llave(env),obj=await env.RESPALDOS_R2.get("instantaneas/v1/"+d.id+".bin");
+  if(!obj)return {ok:true,estado:"no_encontrada"};
+  const r=await verificarGuardado(obj,d,key);
+  return {ok:true,estado:"verificada",resultado:r.resultado,referencia:r.referencia,observaciones:r.observaciones};
+ }catch{return {ok:false,error:"no_verificable"};}
+}
+export class EjecutorRespaldos extends WorkerEntrypoint{
+ async crearRespaldo(datos){return crearRespaldoPrivado(this.env,datos);}
+ async consultarRespaldo(datos){return consultarRespaldoPrivado(this.env,datos);}
+}
 export default {fetch(){return new Response("Not found",{status:404,headers:{"Cache-Control":"no-store"}});}};

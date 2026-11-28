@@ -1,3 +1,4 @@
+import {clasificarReconciliacion} from "./reconciliacion-respaldos.mjs";
 import {evaluarRetencion} from "./retencion-copias.mjs";
 import {mesInformeValido,informeValido,datosInforme} from "./informes-mantenimiento.mjs";
 import {novedadValida} from "./novedades.mjs";
@@ -1577,6 +1578,42 @@ async function api(request,env,ctx) {
       }
       return error("Método no permitido",405);
     }
+    const reconciliacion=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/ejecuciones-respaldos\/([0-9a-f-]{36})\/reconciliaciones$/i);
+    if(reconciliacion){
+      const [,pid,eid]=reconciliacion,db=env.QUIZ_DB;
+      if(!ID_UUID.test(pid)||!ID_UUID.test(eid))return error("Identificador inválido",400);
+      const tablas=await db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('servicio_reconciliaciones_respaldos','servicio_ejecuciones_respaldos','servicio_respaldos','servicio_vinculos')").first();
+      if(tablas.n!==4)return error("Reconciliación pendiente de habilitar (0029)",503);
+      const q=await db.prepare("SELECT x.*,v.negocio_externo,v.estado AS estado_vinculo,v.plataforma FROM servicio_ejecuciones_respaldos x JOIN servicio_vinculos v ON v.id=x.vinculo_id AND v.propuesta_id=x.propuesta_id JOIN propuestas_economicas e ON e.propuesta_id=x.propuesta_id WHERE x.id=?1 AND x.propuesta_id=?2 AND e.fecha_aceptacion IS NOT NULL AND e.mensualidad>0 AND e.paquete<>'solo_fisico'").bind(eid,pid).first();
+      if(!q)return error("Ejecución no encontrada",404);
+      let lista;try{lista=JSON.parse(env.RESPALDOS_NEGOCIOS_AUTORIZADOS||"[]");}catch{}
+      const permitido=env.RECONCILIACION_RESPALDOS_HABILITADA==="si"&&typeof env.RESPALDOS_EJECUTOR?.consultarRespaldo==="function"&&Array.isArray(lista)&&lista.length<=100&&lista.includes(q.negocio_externo)&&q.estado_vinculo==="registrado"&&q.plataforma==="lapaz-comercios";
+      if(request.method==="GET"){
+        const r=await db.prepare("SELECT id,resultado,motivo,referencia,fecha_registro FROM servicio_reconciliaciones_respaldos WHERE ejecucion_id=?1 ORDER BY fecha_registro DESC,id DESC LIMIT 101").bind(eid).all();
+        return json({estado:q.estado,habilitada:permitido,items:r.results.slice(0,100),limitado:r.results.length>100});
+      }
+      if(request.method!=="POST")return error("Método no permitido",405);
+      const d=await leerJson(request,5000);
+      if(!d||typeof d.id!=="string"||!ID_UUID.test(d.id)||d.confirmar!=="VERIFICAR"||!textoEntrega(d.motivo,3,1000))return error("Confirma verificación y motivo",400);
+      const previo=await db.prepare("SELECT resultado,motivo FROM servicio_reconciliaciones_respaldos WHERE id=?1 AND ejecucion_id=?2").bind(d.id,eid).first();
+      if(previo)return previo.motivo===d.motivo.trim()?json({ok:true,repetido:true,resultado:previo.resultado}):error("Identificador en conflicto",409);
+      if(q.estado!=="incierto"||!permitido)return error("Solo ejecuciones inciertas con vínculo y adaptador autorizados",409);
+      let respuesta;try{respuesta=await env.RESPALDOS_EJECUTOR.consultarRespaldo({id:eid,empresa:q.negocio_externo,alcance:q.alcance,fecha_programada:q.fecha_programada});}catch{}
+      const resultado=clasificarReconciliacion(respuesta,eid),ahora=new Date().toISOString();
+      const guard="EXISTS(SELECT 1 FROM servicio_vinculos v WHERE v.id=x.vinculo_id AND v.propuesta_id=x.propuesta_id AND v.estado='registrado' AND v.plataforma='lapaz-comercios' AND v.negocio_externo=?6)";
+      if(resultado!=="verificada"){
+        const r=await db.prepare("INSERT INTO servicio_reconciliaciones_respaldos(id,ejecucion_id,resultado,motivo,fecha_registro) SELECT ?1,x.id,?2,?3,?4 FROM servicio_ejecuciones_respaldos x WHERE x.id=?5 AND x.estado='incierto' AND "+guard+" ON CONFLICT DO NOTHING").bind(d.id,resultado,d.motivo.trim(),ahora,eid,q.negocio_externo).run();
+        return r.meta.changes?json({ok:true,resultado,estado:"incierto"}):error("Ejecución o vínculo modificado. Actualiza.",409);
+      }
+      // Date of original execution is not proof of creation; record date of verification explicitly in notes.
+      const nota="Copia verificada durante reconciliación el "+ahora+". Fecha real de creación no confirmada. "+respuesta.observaciones;
+      const r=await db.batch([
+        db.prepare("INSERT INTO servicio_reconciliaciones_respaldos(id,ejecucion_id,resultado,motivo,fecha_registro,referencia) SELECT ?1,x.id,?2,?3,?4,?7 FROM servicio_ejecuciones_respaldos x WHERE x.id=?5 AND x.estado='incierto' AND "+guard+" AND NOT EXISTS(SELECT 1 FROM servicio_respaldos b WHERE b.id=x.id) ON CONFLICT DO NOTHING").bind(d.id,resultado,d.motivo.trim(),ahora,eid,q.negocio_externo,respuesta.referencia),
+        db.prepare("INSERT INTO servicio_respaldos(id,propuesta_id,fecha_respaldo,alcance,resultado,metodo,referencia,observaciones,fecha_registro) SELECT x.id,x.propuesta_id,?1,x.alcance,'parcial','automatizado',?2,?3,?4 FROM servicio_ejecuciones_respaldos x WHERE x.id=?5 AND x.estado='incierto' AND changes()=1 AND EXISTS(SELECT 1 FROM servicio_reconciliaciones_respaldos z WHERE z.id=?6 AND z.ejecucion_id=x.id AND z.resultado='verificada')").bind(hoyMensualidad(),respuesta.referencia,nota.slice(0,2000),ahora,eid,d.id),
+        db.prepare("UPDATE servicio_ejecuciones_respaldos SET estado='parcial',referencia=?1,observaciones=?2,fecha_actualizacion=?3 WHERE id=?4 AND estado='incierto' AND changes()=1 AND EXISTS(SELECT 1 FROM servicio_respaldos b WHERE b.id=?4)").bind(respuesta.referencia,nota.slice(0,2000),ahora,eid)
+      ]);
+      return r.every(z=>z.meta.changes===1)?json({ok:true,resultado,estado:"parcial"}):error("No se pudo reconciliar; revisar registros existentes",409);
+    }
     const ejecuciones=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/ejecuciones-respaldos$/i);
     if(ejecuciones&&request.method==="GET"){
       const pid=ejecuciones[1],db=env.QUIZ_DB;
@@ -1905,6 +1942,7 @@ async function api(request,env,ctx) {
       if(tablas.has("servicio_respaldos"))borrar("servicio_pruebas_restauracion","respaldo_id IN (SELECT id FROM servicio_respaldos WHERE propuesta_id=?1)");
       borrar("servicio_respaldos","propuesta_id=?1");
       borrar("servicio_politicas_respaldos","propuesta_id=?1");
+      if(tablas.has("servicio_ejecuciones_respaldos"))borrar("servicio_reconciliaciones_respaldos","ejecucion_id IN (SELECT id FROM servicio_ejecuciones_respaldos WHERE propuesta_id=?1)");
       borrar("servicio_ejecuciones_respaldos","propuesta_id=?1");
       if(tablas.has("servicio_actualizaciones"))borrar("servicio_novedades","actualizacion_id IN (SELECT id FROM servicio_actualizaciones WHERE propuesta_id=?1)");
       borrar("servicio_actualizaciones","propuesta_id=?1");
