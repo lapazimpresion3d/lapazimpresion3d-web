@@ -241,13 +241,35 @@ async function cargarProyectos(){
        const caja=elem("section","materiales-administracion materiales-recibidos");
        caja.append(elem("h4",null,"Materiales del proyecto"));
        const secciones={datos_negocio:"Datos, descripción o diseño",servicios_productos:"Productos, servicios, cantidad o medidas",horarios_contacto:"Contacto, uso o entrega",indicaciones:"Indicaciones adicionales"};
-       const nota=elem("div","apartado-recibido"),labelNota=elem("label",null,"Indicaciones para el cliente (visibles en su portal)"),txt=elem("textarea");
-       txt.rows=4;txt.maxLength=2000;txt.value=d.instrucciones||"";labelNota.append(txt);
-       const guardar=elem("button","secundario","Guardar indicaciones");guardar.type="button";
-       const mensaje=elem("p","metadatos","");mensaje.setAttribute("role","status");
-       guardar.disabled=txt.disabled=["finalizado","cancelado"].includes(p.estado);
-       guardar.addEventListener("click",async()=>{guardar.disabled=true;mensaje.textContent="Guardando…";try{const r=await req("/api/admin/proyectos/"+encodeURIComponent(p.id)+"/materiales",{method:"PATCH",body:JSON.stringify({instrucciones:txt.value})});txt.value=r.instrucciones;mensaje.textContent="Indicaciones guardadas. El cliente podrá leerlas al abrir o actualizar su portal."; }catch(e){mensaje.textContent=e.message;}finally{guardar.disabled=false;}});
-       nota.append(labelNota,guardar,mensaje);caja.append(nota);
+       const nota=elem("section","apartado-recibido indicaciones-editor"),filas=elem("div","indicaciones-filas");
+       const colores={rojo:"Rojo · Importante / corrección",amarillo:"Amarillo · Duda / pendiente",verde:"Verde · Confirmación / correcto",azul:"Azul · Información / avance"};
+       const cerrado=["finalizado","cancelado"].includes(p.estado);
+       const agregar=elem("button","secundario","Agregar indicación"),guardar=elem("button",null,"Guardar indicaciones"),mensaje=elem("p","metadatos","");
+       agregar.type=guardar.type="button";mensaje.setAttribute("role","status");
+       let guardando=false;
+       function controlesNotas(){agregar.disabled=cerrado||guardando||filas.children.length>=10;guardar.disabled=cerrado||guardando;for(const el of filas.querySelectorAll("button,textarea,select"))el.disabled=cerrado||guardando;}
+       function agregarNota(item={color:"rojo",texto:""}){
+        if(filas.children.length>=10)return;
+        const fila=elem("div","indicacion-edicion"),labelColor=elem("label",null,"Tipo de indicación"),color=elem("select"),labelTexto=elem("label",null,"Mensaje para el cliente"),txt=elem("textarea"),quitar=elem("button","secundario","Quitar indicación");
+        for(const [k,v] of Object.entries(colores)){const o=elem("option",null,v);o.value=k;color.append(o);}
+        color.value=Object.hasOwn(colores,item.color)?item.color:"rojo";fila.dataset.color=color.value;color.addEventListener("change",()=>fila.dataset.color=color.value);
+        txt.rows=3;txt.maxLength=2000;txt.value=item.texto||"";txt.placeholder="Escribe el mensaje...";
+        labelColor.append(color);labelTexto.append(txt);quitar.type="button";quitar.addEventListener("click",()=>{if(txt.value.trim()&&!confirm("¿Quitar esta indicación? Se aplicará al guardar."))return;fila.remove();controlesNotas();});
+        fila.append(labelColor,labelTexto,quitar);filas.append(fila);controlesNotas();
+       }
+       const previas=Array.isArray(d.indicaciones)?d.indicaciones:(d.instrucciones?[{color:"rojo",texto:d.instrucciones}]:[]);
+       for(const item of previas)agregarNota(item);
+       if(!previas.length&&!cerrado)agregarNota();
+       agregar.addEventListener("click",()=>{agregarNota();filas.lastElementChild?.querySelector("textarea")?.focus();});
+       guardar.addEventListener("click",async()=>{
+        const items=Array.from(filas.children,f=>({color:f.querySelector("select").value,texto:f.querySelector("textarea").value.trim()})).filter(x=>x.texto);
+        if(items.reduce((n,x)=>n+x.texto.length,0)>10000){mensaje.textContent="Máximo 10,000 caracteres en total.";return;}
+        if(!items.length&&!confirm("¿Guardar sin indicaciones? Se quitarán los mensajes anteriores del portal."))return;
+        guardando=true;controlesNotas();mensaje.textContent="Guardando…";
+        try{const r=await req("/api/admin/proyectos/"+encodeURIComponent(p.id)+"/materiales",{method:"PATCH",body:JSON.stringify({indicaciones:items})});filas.replaceChildren();for(const item of r.indicaciones)agregarNota(item);if(!r.indicaciones.length)agregarNota();mensaje.textContent="Indicaciones guardadas. El cliente podrá leerlas al abrir o actualizar su portal.";}
+        catch(e){mensaje.textContent=e.message;}finally{guardando=false;controlesNotas();}
+       });
+       nota.append(elem("h4",null,"Indicaciones para el cliente"),elem("p","metadatos","Añade mensajes independientes y selecciona su color. Todos serán visibles en el portal cuando guardes."),filas,agregar,guardar,mensaje);caja.append(nota);controlesNotas();
        const pendientes=d.secciones.filter(a=>a.estado==="requiere_correccion").length+d.archivos.filter(a=>a.estado==="requiere_correccion").length;
        caja.append(elem("p","metadatos",pendientes+" material(es) requieren corrección al abrir esta revisión."));
        if(!d.secciones.length)caja.append(elem("p",null,"El cliente aún no ha entregado textos."));
