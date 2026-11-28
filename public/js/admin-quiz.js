@@ -231,15 +231,20 @@ async function cargarProyectos(){
      try{await req(rutaAcceso,{method:"DELETE",body:JSON.stringify({confirmacion:"REVOCAR"})});p.acceso_revocado=1;p.tiene_acceso=0;acceso.querySelector(".enlace-cliente")?.remove();estadoProyectos.textContent="Acceso revocado. El cliente ya no podrá utilizar su enlace.";}
      catch(e){estadoProyectos.textContent=e.message;}finally{ocupado=false;pintarAcceso();}
    });
-   const revisar=elem("button","secundario","Ver materiales recibidos");
+   const materiales=elem("details","materiales-desplegables"), resumenMateriales=elem("summary",null,"Materiales del proyecto");
+   const caja=elem("section","materiales-administracion materiales-recibidos");
+   materiales.append(resumenMateriales,caja);
+   let materialesCargados=false,materialesCargando=false;
+   const revisar=elem("button","secundario","Actualizar materiales");
    revisar.type="button";
-   revisar.addEventListener("click",async()=>{
-     revisar.disabled=true;
+   async function cargarMateriales(){
+     if(materialesCargando)return;
+     materialesCargando=true;revisar.disabled=true;
+     if(!materialesCargados)caja.replaceChildren(elem("p","metadatos","Cargando materiales…"));
      try{
        const d=await req("/api/admin/proyectos/"+encodeURIComponent(p.id)+"/materiales");
-       art.querySelector(".materiales-recibidos")?.remove();
-       const caja=elem("section","materiales-administracion materiales-recibidos");
-       caja.append(elem("h4",null,"Materiales del proyecto"));
+       caja.replaceChildren();
+       caja.append(revisar);
        const secciones={datos_negocio:"Datos, descripción o diseño",servicios_productos:"Productos, servicios, cantidad o medidas",horarios_contacto:"Contacto, uso o entrega",indicaciones:"Indicaciones adicionales"};
        const nota=elem("section","apartado-recibido indicaciones-editor"),filas=elem("div","indicaciones-filas");
        const colores={rojo:"Rojo · Importante / corrección",amarillo:"Amarillo · Duda / pendiente",verde:"Verde · Confirmación / correcto",azul:"Azul · Información / avance"};
@@ -286,10 +291,13 @@ async function cargarProyectos(){
          link.href="/api/admin/proyectos/"+encodeURIComponent(p.id)+"/archivos/"+encodeURIComponent(a.id);
          link.target="_blank";link.rel="noopener noreferrer";const bloque=elem("div","apartado-recibido");bloque.append(link,controlRevisionMaterial(p,a,"archivos"));caja.append(bloque);
        }
-       (art.querySelector(".registro-cuerpo")||art).append(caja);
-     }catch(e){estadoProyectos.textContent=e.message;}finally{revisar.disabled=false;}
-   });
-   acciones.append(revisar);art.append(acciones);globalThis.LP_ADMIN_SEGUIMIENTO?.agregar(art,p);globalThis.LP_ADMIN_ENTREGA?.agregar(art,p);plegarRegistro(art,p.id,p.proyecto||p.nombre,p.folio+" · "+p.nombre,estadosProyecto[p.estado]||p.estado,abiertos.has(p.id));listaProyectos.append(art);
+       materialesCargados=true;
+       resumenMateriales.textContent="Materiales del proyecto · "+d.secciones.length+" apartados · "+d.archivos.length+" imágenes";
+     }catch(e){estadoProyectos.textContent=e.message;if(!materialesCargados)caja.replaceChildren(elem("p","metadatos",e.message),revisar);}finally{materialesCargando=false;revisar.disabled=false;}
+   }
+   revisar.addEventListener("click",()=>{if(!materialesCargados||confirm("¿Actualizar materiales? Se descartarán las indicaciones que no hayas guardado."))cargarMateriales();});
+   materiales.addEventListener("toggle",()=>{if(materiales.open&&!materialesCargados)cargarMateriales();});
+   art.append(materiales);globalThis.LP_ADMIN_SEGUIMIENTO?.agregar(art,p);globalThis.LP_ADMIN_ENTREGA?.agregar(art,p);plegarRegistro(art,p.id,p.proyecto||p.nombre,p.folio+" · "+p.nombre,estadosProyecto[p.estado]||p.estado,abiertos.has(p.id));listaProyectos.append(art);
   }
  }catch(e){estadoProyectos.textContent="Proyectos no disponibles: "+e.message+". Comprueba que la migración 0004 esté aplicada a D1.";}
 }

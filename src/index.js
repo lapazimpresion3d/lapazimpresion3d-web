@@ -849,7 +849,7 @@ async function api(request,env,ctx) {
       const p=await db.prepare("SELECT p.id,q.ficha_json FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.id=?1").bind(id).first();
       if(!p)return error("Proyecto no encontrado",404);
       const s=await leerSeguimiento(db,p);
-      if(!s)return error("Seguimiento pendiente de habilitar (migración 0008)",503);
+      if(!s)return error("Seguimiento pendiente de habilitar: la base D1 conectada no contiene la columna seguimiento_json o no devolvió el proyecto. Verifica la migración 0008 en lapazimpresion3d-quiz.",503);
       if(request.method==="GET")return json({seguimiento:s.data});
       if(request.method==="PUT"){
         if(s.estado==="cancelado")return error("Proyecto cancelado",409);
