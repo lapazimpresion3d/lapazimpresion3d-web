@@ -6,7 +6,7 @@ function abrirDestino(destino){
  for(let n=destino;n;n=n.parentElement){if(n.tagName==="DETAILS"&&!n.open){n.open=true;cambio=true;}}
  const servicio=destino.closest(".servicio-colapsable");
  const detalle=servicio?.querySelector(":scope > .servicio-desplegable");
- if(detalle&&!detalle.open){detalle.open=true;cambio=true;}
+ if(detalle?.tagName==="DETAILS"&&!detalle.open){detalle.open=true;cambio=true;}
  return cambio;
 }
 function porHash(hash){
