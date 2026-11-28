@@ -225,35 +225,46 @@ async function alertasComerciales(env,hoy=hoyMensualidad()){
  // Consultas separadas para que una migración pendiente no inutilice todo el panel.
  const grupos=[
  ["Solicitudes",[
- ["nueva","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.fecha AS fecha FROM quiz_propuestas q WHERE q.estado='nueva' ORDER BY q.fecha ASC LIMIT 101",[]],
- ["seguimiento","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.fecha AS fecha FROM quiz_propuestas q WHERE q.estado IN ('en_revision','contactado') AND substr(q.fecha,1,10)<=?1 AND NOT EXISTS(SELECT 1 FROM proyectos_cliente p WHERE p.propuesta_id=q.id) ORDER BY q.fecha ASC LIMIT 101",[seguimiento]]
+ ["nueva","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.ficha_json,q.fecha AS fecha FROM quiz_propuestas q WHERE q.estado='nueva' ORDER BY q.fecha ASC LIMIT 101",[]],
+ ["seguimiento","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.ficha_json,q.fecha AS fecha FROM quiz_propuestas q WHERE q.estado IN ('en_revision','contactado') AND substr(q.fecha,1,10)<=?1 AND NOT EXISTS(SELECT 1 FROM proyectos_cliente p WHERE p.propuesta_id=q.id) ORDER BY q.fecha ASC LIMIT 101",[seguimiento]]
  ]],
  ["Cotizaciones",[
- ["cotizacion","SELECT q.folio,q.nombre,q.proyecto,q.telefono,COALESCE(e.fecha_actualizacion,q.fecha) AS fecha FROM quiz_propuestas q LEFT JOIN propuestas_economicas e ON e.propuesta_id=q.id WHERE q.estado='cotizado' AND e.fecha_aceptacion IS NULL AND NOT EXISTS(SELECT 1 FROM proyectos_cliente p WHERE p.propuesta_id=q.id) ORDER BY fecha ASC LIMIT 101",[]]
+ ["cotizacion","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.ficha_json,COALESCE(e.fecha_actualizacion,q.fecha) AS fecha FROM quiz_propuestas q LEFT JOIN propuestas_economicas e ON e.propuesta_id=q.id WHERE q.estado='cotizado' AND e.fecha_aceptacion IS NULL AND NOT EXISTS(SELECT 1 FROM proyectos_cliente p WHERE p.propuesta_id=q.id) ORDER BY fecha ASC LIMIT 101",[]]
  ]],
  ["Materiales",[
- ["materiales","SELECT q.folio,q.nombre,q.proyecto,q.telefono,p.fecha_creacion AS fecha FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado='recabando_materiales' AND NOT EXISTS(SELECT 1 FROM proyecto_secciones s WHERE s.proyecto_id=p.id AND trim(s.contenido)<>'') AND NOT EXISTS(SELECT 1 FROM proyecto_archivos a WHERE a.proyecto_id=p.id) ORDER BY fecha ASC LIMIT 101",[]],
- ["revisar_materiales","SELECT q.folio,q.nombre,q.proyecto,q.telefono,p.fecha_actualizacion AS fecha FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado NOT IN ('finalizado','cancelado') AND (EXISTS(SELECT 1 FROM proyecto_secciones s WHERE s.proyecto_id=p.id AND s.estado='recibido' AND trim(s.contenido)<>'') OR EXISTS(SELECT 1 FROM proyecto_archivos a WHERE a.proyecto_id=p.id AND a.estado='recibido')) ORDER BY fecha ASC LIMIT 101",[]],
- ["corregir_materiales","SELECT q.folio,q.nombre,q.proyecto,q.telefono,p.fecha_actualizacion AS fecha FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado NOT IN ('finalizado','cancelado') AND (EXISTS(SELECT 1 FROM proyecto_secciones s WHERE s.proyecto_id=p.id AND s.estado='requiere_correccion') OR EXISTS(SELECT 1 FROM proyecto_archivos a WHERE a.proyecto_id=p.id AND a.estado='requiere_correccion')) ORDER BY fecha ASC LIMIT 101",[]]
+ ["materiales","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.ficha_json,p.fecha_creacion AS fecha FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado='recabando_materiales' AND NOT EXISTS(SELECT 1 FROM proyecto_secciones s WHERE s.proyecto_id=p.id AND trim(s.contenido)<>'') AND NOT EXISTS(SELECT 1 FROM proyecto_archivos a WHERE a.proyecto_id=p.id) ORDER BY fecha ASC LIMIT 101",[]],
+ ["revisar_materiales","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.ficha_json,p.fecha_actualizacion AS fecha FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado NOT IN ('finalizado','cancelado') AND (EXISTS(SELECT 1 FROM proyecto_secciones s WHERE s.proyecto_id=p.id AND s.estado='recibido' AND trim(s.contenido)<>'') OR EXISTS(SELECT 1 FROM proyecto_archivos a WHERE a.proyecto_id=p.id AND a.estado='recibido')) ORDER BY fecha ASC LIMIT 101",[]],
+ ["corregir_materiales","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.ficha_json,p.fecha_actualizacion AS fecha FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado NOT IN ('finalizado','cancelado') AND (EXISTS(SELECT 1 FROM proyecto_secciones s WHERE s.proyecto_id=p.id AND s.estado='requiere_correccion') OR EXISTS(SELECT 1 FROM proyecto_archivos a WHERE a.proyecto_id=p.id AND a.estado='requiere_correccion')) ORDER BY fecha ASC LIMIT 101",[]]
  ]],
  ["Entregas",[
- ["aprobar","SELECT q.folio,q.nombre,q.proyecto,q.telefono,e.fecha_actualizacion AS fecha FROM proyecto_entregas e JOIN proyectos_cliente p ON p.id=e.proyecto_id JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado NOT IN ('finalizado','cancelado') AND e.decision='pendiente' AND e.fecha_entrega IS NULL ORDER BY fecha ASC LIMIT 101",[]],
- ["cambios","SELECT q.folio,q.nombre,q.proyecto,q.telefono,e.fecha_decision AS fecha FROM proyecto_entregas e JOIN proyectos_cliente p ON p.id=e.proyecto_id JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado NOT IN ('finalizado','cancelado') AND e.decision='requiere_cambios' AND e.fecha_entrega IS NULL ORDER BY fecha ASC LIMIT 101",[]],
- ["entrega","SELECT q.folio,q.nombre,q.proyecto,q.telefono,e.fecha_decision AS fecha FROM proyecto_entregas e JOIN proyectos_cliente p ON p.id=e.proyecto_id JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado NOT IN ('finalizado','cancelado') AND e.decision='aprobado' AND e.fecha_entrega IS NULL ORDER BY fecha ASC LIMIT 101",[]],
- ["garantia","SELECT q.folio,q.nombre,q.proyecto,q.telefono,e.garantia_hasta AS fecha FROM proyecto_entregas e JOIN proyectos_cliente p ON p.id=e.proyecto_id JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado<>'cancelado' AND e.garantia_hasta BETWEEN ?1 AND ?2 ORDER BY fecha ASC LIMIT 101",[hoy,pronto]]
+ ["aprobar","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.ficha_json,e.fecha_actualizacion AS fecha FROM proyecto_entregas e JOIN proyectos_cliente p ON p.id=e.proyecto_id JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado NOT IN ('finalizado','cancelado') AND e.decision='pendiente' AND e.fecha_entrega IS NULL ORDER BY fecha ASC LIMIT 101",[]],
+ ["cambios","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.ficha_json,e.fecha_decision AS fecha FROM proyecto_entregas e JOIN proyectos_cliente p ON p.id=e.proyecto_id JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado NOT IN ('finalizado','cancelado') AND e.decision='requiere_cambios' AND e.fecha_entrega IS NULL ORDER BY fecha ASC LIMIT 101",[]],
+ ["entrega","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.ficha_json,e.fecha_decision AS fecha FROM proyecto_entregas e JOIN proyectos_cliente p ON p.id=e.proyecto_id JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado NOT IN ('finalizado','cancelado') AND e.decision='aprobado' AND e.fecha_entrega IS NULL ORDER BY fecha ASC LIMIT 101",[]],
+ ["garantia","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.ficha_json,e.garantia_hasta AS fecha FROM proyecto_entregas e JOIN proyectos_cliente p ON p.id=e.proyecto_id JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.estado<>'cancelado' AND e.garantia_hasta BETWEEN ?1 AND ?2 ORDER BY fecha ASC LIMIT 101",[hoy,pronto]]
  ]],
  ["Mensualidades",[
- ["inicio","SELECT q.folio,q.nombre,q.proyecto,q.telefono,d.fecha_entrega AS fecha FROM proyecto_entregas d JOIN proyectos_cliente p ON p.id=d.proyecto_id JOIN quiz_propuestas q ON q.id=p.propuesta_id JOIN propuestas_economicas e ON e.propuesta_id=q.id WHERE p.estado<>'cancelado' AND d.fecha_entrega IS NOT NULL AND e.fecha_aceptacion IS NOT NULL AND e.mensualidad>0 AND e.paquete<>'solo_fisico' AND NOT EXISTS(SELECT 1 FROM suscripciones_cliente s WHERE s.propuesta_id=q.id) ORDER BY fecha ASC LIMIT 101",[]],
- ["primer_pago","SELECT q.folio,q.nombre,q.proyecto,q.telefono,s.inicio AS fecha FROM suscripciones_cliente s JOIN quiz_propuestas q ON q.id=s.propuesta_id WHERE s.estado='activo' AND s.inicio<=?1 AND NOT EXISTS(SELECT 1 FROM pagos_mensualidad m WHERE m.propuesta_id=q.id) ORDER BY fecha ASC LIMIT 101",[hoy]],
- ["renovacion","SELECT q.folio,q.nombre,q.proyecto,q.telefono,MAX(m.fin) AS fecha FROM suscripciones_cliente s JOIN quiz_propuestas q ON q.id=s.propuesta_id JOIN pagos_mensualidad m ON m.propuesta_id=q.id WHERE s.estado='activo' GROUP BY q.id HAVING MAX(m.fin)<=?1 ORDER BY fecha ASC LIMIT 101",[hoy]],
- ["vence","SELECT q.folio,q.nombre,q.proyecto,q.telefono,MAX(m.fin) AS fecha FROM suscripciones_cliente s JOIN quiz_propuestas q ON q.id=s.propuesta_id JOIN pagos_mensualidad m ON m.propuesta_id=q.id WHERE s.estado='activo' GROUP BY q.id HAVING MAX(m.fin)>?1 AND MAX(m.fin)<=?2 ORDER BY fecha ASC LIMIT 101",[hoy,pronto]]
+ ["inicio","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.ficha_json,d.fecha_entrega AS fecha FROM proyecto_entregas d JOIN proyectos_cliente p ON p.id=d.proyecto_id JOIN quiz_propuestas q ON q.id=p.propuesta_id JOIN propuestas_economicas e ON e.propuesta_id=q.id WHERE p.estado<>'cancelado' AND d.fecha_entrega IS NOT NULL AND e.fecha_aceptacion IS NOT NULL AND e.mensualidad>0 AND e.paquete<>'solo_fisico' AND NOT EXISTS(SELECT 1 FROM suscripciones_cliente s WHERE s.propuesta_id=q.id) ORDER BY fecha ASC LIMIT 101",[]],
+ ["primer_pago","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.ficha_json,s.inicio AS fecha FROM suscripciones_cliente s JOIN quiz_propuestas q ON q.id=s.propuesta_id WHERE s.estado='activo' AND s.inicio<=?1 AND NOT EXISTS(SELECT 1 FROM pagos_mensualidad m WHERE m.propuesta_id=q.id) ORDER BY fecha ASC LIMIT 101",[hoy]],
+ ["renovacion","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.ficha_json,MAX(m.fin) AS fecha FROM suscripciones_cliente s JOIN quiz_propuestas q ON q.id=s.propuesta_id JOIN pagos_mensualidad m ON m.propuesta_id=q.id WHERE s.estado='activo' GROUP BY q.id HAVING MAX(m.fin)<=?1 ORDER BY fecha ASC LIMIT 101",[hoy]],
+ ["vence","SELECT q.folio,q.nombre,q.proyecto,q.telefono,q.ficha_json,MAX(m.fin) AS fecha FROM suscripciones_cliente s JOIN quiz_propuestas q ON q.id=s.propuesta_id JOIN pagos_mensualidad m ON m.propuesta_id=q.id WHERE s.estado='activo' GROUP BY q.id HAVING MAX(m.fin)>?1 AND MAX(m.fin)<=?2 ORDER BY fecha ASC LIMIT 101",[hoy,pronto]]
  ]]
  ];
  for(const [grupo,consultas] of grupos){
   for(const [tipo,sql,args] of consultas){
    try{let st=db.prepare(sql);if(args.length)st=st.bind(...args);const d=await st.all();
     if(d.results.length>100)avisos.push("Más de 100 alertas de "+TIPOS_ALERTA[tipo][0]+". Se muestran las primeras 100.");
-    for(const q of d.results.slice(0,100)){const [titulo,prioridad,seccion]=TIPOS_ALERTA[tipo];items.push({...q,tipo,titulo,prioridad,seccion,fecha:String(q.fecha||"").slice(0,10)});}
+    for(const q of d.results.slice(0,100)){
+     const [titulo,prioridad,seccion]=TIPOS_ALERTA[tipo];
+     const {ficha_json,...datos}=q;
+     let servicio="";
+     try{
+      const f=JSON.parse(ficha_json||"{}");
+      if(f.tipo_documento==="solicitud_servicio")servicio=f.titulo_servicio||(Object.hasOwn(TIPOS_FISICOS,f.servicio)?TIPOS_FISICOS[f.servicio]:"Impresión 3D");
+      else if(f.tipo_documento==="solicitud_web")servicio=f.paquete||f.tipo_pagina||"Proyecto web a medida";
+      else servicio=f.recomendacion?.titulo||"Cuestionario de orientación";
+     }catch{}
+     items.push({...datos,tipo,titulo,servicio:typeof servicio==="string"?servicio.slice(0,160):"",prioridad,seccion,fecha:String(q.fecha||"").slice(0,10)});
+    }
    }catch{avisos.push(grupo+": no se pudo consultar "+TIPOS_ALERTA[tipo][0]+". Comprueba las migraciones y D1.");}
   }
  }
