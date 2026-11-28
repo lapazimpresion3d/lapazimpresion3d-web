@@ -1,4 +1,5 @@
 import {WorkerEntrypoint} from "cloudflare:workers";
+import {guardarEvidencia,tablaEvidencias,proyectarEvidencia,valoresEvidencia} from "./evidencias-soporte.mjs";
 // Private Service Binding RPC only. Caller must authorize the enterprise in its own server.
 const PLATAFORMA="lapaz-comercios";
 const idValido=v=>typeof v==="string"&&/^[a-z0-9][a-z0-9._:-]{0,127}$/.test(v);
@@ -114,7 +115,47 @@ export async function enviarMensajePrivado(env,empresa,ticket,d){
  if(["resuelto","cancelado"].includes(actual.estado))return {ok:false,error:"solicitud_cerrada"};
  return {ok:false,error:"limite_o_conflicto"};
 }
+async function contextoEvidencia(env,empresa,ticket){
+ const ctx=await contextoSoporte(env,empresa);if(ctx.error)return ctx;
+ if(typeof ticket!=="string"||!UUID.test(ticket))return {error:"datos_invalidos"};
+ const {db,v}=ctx,args=[PLATAFORMA,empresa,v.id,ticket];
+ if(!await db.prepare("SELECT t.id"+joinsTicket+"WHERE "+guardiaTicket).bind(...args).first())return {error:"no_autorizado"};
+ if(!env.COTIZACIONES_R2||!await tablaEvidencias(db))return {error:"no_disponible"};
+ return {...ctx,args};
+}
+export async function listarEvidenciasPrivadas(env,empresa,ticket){
+ const ctx=await contextoEvidencia(env,empresa,ticket);if(ctx.error)return {ok:false,error:ctx.error};
+ const {db,v,args}=ctx;
+ const r=await db.prepare("SELECT a.*"+joinsTicket+"JOIN servicio_soporte_evidencias a ON a.soporte_id=t.id WHERE "+guardiaTicket+" AND a.visibilidad='cliente' ORDER BY a.fecha_registro DESC LIMIT 20").bind(...args).all();
+ if(!await sigueVinculado(db,v,empresa))return {ok:false,error:"no_autorizado"};
+ return {ok:true,version:1,evidencias:r.results.map(proyectarEvidencia)};
+}
+export async function leerEvidenciaPrivada(env,empresa,ticket,id){
+ const ctx=await contextoEvidencia(env,empresa,ticket);if(ctx.error)return {ok:false,error:ctx.error};
+ if(typeof id!=="string"||!UUID.test(id))return {ok:false,error:"datos_invalidos"};
+ const {db,v,args}=ctx;
+ const a=await db.prepare("SELECT a.*"+joinsTicket+"JOIN servicio_soporte_evidencias a ON a.soporte_id=t.id WHERE "+guardiaTicket+" AND a.visibilidad='cliente' AND a.id=?5").bind(...args,id).first();
+ if(!a)return {ok:false,error:"no_autorizado"};
+ const obj=await env.COTIZACIONES_R2.get(a.clave_r2);if(!obj)return {ok:false,error:"no_disponible"};
+ const bytes=await obj.arrayBuffer();
+ if(bytes.byteLength!==a.tamano_bytes||bytes.byteLength>4194304)return {ok:false,error:"no_disponible"};
+ if(!await sigueVinculado(db,v,empresa))return {ok:false,error:"no_autorizado"};
+ return {ok:true,version:1,evidencia:proyectarEvidencia(a),bytes};
+}
+export async function adjuntarEvidenciaPrivada(env,empresa,ticket,d){
+ const ctx=await contextoEvidencia(env,empresa,ticket);if(ctx.error)return {ok:false,error:ctx.error};
+ if(!d||typeof d!=="object"||Object.keys(d).some(k=>!["id","descripcion","mime","bytes"].includes(k)))return {ok:false,error:"datos_invalidos"};
+ const {db,v,args}=ctx,desde=new Date(Date.now()-86400000).toISOString();
+ const consultar=id=>db.prepare("SELECT a.*"+joinsTicket+"JOIN servicio_soporte_evidencias a ON a.soporte_id=t.id WHERE "+guardiaTicket+" AND a.id=?5 AND a.visibilidad='cliente'").bind(...args,id).first();
+ const insertar=x=>db.prepare("INSERT INTO servicio_soporte_evidencias(id,soporte_id,clave_r2,autor,visibilidad,descripcion,tipo_mime,tamano_bytes,sha256,fecha_registro) SELECT ?5,t.id,?6,?7,?8,?9,?10,?11,?12,?13"+joinsTicket+"WHERE "+guardiaTicket+" AND t.estado NOT IN ('resuelto','cancelado') AND (SELECT COUNT(*) FROM servicio_soporte_evidencias a WHERE a.soporte_id=t.id)<20 AND (SELECT COUNT(*) FROM servicio_soporte_evidencias a JOIN servicio_soporte st ON st.id=a.soporte_id WHERE st.propuesta_id=v.propuesta_id AND a.autor='cliente' AND a.fecha_registro>=?14)<30 ON CONFLICT(id) DO NOTHING").bind(...args,...valoresEvidencia(x),desde).run();
+ const r=await guardarEvidencia(env,ticket,d,"cliente","cliente",insertar,consultar);
+ if(!await sigueVinculado(db,v,empresa))return {ok:false,error:"no_autorizado"};
+ return {...r,version:1};
+}
 export class IntegracionComercial extends WorkerEntrypoint {
+ async listarEvidencias(empresa,ticket){try{return await listarEvidenciasPrivadas(this.env,empresa,ticket);}catch{return {ok:false,error:"no_disponible"};}}
+ async leerEvidencia(empresa,ticket,id){try{return await leerEvidenciaPrivada(this.env,empresa,ticket,id);}catch{return {ok:false,error:"no_disponible"};}}
+ async adjuntarEvidencia(empresa,ticket,datos){try{return await adjuntarEvidenciaPrivada(this.env,empresa,ticket,datos);}catch{return {ok:false,error:"no_disponible"};}}
  async consultarConversacion(empresa,ticket){try{return await consultarConversacionPrivada(this.env,empresa,ticket);}catch{return {ok:false,error:'no_disponible'};}}
  async enviarMensaje(empresa,ticket,datos){try{return await enviarMensajePrivado(this.env,empresa,ticket,datos);}catch{return {ok:false,error:'no_disponible'};}}
  async listarSoporte(empresa){try{return await listarSoportePrivado(this.env,empresa);}catch{return {ok:false,error:'no_disponible'};}}

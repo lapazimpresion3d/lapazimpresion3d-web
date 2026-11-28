@@ -1,3 +1,4 @@
+import {guardarEvidencia,tablaEvidencias,uuidEvidencia,proyectarEvidencia,valoresEvidencia} from "./evidencias-soporte.mjs";
 // Lapazimpresion3d: sitio estático + recepción de diagnósticos + panel privado.
 // Requiere D1 (QUIZ_DB) y secreto ADMIN_PASSWORD; no publica listas sin autenticación.
 const CAMPOS = {
@@ -1210,6 +1211,37 @@ async function api(request,env,ctx) {
       }
       return error("Método no permitido",405);
     }
+    const evidencia=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/soporte\/([0-9a-f-]{36})\/evidencias(?:\/([0-9a-f-]{36}))?$/i);
+    if(evidencia){
+      const [,pid,tid,aid]=evidencia,db=env.QUIZ_DB;
+      if(![pid,tid].every(uuidEvidencia)||(aid&&!uuidEvidencia(aid)))return error("Identificador inválido",400);
+      const t=await db.prepare("SELECT t.id,t.estado FROM servicio_soporte t WHERE t.id=?1 AND t.propuesta_id=?2").bind(tid,pid).first();
+      if(!t)return error("Solicitud no encontrada",404);
+      if(!await tablaEvidencias(db)||!env.COTIZACIONES_R2)return error("Evidencias pendientes de habilitar (migración 0015 y R2)",503);
+      const consultar=async id=>db.prepare("SELECT a.* FROM servicio_soporte_evidencias a JOIN servicio_soporte t ON t.id=a.soporte_id WHERE a.id=?1 AND t.id=?2 AND t.propuesta_id=?3").bind(id,tid,pid).first();
+      if(request.method==="GET"&&!aid){
+        const r=await db.prepare("SELECT a.* FROM servicio_soporte_evidencias a JOIN servicio_soporte t ON t.id=a.soporte_id WHERE t.id=?1 AND t.propuesta_id=?2 ORDER BY a.fecha_registro DESC LIMIT 20").bind(tid,pid).all();
+        return json({evidencias:r.results.map(proyectarEvidencia)});
+      }
+      if(request.method==="GET"&&aid){
+        const a=await consultar(aid);if(!a)return error("Evidencia no encontrada",404);
+        const obj=await env.COTIZACIONES_R2.get(a.clave_r2);if(!obj)return error("Archivo no encontrado",404);
+        return new Response(obj.body,{headers:{"Content-Type":a.tipo_mime,"Content-Disposition":"inline","Cache-Control":"private,no-store","Content-Security-Policy":"default-src 'none'; sandbox","X-Content-Type-Options":"nosniff"}});
+      }
+      if(request.method==="POST"&&!aid){
+        if(!request.headers.get("content-type")?.startsWith("multipart/form-data")||Number(request.headers.get("content-length")||0)>4344304)return error("Archivo demasiado grande o formato inválido",400);
+        const form=await request.formData(),file=form.get("imagen"),vis=form.get("visibilidad");
+        if(!(file instanceof File)||file.size>4194304||!["interna","cliente"].includes(vis))return error("Imagen o visibilidad inválida",400);
+        const publica=vis==="cliente";
+        const cliente=publica&&await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='servicio_soporte_cliente'").first();
+        if(publica&&!cliente)return error("Solicitud de cliente no disponible",409);
+        const extra=publica?" AND EXISTS(SELECT 1 FROM servicio_soporte_cliente c WHERE c.soporte_id=t.id)":"";
+        const insertar=x=>db.prepare("INSERT INTO servicio_soporte_evidencias(id,soporte_id,clave_r2,autor,visibilidad,descripcion,tipo_mime,tamano_bytes,sha256,fecha_registro) SELECT ?1,t.id,?2,?3,?4,?5,?6,?7,?8,?9 FROM servicio_soporte t WHERE t.id=?10 AND t.propuesta_id=?11 AND t.estado<>'cancelado' AND (SELECT COUNT(*) FROM servicio_soporte_evidencias a WHERE a.soporte_id=t.id)<20"+extra+" ON CONFLICT(id) DO NOTHING").bind(...valoresEvidencia(x),tid,pid).run();
+        const r=await guardarEvidencia(env,tid,{id:form.get("id"),descripcion:form.get("descripcion"),mime:file.type,bytes:await file.arrayBuffer()},"lapazimpresion3d",vis,insertar,consultar);
+        return r.ok?json(r,201):error(r.error==="datos_invalidos"?"Imagen inválida (JPG, PNG o WebP, máximo 4 MB)":"No se guardó la evidencia: "+r.error,r.error==="datos_invalidos"?400:409);
+      }
+      return error("Método no permitido",405);
+    }
     const soporte=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/soporte(?:\/([0-9a-f-]{36})(?:\/(intervenciones|mensajes))?)?$/i);
     if(soporte){
       const db=env.QUIZ_DB,[,pid,tid,accion]=soporte,hoy=hoyMensualidad(),ahora=new Date().toISOString();
@@ -1407,9 +1439,12 @@ async function api(request,env,ctx) {
         claves.push(...archivos.results.map(x=>x.clave_r2));
       }
       const tieneFotos=tieneProyecto&&tablas.has("proyecto_avances_fotos");
-      if((claves.length||tieneFotos)&&!env.COTIZACIONES_R2)return error("Almacenamiento de imágenes no disponible.",503);
+      const tieneEvidencias=tablas.has("servicio_soporte_evidencias")&&tablas.has("servicio_soporte");
+      if((claves.length||tieneFotos||tieneEvidencias)&&!env.COTIZACIONES_R2)return error("Almacenamiento de imágenes no disponible.",503);
       const stmts=[];
       const borrar=(tabla,filtro)=>{if(tablas.has(tabla))stmts.push(db.prepare("DELETE FROM "+tabla+" WHERE "+filtro+" AND "+guardia).bind(id));};
+      let indiceEvidencias=-1;
+      if(tieneEvidencias){indiceEvidencias=stmts.length;stmts.push(db.prepare("DELETE FROM servicio_soporte_evidencias WHERE soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1) AND "+guardia+" RETURNING clave_r2").bind(id));}
       if(tablas.has("servicio_soporte")){borrar("servicio_soporte_mensajes","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");borrar("servicio_intervenciones","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");}
       if(tablas.has("servicio_soporte"))borrar("servicio_soporte_cliente","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");
       borrar("servicio_soporte","propuesta_id=?1");
@@ -1428,6 +1463,7 @@ async function api(request,env,ctx) {
       const resultados=await db.batch(stmts);
       if(!resultados[resultados.length-1].meta.changes)return error("Solicitud protegida con candado o ya eliminada.",409);
       if(indiceFotos>=0)for(const a of resultados[indiceFotos].results||[])claves.push("avances/"+a.proyecto_id+"/"+a.id);
+      if(indiceEvidencias>=0)for(const a of resultados[indiceEvidencias].results||[])if(/^soporte\/[0-9a-f-]{36}\/[0-9a-f-]{36}$/i.test(a.clave_r2))claves.push(a.clave_r2);
       const limpieza=await Promise.allSettled([...new Set(claves)].map(k=>env.COTIZACIONES_R2.delete(k)));
       const pendientes=limpieza.filter(x=>x.status==="rejected").length;
       if(pendientes)console.error("Limpieza R2 pendiente para solicitud",id,pendientes);
