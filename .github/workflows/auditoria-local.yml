@@ -7,6 +7,17 @@ jobs:
   sqlite:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Migraciones y SQL literal
         run: python3 scripts/auditar-migraciones.py
+      - name: SQL dinámico seleccionado
+        run: python3 scripts/auditar-sql-dinamico.py
+  javascript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+      - name: Pruebas JavaScript
+        run: node scripts/auditar-js.mjs

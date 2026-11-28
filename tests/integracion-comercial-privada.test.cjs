@@ -1,6 +1,6 @@
 const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs");
 const s=fs.readFileSync("src/integracion-comercial.mjs","utf8");
-const a=new Function(s.replace(/^import .*\n/m,"").replace(/export class IntegracionComercial[\s\S]*$/,"").replace(/export /g,"")+"return {proyectarSuscripcion,consultarSuscripcionPrivada};")();
+const a=new Function(s.replace(/^import .*\n/gm,"").replace(/export class IntegracionComercial[\s\S]*$/,"").replace(/export /g,"")+"return {proyectarSuscripcion,consultarSuscripcionPrivada};")();
 test("deshabilitado por defecto y sin acceso a D1",async()=>{assert.deepEqual(await a.consultarSuscripcionPrivada({QUIZ_DB:{prepare(){throw Error("no debe consultar");}}},"empresa"),{ok:false,error:"no_disponible"});});
 test("proyección excluye datos internos y conserva tarifa acordada",()=>{const x=a.proyectarSuscripcion({paquete:"presencia-digital",tarifa_acordada:14900,total_acordado:17284,inicio:null,vinculo:"privado"},[],"2026-11-28");assert.equal(x.total_centavos,17284);assert.equal(x.iva_centavos,2384);assert.equal(x.situacion,"sin_iniciar");assert.equal(x.vinculo,undefined);});
 test("rechaza ID inválido y vínculo ausente",async()=>{const env={INTEGRACION_COMERCIAL_HABILITADA:"si",QUIZ_DB:{prepare(){return {bind(){return {first:async()=>null};}};}}};assert.equal((await a.consultarSuscripcionPrivada(env,"../otro")).error,"no_autorizado");assert.equal((await a.consultarSuscripcionPrivada(env,"empresa")).error,"no_autorizado");});
