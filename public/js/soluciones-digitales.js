@@ -7,7 +7,7 @@ const publico=p=>Object.hasOwn(c.planes,p);
 const $=id=>document.getElementById(id);
 const giro=$('demo-giro'),paquete=$('demo-paquete');if(!giro||!paquete)return;
 $('aviso-revision-demos').hidden=!revision;
-function enlace(a,url,activo){if(!a)return;a.hidden=!(url&&activo);if(a.hidden){a.removeAttribute('href');return;}a.href=url;a.target='_blank';a.rel='noopener noreferrer';}
+function enlace(a,url,activo){if(!a)return;a.hidden=!(url&&activo);if(a.hidden){a.removeAttribute('href');return;}a.href=url;a.removeAttribute('target');a.rel='noopener noreferrer';}
 
 for(const card of document.querySelectorAll('.tarjeta-demo[data-negocio]')){
  const n=card.dataset.negocio,p=card.dataset.paquete,activa=publico(p)&&(accesoPractica||c.verificada(n,p));
