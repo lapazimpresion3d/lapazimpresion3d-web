@@ -1,0 +1,104 @@
+{
+  "version": "2026-11-28",
+  "moneda": "MXN",
+  "iva_incluido": false,
+  "precios": "comerciales confirmados",
+  "capacidad": "prevista, sujeta a validación y propuesta",
+  "planes": [
+    {
+      "slug": "presencia-digital",
+      "name": "Presencia digital",
+      "setup": 750,
+      "monthly": 149,
+      "users": 1,
+      "branches": 1,
+      "minutes": 15
+    },
+    {
+      "slug": "negocio-interactivo",
+      "name": "Negocio interactivo",
+      "setup": 1500,
+      "monthly": 249,
+      "users": 3,
+      "branches": 1,
+      "minutes": 30
+    },
+    {
+      "slug": "gestion-comercial",
+      "name": "Gestión comercial",
+      "setup": 2500,
+      "monthly": 349,
+      "users": 5,
+      "branches": 2,
+      "minutes": 45
+    },
+    {
+      "slug": "gestion-profesional",
+      "name": "Gestión profesional",
+      "setup": 3500,
+      "monthly": 499,
+      "users": 10,
+      "branches": 3,
+      "minutes": 60
+    }
+  ],
+  "modulos_previstos": [
+    {
+      "nombre": "Página, identidad, catálogo, contacto y QR/NFC",
+      "desde_paquete": 1
+    },
+    {
+      "nombre": "Panel de autogestión de contenidos",
+      "desde_paquete": 1
+    },
+    {
+      "nombre": "Pedidos, seguimiento, citas y reservaciones",
+      "desde_paquete": 2
+    },
+    {
+      "nombre": "Pedidos desde mesas, cocina y agenda de empleados",
+      "desde_paquete": 2
+    },
+    {
+      "nombre": "Gestión de clientes y registro de pagos",
+      "desde_paquete": 2
+    },
+    {
+      "nombre": "Punto de venta, caja, cortes y tickets",
+      "desde_paquete": 3
+    },
+    {
+      "nombre": "Inventario, almacenes y traspasos",
+      "desde_paquete": 3
+    },
+    {
+      "nombre": "Proveedores, compras y reportes comerciales",
+      "desde_paquete": 3
+    },
+    {
+      "nombre": "Comandas, cotizaciones y órdenes de servicio",
+      "desde_paquete": 3
+    },
+    {
+      "nombre": "Fidelización, costos, recetas e insumos",
+      "desde_paquete": 4
+    },
+    {
+      "nombre": "Automatizaciones y alertas avanzadas",
+      "desde_paquete": 4
+    }
+  ],
+  "prestaciones_recurrentes": [
+    "Uso de plataforma y autogestión habilitada",
+    "Alojamiento HTTPS",
+    "Mantenimiento y seguridad",
+    "Actualizaciones generales compatibles",
+    "Almacenamiento y respaldos según propuesta",
+    "Supervisión técnica y soporte según alcance"
+  ],
+  "pendiente": [
+    "Validar módulos y cupos en repositorio de desarrollo",
+    "Definir límites de almacenamiento, retención y recuperación",
+    "Unificar catálogo contractual externo sin alterar acuerdos aceptados"
+  ]
+}
