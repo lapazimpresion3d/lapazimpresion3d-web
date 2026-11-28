@@ -205,7 +205,7 @@
 /* Fichas integradas: precios escaneables y demostraciones cómodas en móvil. */
 #paginas-web .plan-integrado .plan-precios{gap:10px}
 #paginas-web .plan-integrado .plan-precios>div{padding:12px 10px;background:#edf3ff;border:1px solid #c6d4ee;border-radius:10px;color:#16203a}
-#paginas-web .plan-integrado .plan-precios>div:last-child{background:#fff8df;border-color:#e9d388}
+#paginas-web .plan-integrado .plan-precios>div:last-child{background:#dce8fa;border-color:#a9c2e8}
 #paginas-web .plan-integrado .plan-precios dt{color:#304a78;font-weight:650;line-height:1.35}
 #paginas-web .plan-integrado .plan-precios dd{color:#174ab8;font-size:clamp(1.15rem,2.5vw,1.65rem);line-height:1.25;overflow-wrap:normal;font-variant-numeric:tabular-nums}
 #paginas-web .plan-integrado .plan-precios+ .nota{margin:6px 0 14px}
