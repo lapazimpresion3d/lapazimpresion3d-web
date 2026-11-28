@@ -118,7 +118,12 @@ async function autorizado(request,env) {
   const [exp, sig, extra] = value.split(".");
   if (extra || !/^\d{10,13}$/.test(exp) || !/^[0-9a-f]{64}$/.test(sig||"")) return false;
   if(Number(exp) < Date.now() || Number(exp)>Date.now()+86400000) return false;
-  return constante(sig, await firma(env.SESSION_SECRET,exp));
+  return constante(sig, await firmaSesion(env,exp));
+}
+// Vincula la sesión a la contraseña vigente: una rotación invalida las cookies anteriores.
+async function firmaSesion(env,exp){
+  const clave=await firma(env.SESSION_SECRET,"admin-password:"+env.ADMIN_PASSWORD);
+  return firma(clave,"admin-session-v2:"+exp);
 }
 // Tokens de proyecto de 256 bits: solo se guarda SHA-256 en D1.
 function tokenCliente() {
@@ -585,7 +590,7 @@ async function api(request,env,ctx) {
     const expected=env.ADMIN_PASSWORD;
     const a=await firma(env.SESSION_SECRET,received),b=await firma(env.SESSION_SECRET,expected);
     if(!received || !constante(a,b)) return error("Contraseña incorrecta",401);
-    const exp=String(Date.now()+8*60*60*1000),signature=await firma(env.SESSION_SECRET,exp);
+    const exp=String(Date.now()+8*60*60*1000),signature=await firmaSesion(env,exp);
     return json({ok:true},200,{"set-cookie":`lp3d_session=${exp}.${signature}; Path=/api/admin; Max-Age=28800; HttpOnly; Secure; SameSite=Strict`});
   }
   // Portal de cliente: la URL lleva la clave en fragmento, nunca en el servidor.
@@ -690,7 +695,7 @@ async function api(request,env,ctx) {
   }
   if(path.startsWith("/api/admin/")) {
     if(!await autorizado(request,env)) return error("Acceso restringido",401);
-    if(request.method==="POST" && !sameOrigin(request)) return error("Origen no autorizado",403);
+    if(!["GET","HEAD","OPTIONS"].includes(request.method) && !sameOrigin(request)) return error("Origen no autorizado",403);
     if(path==="/api/admin/sesion" && request.method==="GET") return json({ok:true});
     if(path==="/api/admin/salir" && request.method==="POST") return json({ok:true},200,{"set-cookie":"lp3d_session=; Path=/api/admin; Max-Age=0; HttpOnly; Secure; SameSite=Strict"});
     // Consulta administrativa de materiales recibidos sin exponer R2 públicamente.
@@ -1044,14 +1049,24 @@ async function api(request,env,ctx) {
 export default { async fetch(request,env,ctx) {
   const path=new URL(request.url).pathname;
   try {
-    if(path.startsWith("/api/")) return await api(request,env,ctx);
+    if(path.startsWith("/api/")) {
+      const resp=await api(request,env,ctx),headers=new Headers(resp.headers);
+      headers.set("Cache-Control","no-store");
+      headers.set("X-Content-Type-Options","nosniff");
+      headers.set("X-Frame-Options","SAMEORIGIN");
+      headers.set("Referrer-Policy","no-referrer");
+      headers.set("X-Robots-Tag","noindex, nofollow");
+      return new Response(resp.body,{status:resp.status,statusText:resp.statusText,headers});
+    }
     const resp=await env.ASSETS.fetch(request);
     if(path==="/cliente" || path.startsWith("/cliente/") || path==="/admin" || path.startsWith("/admin/")) {
       const headers=new Headers(resp.headers);
       headers.set("Cache-Control","no-store");
       headers.set("X-Robots-Tag","noindex, nofollow");
       headers.set("X-Content-Type-Options","nosniff");
-      headers.set("Referrer-Policy","same-origin");
+      headers.set("Referrer-Policy","no-referrer");
+      headers.set("X-Frame-Options","SAMEORIGIN");
+      headers.set("Permissions-Policy","camera=(), microphone=(), geolocation=()");
       return new Response(resp.body,{status:resp.status,statusText:resp.statusText,headers});
     }
     return resp;
