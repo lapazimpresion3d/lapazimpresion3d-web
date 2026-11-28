@@ -411,6 +411,7 @@
         if(!r.ok || !data.ok) throw new Error(data.error||"No se pudo registrar. Intenta de nuevo.");
         const confirmacion=document.createElement("div");confirmacion.className="quiz-confirmacion";
         const h=document.createElement("h4");h.textContent="Solicitud recibida";
+        if(data.folio)globalThis.LP_Medicion?.emit("generate_lead",{source:"quiz"});
         const folio=document.createElement("p");folio.textContent=`Tu folio es ${data.folio}. Guárdalo para cualquier consulta.`;
         const detalle=document.createElement("p");detalle.textContent="Revisaremos tu proyecto y te contactaremos. El envío de esta solicitud no constituye una compra ni confirma un precio.";
         const seguir=document.createElement("a");seguir.className="quiz-accion-secundaria";seguir.textContent="Continuar por WhatsApp (opcional)";
