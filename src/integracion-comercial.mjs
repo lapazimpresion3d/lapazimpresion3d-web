@@ -74,7 +74,49 @@ export async function crearSoportePrivado(env,empresa,d){
   return {ok:true,version:1,solicitud:proyectarSolicitud({soporte_id:id,titulo:valores[0],descripcion:valores[1],categoria:valores[2],modulo:valores[3],impacto:valores[4],estado:"abierto",fecha_registro:ahora,fecha_actualizacion:ahora})};
  }catch(e){const repetido=await previo();if(repetido)return repetido;throw e;}
 }
+export function mensajeClienteValido(d){
+ return !!d&&typeof d==="object"&&!Array.isArray(d)&&Object.keys(d).every(k=>["id","texto"].includes(k))&&typeof d.id==="string"&&UUID.test(d.id)&&texto(d.texto,1,3000);
+}
+const guardiaTicket="c.vinculo_id=?3 AND c.soporte_id=?4 AND v.id=c.vinculo_id AND v.propuesta_id=t.propuesta_id AND "+guardiaVinculo;
+const joinsTicket=" FROM servicio_soporte_cliente c JOIN servicio_soporte t ON t.id=c.soporte_id JOIN servicio_vinculos v ON v.id=c.vinculo_id JOIN propuestas_economicas e ON e.propuesta_id=v.propuesta_id ";
+export async function consultarConversacionPrivada(env,empresa,ticket){
+ const ctx=await contextoSoporte(env,empresa);if(ctx.error)return {ok:false,error:ctx.error};
+ if(typeof ticket!=="string"||!UUID.test(ticket))return {ok:false,error:"datos_invalidos"};
+ const {db,v}=ctx,args=[PLATAFORMA,empresa,v.id,ticket];
+ const q=await db.prepare("SELECT "+columnasSoporte+joinsTicket+"WHERE "+guardiaTicket).bind(...args).first();
+ if(!q)return {ok:false,error:"no_autorizado"};
+ const r=await db.prepare("SELECT m.id,m.autor,m.texto,m.fecha_registro"+joinsTicket+"JOIN servicio_soporte_mensajes m ON m.soporte_id=t.id WHERE "+guardiaTicket+" ORDER BY m.fecha_registro DESC,m.id DESC LIMIT 201").bind(...args).all();
+ if(!await sigueVinculado(db,v,empresa))return {ok:false,error:"no_autorizado"};
+ return {ok:true,version:1,solicitud:proyectarSolicitud(q),mensajes:r.results.slice(0,200).reverse().map(m=>({id:m.id,autor:m.autor,texto:m.texto,fecha_registro:m.fecha_registro})),limitado:r.results.length>200};
+}
+export async function enviarMensajePrivado(env,empresa,ticket,d){
+ const ctx=await contextoSoporte(env,empresa);if(ctx.error)return {ok:false,error:ctx.error};
+ if(typeof ticket!=="string"||!UUID.test(ticket)||!mensajeClienteValido(d))return {ok:false,error:"datos_invalidos"};
+ const {db,v}=ctx,args=[PLATAFORMA,empresa,v.id,ticket],contenido=d.texto.trim(),ahora=new Date().toISOString(),desde=new Date(Date.now()-3600000).toISOString();
+ const q=await db.prepare("SELECT t.estado"+joinsTicket+"WHERE "+guardiaTicket).bind(...args).first();
+ if(!q)return {ok:false,error:"no_autorizado"};
+ async function previo(){
+  const m=await db.prepare("SELECT m.id,m.autor,m.texto,m.fecha_registro"+joinsTicket+"JOIN servicio_soporte_mensajes m ON m.soporte_id=t.id WHERE "+guardiaTicket+" AND m.id=?5").bind(...args,d.id).first();
+  if(!m)return null;
+  return m.autor==="cliente"&&m.texto===contenido?{ok:true,version:1,mensaje:{id:m.id,autor:m.autor,texto:m.texto,fecha_registro:m.fecha_registro},repetido:true}:{ok:false,error:"conflicto"};
+ }
+ const anterior=await previo();if(anterior)return anterior;
+ if(["resuelto","cancelado"].includes(q.estado))return {ok:false,error:"solicitud_cerrada"};
+ const r=await db.batch([
+  db.prepare("INSERT INTO servicio_soporte_mensajes(id,soporte_id,autor,texto,fecha_registro) SELECT ?5,t.id,'cliente',?6,?7"+joinsTicket+"WHERE "+guardiaTicket+" AND t.estado NOT IN ('resuelto','cancelado') AND (SELECT COUNT(*) FROM servicio_soporte_mensajes m JOIN servicio_soporte st ON st.id=m.soporte_id WHERE st.propuesta_id=v.propuesta_id AND m.autor='cliente' AND m.fecha_registro>=?8)<30 ON CONFLICT(id) DO NOTHING").bind(...args,d.id,contenido,ahora,desde),
+  db.prepare("UPDATE servicio_soporte SET fecha_actualizacion=CASE WHEN fecha_actualizacion<?7 THEN ?7 ELSE fecha_actualizacion END WHERE id=?4 AND EXISTS(SELECT 1"+joinsTicket+"JOIN servicio_soporte_mensajes m ON m.soporte_id=t.id WHERE "+guardiaTicket+" AND m.id=?5 AND m.autor='cliente' AND m.texto=?6 AND m.fecha_registro=?7)").bind(...args,d.id,contenido,ahora)
+ ]);
+ if(!await sigueVinculado(db,v,empresa))return {ok:false,error:"no_autorizado"};
+ if(r[0].meta.changes===1)return {ok:true,version:1,mensaje:{id:d.id,autor:"cliente",texto:contenido,fecha_registro:ahora}};
+ const repetido=await previo();if(repetido)return repetido;
+ const actual=await db.prepare("SELECT t.estado"+joinsTicket+"WHERE "+guardiaTicket).bind(...args).first();
+ if(!actual)return {ok:false,error:"no_autorizado"};
+ if(["resuelto","cancelado"].includes(actual.estado))return {ok:false,error:"solicitud_cerrada"};
+ return {ok:false,error:"limite_o_conflicto"};
+}
 export class IntegracionComercial extends WorkerEntrypoint {
+ async consultarConversacion(empresa,ticket){try{return await consultarConversacionPrivada(this.env,empresa,ticket);}catch{return {ok:false,error:'no_disponible'};}}
+ async enviarMensaje(empresa,ticket,datos){try{return await enviarMensajePrivado(this.env,empresa,ticket,datos);}catch{return {ok:false,error:'no_disponible'};}}
  async listarSoporte(empresa){try{return await listarSoportePrivado(this.env,empresa);}catch{return {ok:false,error:'no_disponible'};}}
  async crearSoporte(empresa,datos){try{return await crearSoportePrivado(this.env,empresa,datos);}catch{return {ok:false,error:'no_disponible'};}}
  async consultarSuscripcion(empresa){

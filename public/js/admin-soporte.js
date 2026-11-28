@@ -12,7 +12,7 @@ function conversacion(body,ruta,q,vigente){
   const d=await api(ruta+"/mensajes");if(!vigente()||!panel.isConnected)return;
   cargado=true;const lista=el("div",undefined,"soporte-mensajes"),ref=boton("Actualizar conversación");
   ref.addEventListener("click",()=>{if(confirm("¿Actualizar conversación? Se perderá el borrador no guardado."))cargar();});
-  caja.replaceChildren(el("p","Mensajes destinados al cliente. La conexión con su panel aún no está habilitada: guardar aquí no envía una notificación ni confirma recepción. No incluyas contraseñas, notas internas ni costos operativos.","metadatos"),ref,lista);
+  caja.replaceChildren(el("p","Mensajes destinados al cliente. Se podrán consultar desde su panel cuando la integración esté habilitada; guardar aquí no envía una notificación ni confirma recepción. No incluyas contraseñas, notas internas ni costos operativos.","metadatos"),ref,lista);
   if(d.limitado)lista.append(el("p","Se muestran los últimos 200 mensajes.","metadatos"));
   if(!d.mensajes.length)lista.append(el("p","Sin mensajes registrados."));
   for(const m of d.mensajes){const a=el("article",undefined,"soporte-mensaje");a.dataset.autor=m.autor;a.append(el("strong",m.autor==="cliente"?"Cliente":"Lapazimpresion3d"),el("p",m.texto),el("p",new Date(m.fecha_registro).toLocaleString("es-MX",{timeZone:"America/Mazatlan"}),"metadatos"));lista.append(a);}

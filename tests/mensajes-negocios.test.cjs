@@ -1,0 +1,7 @@
+const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs");
+const s=fs.readFileSync("src/integracion-comercial.mjs","utf8");
+const a=new Function(s.replace(/^import .*\n/m,"").replace(/export class IntegracionComercial[\s\S]*$/,"").replace(/export /g,"")+"return {mensajeClienteValido,consultarConversacionPrivada,enviarMensajePrivado};")();
+const id="550e8400-e29b-41d4-a716-446655440000",d={id,texto:"Gracias"};
+test("mensaje válido y sin autor manipulable",()=>{assert.equal(a.mensajeClienteValido(d),true);for(const k of ["autor","estado","propuesta_id","prioridad"])assert.equal(a.mensajeClienteValido({...d,[k]:"x"}),false);assert.equal(a.mensajeClienteValido({...d,texto:"  "}),false);assert.equal(a.mensajeClienteValido({...d,texto:"x".repeat(3001)}),false);});
+test("deshabilitado sin consultar D1",async()=>{const env={QUIZ_DB:{prepare(){throw Error("no consultar");}}};assert.equal((await a.consultarConversacionPrivada(env,"empresa",id)).error,"no_disponible");assert.equal((await a.enviarMensajePrivado(env,"empresa",id,d)).error,"no_disponible");});
+test("sin vinculo no consulta mensajes",async()=>{const env={INTEGRACION_COMERCIAL_HABILITADA:"si",QUIZ_DB:{prepare(sql){assert.ok(sql.includes("servicio_vinculos"));return {bind(){return {first:async()=>null};}};}}};assert.equal((await a.consultarConversacionPrivada(env,"empresa",id)).error,"no_autorizado");assert.equal((await a.enviarMensajePrivado(env,"empresa",id,d)).error,"no_autorizado");});
