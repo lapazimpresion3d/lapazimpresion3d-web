@@ -289,7 +289,7 @@ async function cargarProyectos(){
        (art.querySelector(".registro-cuerpo")||art).append(caja);
      }catch(e){estadoProyectos.textContent=e.message;}finally{revisar.disabled=false;}
    });
-   acciones.append(revisar);art.append(acciones);globalThis.LP_ADMIN_ENTREGA?.agregar(art,p);plegarRegistro(art,p.id,p.proyecto||p.nombre,p.folio+" · "+p.nombre,estadosProyecto[p.estado]||p.estado,abiertos.has(p.id));listaProyectos.append(art);
+   acciones.append(revisar);art.append(acciones);globalThis.LP_ADMIN_SEGUIMIENTO?.agregar(art,p);globalThis.LP_ADMIN_ENTREGA?.agregar(art,p);plegarRegistro(art,p.id,p.proyecto||p.nombre,p.folio+" · "+p.nombre,estadosProyecto[p.estado]||p.estado,abiertos.has(p.id));listaProyectos.append(art);
   }
  }catch(e){estadoProyectos.textContent="Proyectos no disponibles: "+e.message+". Comprueba que la migración 0004 esté aplicada a D1.";}
 }

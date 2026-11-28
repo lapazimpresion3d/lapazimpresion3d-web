@@ -1,0 +1,4 @@
+# Mi proyecto — fase 1
+Seguimiento explícito de etapas, fecha estimada y mensajes fechados. El portal mantiene su URL y autorización. Sin inferencias de aprobación ni entrega. Modalidad configurable antes de primera publicación. Límite inicial: 200 actualizaciones por proyecto. La revisión y entrega siguen en sus controles existentes. Fotografías privadas de proceso y proyectos combinados requieren fase posterior.
+Migración 0008: añadir columna al proyecto, no ejecutar remotamente sin autorización. Antes de aplicarla, el portal muestra etapas sin avances y administración informa que falta la migración; el resto sigue operativo.
+Pruebas previstas: node --test tests/seguimiento-proyectos.test.cjs; comprobar publicación, conflictos de versión, sesión ausente, revocación y aislamiento con datos ficticios, móvil y escritorio. No realizar migraciones o pruebas de producción sin autorización.

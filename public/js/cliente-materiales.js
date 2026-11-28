@@ -212,6 +212,7 @@ async function iniciar(){
   confirmarMateriales.disabled=["finalizado","cancelado"].includes(p.estado);
   mensaje.hidden=true;panel.hidden=false;document.querySelector("#salir").hidden=false;
   await cargarEntrega();
+  await globalThis.LP_CLIENTE_SEGUIMIENTO?.cargar();
  }catch(e){panel.hidden=true;mensaje.hidden=false;mensaje.className="error";mensaje.textContent=e.message+". Solicita un nuevo enlace a Lapazimpresion3d si tu acceso venció.";}
 }
 async function subirImagenes(){

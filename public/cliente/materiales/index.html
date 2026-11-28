@@ -5,16 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta name="referrer" content="no-referrer">
-<title>Materiales de mi proyecto · Lapazimpresion3d</title>
+<title>Mi proyecto · Lapazimpresion3d</title>
 <link rel="icon" href="/favicon.ico">
-<link rel="stylesheet" href="/css/cliente-materiales.css?v=6">
-<script src="/js/cliente-materiales.js?v=6" defer></script>
+<link rel="stylesheet" href="/css/cliente-materiales.css?v=7">
+<script src="/js/seguimiento.js?v=1" defer></script>
+<script src="/js/cliente-seguimiento.js?v=1" defer></script>
+<script src="/js/cliente-materiales.js?v=7" defer></script>
 </head>
 <body>
 <header><div class="contenedor barra"><strong>Lapazimpresion3d · Área privada</strong><button type="button" id="salir" class="secundario" hidden>Cerrar sesión</button><a href="/">Volver al sitio</a></div></header>
 <main class="contenedor">
-<h1>Materiales de mi proyecto</h1>
-<p class="intro">Entrega la información necesaria para preparar tu proyecto. Puedes guardar cada apartado y regresar más adelante.</p>
+<h1>Mi proyecto</h1>
+<p class="intro">Consulta el avance de tu proyecto, revisa las novedades y entrega tus materiales en esta área privada.</p>
 <p id="mensaje-acceso" role="status">Comprobando acceso…</p>
 <section id="proyecto" hidden>
   <section class="ficha ficha-proyecto" aria-labelledby="nombre-proyecto">
@@ -27,6 +29,7 @@
       <div><dt>Estado del proyecto</dt><dd><span id="estado-proyecto"></span></dd></div>
     </dl>
   </section>
+  <section class="bloque seguimiento-proyecto" id="seguimiento-proyecto" hidden aria-label="Seguimiento del proyecto"></section>
   <p class="ayuda">Completa los apartados que correspondan a tu proyecto. Puedes guardar cada uno y volver después. Para referencias visuales, también puedes adjuntar imágenes.</p>
   <section class="bloque indicaciones-revision" id="indicaciones-revision" hidden aria-labelledby="titulo-indicaciones"><h2 id="titulo-indicaciones">Indicaciones de Lapazimpresion3d</h2><p class="aviso-indicaciones">Consulta los mensajes sobre tus materiales y el avance de tu proyecto.</p><div id="texto-indicaciones"></div></section>
   <section class="bloque avance-materiales" aria-labelledby="titulo-avance"><h2 id="titulo-avance">Avance de tus materiales</h2>

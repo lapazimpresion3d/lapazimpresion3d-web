@@ -40,3 +40,9 @@ summary:focus-visible{outline:3px solid #e4ac00;outline-offset:2px}
 @media(max-width:700px){.admin-nav{position:static;gap:5px}.admin-nav a{padding:6px 8px;font-size:.88rem}.admin-nav #salir{margin-left:0}.admin-seccion>summary{padding:13px}.admin-seccion>summary h2{scroll-margin-top:12px}.seccion-contenido,.registro-cuerpo{padding:12px}.registro-resumen{gap:8px;padding:12px}.registro-estado{max-width:36%;padding:4px 6px}.panel-vista .intro{width:100%}}
 
 .indicaciones-editor h4{margin:0 0 6px}.indicaciones-filas{display:grid;gap:12px;margin:12px 0}.indicacion-edicion{--tono:#991b1b;--fondo-nota:#fff1f2;--borde-nota:#fecdd3;border:1px solid var(--borde-nota);border-left:5px solid var(--tono);background:var(--fondo-nota);border-radius:9px;padding:12px}.indicacion-edicion[data-color=amarillo]{--tono:#854d0e;--fondo-nota:#fefce8;--borde-nota:#fde68a}.indicacion-edicion[data-color=verde]{--tono:#166534;--fondo-nota:#f0fdf4;--borde-nota:#bbf7d0}.indicacion-edicion[data-color=azul]{--tono:#1e40af;--fondo-nota:#eff6ff;--borde-nota:#bfdbfe}.indicacion-edicion label{display:grid;gap:6px;color:var(--tono);font-weight:700;margin-bottom:8px}.indicacion-edicion select{width:100%;background:white;color:var(--tono)}.indicacion-edicion textarea{color:#16203a;background:white}.indicaciones-editor>button{margin:4px 8px 4px 0}
+
+.seguimiento-admin{margin:12px 0;border:1px solid #cbd5e1;border-radius:8px;padding:12px}
+.seguimiento-admin summary{cursor:pointer;font-weight:700}
+.seguimiento-admin fieldset{min-width:0;border:1px solid #cbd5e1;padding:12px}
+.seguimiento-admin .seguimiento-check{display:flex;align-items:center;gap:8px;margin:8px 0}
+.seguimiento-admin .seguimiento-check input{width:auto}

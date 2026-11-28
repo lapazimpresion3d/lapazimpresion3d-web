@@ -66,3 +66,16 @@ main{padding-top:28px}h1{color:var(--marino)}
 .titulo-materiales{margin:26px 0 10px}.material-imagenes{border-left:5px solid var(--azul)}.material-imagenes h2{color:var(--marino)}
 .confirmacion-materiales{border-top:4px solid var(--azul);background:#f3f7ff}.confirmacion-materiales h2{font-size:1.3rem;color:var(--marino)}.confirmacion-materiales #confirmar-materiales{width:100%;min-height:50px}.confirmacion-materiales #estado-confirmacion:not(.error){color:#166534;font-weight:600}
 @media(max-width:640px){.ficha-proyecto{padding:16px}.ficha-datos,.avance-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.material-cabecera{flex-wrap:wrap;padding:13px}.material-cabecera h2{flex:1 1 calc(100% - 60px)}.material-cabecera .estado-material{margin-left:0}.material-apartado>p,.material-apartado>label,.material-apartado>.controles{margin-left:13px;margin-right:13px}.material-apartado>textarea{width:calc(100% - 26px);margin:0 13px}.material-apartado>.controles{margin-bottom:14px}.lista-archivos .archivo span{min-width:0}.barra{gap:10px}}
+
+/* Mi proyecto: seguimiento independiente de materiales. */
+.seguimiento-proyecto{border-top:4px solid #eab308}
+.seguimiento-actual{font-weight:700;color:#14283f}
+.seguimiento-etapas{list-style:none;padding:0;display:grid;gap:8px;counter-reset:etapa}
+.seguimiento-etapas li{counter-increment:etapa;position:relative;padding:12px 12px 12px 52px;border:1px solid #cbd5e1;border-radius:8px;color:#14283f;background:#f8fafc}
+.seguimiento-etapas li::before{content:counter(etapa);position:absolute;left:12px;top:12px;width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#e2e8f0;color:#14283f;font-weight:700}
+.seguimiento-etapas li span{display:block;font-size:.9em}
+.seguimiento-etapas li[data-estado="Completada"]::before{content:"✓";background:#15803d;color:white}
+.seguimiento-etapas li[data-estado="En proceso"]{border-color:#a16207;background:#fef3c7}
+.seguimiento-etapas li[data-estado="En proceso"]::before{background:#facc15}
+.seguimiento-avance{border-left:3px solid #14283f;padding:8px 14px;margin:12px 0;overflow-wrap:anywhere}
+.seguimiento-avance p{white-space:pre-wrap;margin:6px 0}

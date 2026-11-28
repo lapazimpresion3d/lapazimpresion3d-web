@@ -303,6 +303,28 @@ function datosIndicaciones(valor){
  const indicaciones=leerIndicaciones(valor);
  return {indicaciones,instrucciones:indicaciones.map(x=>x.texto).join("\n\n")};
 }
+
+// Seguimiento publicado: separado del estado general y de las decisiones de entrega.
+const ETAPAS_SEGUIMIENTO={fisica:6,web:7};
+function modalidadSeguimiento(p){
+ let f={};try{f=JSON.parse(p.ficha_json||"{}");}catch{}
+ return ["llaveros","soporte_qr","fdm_medida","resina"].includes(f.servicio)||
+ (f.tipo_documento==="ficha_quiz"&&["R1","R2","R6","R7"].includes(f.recomendacion?.id))?"fisica":"web";
+}
+function seguimientoVacio(p){return {modalidad:modalidadSeguimiento(p),actual:null,completadas:[],fecha_estimada:"",historial:[],version:0};}
+function seguimientoValido(d){
+ if(!d||!Object.hasOwn(ETAPAS_SEGUIMIENTO,d.modalidad)||!Number.isSafeInteger(d.version)||d.version<0)return false;
+ const n=ETAPAS_SEGUIMIENTO[d.modalidad],indice=i=>Number.isInteger(i)&&i>=0&&i<n;
+ return (d.actual===null||indice(d.actual))&&Array.isArray(d.completadas)&&d.completadas.length<=n&&d.completadas.every(indice)&&new Set(d.completadas).size===d.completadas.length&&!d.completadas.includes(d.actual)&&
+ typeof d.fecha_estimada==="string"&&(d.fecha_estimada===""||fechaMensualidad(d.fecha_estimada))&&typeof d.mensaje==="string"&&d.mensaje.length<=2000;
+}
+async function leerSeguimiento(db,p){
+ // SELECT * permite distinguir una migración aún no autorizada sin afectar otros módulos.
+ const row=await db.prepare("SELECT * FROM proyectos_cliente WHERE id=?1").bind(p.id).first();
+ if(!row||!Object.hasOwn(row,"seguimiento_json"))return null;
+ return {raw:row.seguimiento_json,estado:row.estado,data:row.seguimiento_json?JSON.parse(row.seguimiento_json):seguimientoVacio(p)};
+}
+
 async function proyectoDeCliente(request,env,tokenExplicito) {
   const cookie=(request.headers.get("Cookie")||"").split(";").map(x=>x.trim()).find(x=>x.startsWith("lp3d_cliente="));
   const token=tokenExplicito||cookie?.slice("lp3d_cliente=".length);
@@ -646,6 +668,10 @@ async function api(request,env,ctx) {
   if(path.startsWith("/api/cliente/")) {
     const p=await proyectoDeCliente(request,env);
     if(!p)return error("Acceso del proyecto no autorizado o vencido",401);
+    if(path==="/api/cliente/seguimiento"&&request.method==="GET"){
+      const s=await leerSeguimiento(env.QUIZ_DB,p);
+      return json({seguimiento:s?.data||seguimientoVacio(p),disponible:!!s});
+    }
     if(path==="/api/cliente/materiales" && request.method==="GET") {
       const secciones=await env.QUIZ_DB.prepare("SELECT clave,contenido,estado,fecha_actualizacion FROM proyecto_secciones WHERE proyecto_id=?1")
         .bind(p.id).all();
@@ -748,6 +774,29 @@ async function api(request,env,ctx) {
       const res=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json","Idempotency-Key":"alertas-comerciales-"+alertas.hoy},body:JSON.stringify(body)});
       if(!res.ok)return error("El proveedor de correo no confirmó el envío. Si ya solicitaste un resumen hoy, consulta el panel.",502);
       return json({ok:true,hoy:alertas.hoy,total:alertas.items.length});
+    }
+    const seguimientoAdmin=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/seguimiento$/i);
+    if(seguimientoAdmin){
+      const db=env.QUIZ_DB,id=seguimientoAdmin[1];
+      const p=await db.prepare("SELECT p.id,q.ficha_json FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.id=?1").bind(id).first();
+      if(!p)return error("Proyecto no encontrado",404);
+      const s=await leerSeguimiento(db,p);
+      if(!s)return error("Seguimiento pendiente de habilitar (migración 0008)",503);
+      if(request.method==="GET")return json({seguimiento:s.data});
+      if(request.method==="PUT"){
+        if(s.estado==="cancelado")return error("Proyecto cancelado",409);
+        const d=await leerJson(request,8000);
+        if(!seguimientoValido(d))return error("Datos de seguimiento inválidos",400);
+        if(d.version!==s.data.version)return error("El seguimiento cambió. Vuelve a cargarlo.",409);
+        if(d.modalidad!==s.data.modalidad&&s.data.version!==0)return error("La modalidad ya fue publicada",409);
+        const mensaje=d.mensaje.trim();
+        const nuevo={modalidad:d.modalidad,actual:d.actual,completadas:[...d.completadas].sort((a,b)=>a-b),fecha_estimada:d.fecha_estimada,historial:s.data.historial,version:d.version+1};
+        if(nuevo.historial.length>=200)return error("Límite de 200 actualizaciones alcanzado",409);
+        nuevo.historial=[{fecha:new Date().toISOString(),mensaje,actual:nuevo.actual,completadas:nuevo.completadas,fecha_estimada:nuevo.fecha_estimada},...nuevo.historial];
+        const r=await db.prepare("UPDATE proyectos_cliente SET seguimiento_json=?1 WHERE id=?2 AND seguimiento_json=?3 AND estado<>'cancelado'").bind(JSON.stringify(nuevo),id,s.raw).run();
+        return r.meta.changes?json({seguimiento:nuevo}):error("El proyecto cambió. Vuelve a cargarlo.",409);
+      }
+      return error("Método no permitido",405);
     }
     const entregaAdmin=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/entrega(?:\/(decision|finalizar|cambios))?$/i);
     if(entregaAdmin){
