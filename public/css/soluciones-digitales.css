@@ -239,3 +239,10 @@
 
 /* Fichas: separar beneficio, mensualidad y capacidad. */
 .beneficio-paquete{line-height:1.5;margin:.5rem 0 .85rem}.mensualidad-incluye{margin:.5rem 0 .75rem;padding-inline-start:1.15rem}.mensualidad-incluye li{margin:.3rem 0;line-height:1.45}.capacidad-ficha{border-top:1px solid currentColor;border-color:#d6dde7;margin:.8rem 0;padding-top:.7rem}.capacidad-cupos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;margin:.55rem 0}.capacidad-cupos>div{background:#edf2f8;color:#0f2347;border-radius:.5rem;padding:.55rem;text-align:center;display:flex;flex-direction:column-reverse;justify-content:center}.capacidad-cupos dt{font-size:.82rem;line-height:1.25}.capacidad-cupos dd{margin:0;font-size:1.35rem;font-weight:750}.capacidad-general{margin:.5rem 0 1rem}
+
+/* Escaparate de seis ejemplos: enlaces por giro y tarjetas equilibradas. */
+#paginas-web .demo-plan{font-size:.78rem;font-weight:700;color:var(--titulo);line-height:1.35}
+#paginas-web .ejemplos-integrados>*{min-width:0;max-width:100%}
+#paginas-web .demo-botones .accion-cotizar{min-height:44px}
+#paginas-web .demos-generales{display:flex;flex-wrap:wrap;gap:10px}
+#paginas-web .demos-generales .accion{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:center}
