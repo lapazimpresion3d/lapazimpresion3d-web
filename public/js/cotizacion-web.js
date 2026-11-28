@@ -26,6 +26,7 @@ let claveActiva = 'a-medida';
 let modoMedida = false;
 let incluidas = new Set();
 let avisoAjuste = '';
+let giroActivo = LP_ORIENTACION_WEB.giroDesdeTexto(formularioWeb.elements.giro.value);
 function camposSeleccionados() {
   return Array.from(opcionesWeb).map(o=>o.querySelector('input')).filter(c=>c.checked).map(c=>c.value);
 }
@@ -34,7 +35,7 @@ function seleccionarPaquete(clave) {
   claveActiva = ordenPaquetes.includes(clave) ? clave : 'a-medida';
   modoMedida = claveActiva === 'a-medida';
   avisoAjuste = '';
-  const funciones = new Set(planesCotizacion[claveActiva]?.funciones || []);
+  const funciones = new Set(LP_ORIENTACION_WEB.funcionesPorGiro(claveActiva,giroActivo));
   for (const opcion of opcionesWeb) opcion.querySelector('input').checked = funciones.has(opcion.querySelector('input').value);
   actualizarFunciones();
 }
@@ -61,7 +62,7 @@ function actualizarFunciones() {
   if (plan) {
     document.getElementById('nombre-paquete-web').textContent = plan.nombre;
     document.getElementById('precio-paquete-web').textContent = plan.precio;
-    document.getElementById('alcance-paquete-web').textContent = plan.alcance;
+    document.getElementById('alcance-paquete-web').textContent = LP_ORIENTACION_WEB.alcancePorGiro(claveActiva,giroActivo);
     document.getElementById('ficha-paquete-web').href = 'paquetes-web.html#' + claveActiva;
   }
   document.getElementById('leyenda-funciones-web').textContent = 'Características y funciones del proyecto';
@@ -96,6 +97,7 @@ function editarFuncion(campo) {
 }
 formularioWeb.addEventListener('change', evento => {
   if (evento.target?.name === 'funciones') editarFuncion(evento.target);
+  if (evento.target?.name === 'giro') {const nuevo=LP_ORIENTACION_WEB.giroDesdeTexto(evento.target.value);if(nuevo!==giroActivo){giroActivo=nuevo;if(!modoMedida)seleccionarPaquete(claveActiva);else actualizarFunciones();}}
 });
 for (const radio of radiosPaquete) {
   radio.addEventListener('change',()=>seleccionarPaquete(radio.value));
@@ -204,9 +206,10 @@ botonEnviar.addEventListener('click', async () => {
 const parametrosCatalogo = new URLSearchParams(location.search);
 const paqueteCatalogo = parametrosCatalogo.get('paquete');
 const radioInicial = radiosPaquete.find(r => r.value === paqueteCatalogo);
-seleccionarPaquete(radioInicial?.value || radiosPaquete.find(r=>r.checked)?.value || 'a-medida');
 const giroCatalogo = parametrosCatalogo.get('giro');
 if (!formularioWeb.elements.giro.value && Object.hasOwn(LP_ORIENTACION_WEB.giros,giroCatalogo)) formularioWeb.elements.giro.value = LP_ORIENTACION_WEB.giros[giroCatalogo];
+giroActivo = LP_ORIENTACION_WEB.giroDesdeTexto(formularioWeb.elements.giro.value);
+seleccionarPaquete(radioInicial?.value || radiosPaquete.find(r=>r.checked)?.value || 'a-medida');
 const orientacionInicial = LP_ORIENTACION_WEB.leer(parametrosCatalogo);
 if (orientacionInicial) {
   claveActiva = orientacionInicial.paquete;

@@ -10,9 +10,9 @@
   <link rel="stylesheet" href="css/inicio.css?v=20261127-3">
   <link rel="stylesheet" href="css/cotizacion-web.css?v=2">
   <link rel="stylesheet" href="css/soluciones-digitales.css?v=18">
-  <script src="js/orientacion-web.js?v=3" defer></script>
+  <script src="js/orientacion-web.js?v=4" defer></script>
   <script src="js/turnstile.js?v=1" defer></script>
-  <script src="js/cotizacion-web.js?v=20261127-turnstile1" defer></script>
+  <script src="js/cotizacion-web.js?v=20261128-giro1" defer></script>
 <link rel="stylesheet" href="css/catalogo-colapsable.css?v=16">
 <link rel="canonical" href="https://lapazimpresion3d.com/cotizacion-web.html">
 <link rel="stylesheet" href="css/analytics-publico.css?v=1">
@@ -66,7 +66,7 @@
         </div>
       <fieldset id="funciones-web" hidden>
         <legend id="leyenda-funciones-web">Características y funciones del proyecto</legend>
-        <p id="orientacion-paquete-web" class="ayuda-cotizacion" hidden>Selecciona las funciones que necesita tu negocio. Al marcar o desmarcar opciones se ajusta el paquete al que cubre tus necesidades, sin marcar otras funciones automáticamente. Si eliges otro paquete directamente en la tabla, se carga su selección inicial. Proyecto a medida conserva la cotización personalizada.</p>
+        <p id="orientacion-paquete-web" class="ayuda-cotizacion" hidden>Selecciona las funciones que necesita tu negocio. Al marcar o desmarcar opciones se ajusta el paquete al que cubre tus necesidades, sin marcar otras funciones automáticamente. Si eliges otro paquete directamente en la tabla o cambias a un giro reconocido, se carga su selección inicial adaptada al giro. Puedes personalizarla. Proyecto a medida conserva la cotización personalizada.</p>
         <p id="ayuda-pedidos" class="ayuda-cotizacion" hidden>Las funciones que requieren carrito lo seleccionan automáticamente. Si desmarcas el carrito, se desmarcan también sus funciones dependientes.</p>
         <h3 id="titulo-funciones-plan" hidden>Funciones del paquete</h3>
         <p id="conteo-funciones-plan" class="nota" hidden></p>
@@ -106,8 +106,17 @@
         </label>
         <label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Reservaciones de tours y pases turísticos">
-          <span>Reservaciones de tours, actividades y pases turísticos<small>Para excursiones, paseos y experiencias. Permite solicitar fecha, horario y número de personas, consultar cupos y gestionar confirmaciones. La emisión de pases digitales y los pagos en línea se cotizan según el proyecto.</small><small class="nivel-funcion" hidden></small></span>
+          <span>Reservaciones de tours, actividades y pases turísticos<small>Para excursiones, paseos y experiencias. Permite solicitar fecha, horario y número de personas, consultar cupos y gestionar confirmaciones. Los pagos en línea se cotizan según el proyecto.</small><small class="nivel-funcion" hidden></small></span>
         </label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Página turística bilingüe"><span>Página turística bilingüe<small>Presentación de experiencias en español e inglés.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Catálogo de experiencias turísticas"><span>Catálogo de experiencias turísticas<small>Tours, tarifas, horarios y fotografías.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Boletos digitales con QR"><span>Boletos digitales con QR<small>Boletos grupales e individuales para reservaciones confirmadas; descarga e impresión.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Gestión de salidas y recursos turísticos"><span>Gestión de salidas y recursos turísticos<small>Calendario, guías, embarcaciones y asignación de recursos.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Control de asistencia y abordaje con QR"><span>Control de asistencia y abordaje con QR<small>Verificación de boletos y registro de pasajeros en la salida.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Anticipos, saldos y caja turística"><span>Anticipos, saldos y caja turística<small>Registro de anticipos, liquidaciones y devoluciones.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Reportes turísticos"><span>Reportes turísticos<small>Pasajeros, ventas y saldos por salida.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Rentabilidad, comisiones y promociones turísticas"><span>Rentabilidad, comisiones y promociones turísticas<small>Costos de experiencias, intermediarios y promociones.</small><small class="nivel-funcion" hidden></small></span></label>
+        <label class="opcion" data-funcion><input type="checkbox" name="funciones" value="Cotizaciones y órdenes de servicio"><span>Cotizaciones y órdenes de servicio<small>Presupuestos, trabajos y estados según el giro.</small><small class="nivel-funcion" hidden></small></span></label>
         <label class="opcion" data-funcion>
           <input type="checkbox" name="funciones" value="Panel privado">
           <span>Panel privado<small>Edita contenido, precios, horarios o disponibilidad según tu página.</small><small class="nivel-funcion" hidden></small></span>

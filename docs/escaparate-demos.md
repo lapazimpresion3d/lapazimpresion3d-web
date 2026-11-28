@@ -49,3 +49,6 @@ Tarjetas de radio nativas, seis negocios y cuatro paquetes libres. Cambio de neg
 
 ### Navegación del explorador
 Por solicitud del usuario, Explorar página web abre en la misma pestaña; el panel administrativo y el comparador conservan su apertura en pestaña nueva.
+
+## Precarga de cotización por giro
+Se adapta la selección inicial a giro y paquete, antes de cargar la tabla. Las funciones ajenas no se premarcan; todas siguen editables para proyectos personalizados. Turismo: QR grupal/individual desde P2 y control de abordaje desde P3, según turismo-boletos.mjs y pasajeros/app.mjs del commit cf19117b38f7cf8fac199c4d6d1c539f569ccff4 de demos. Nuevas etiquetas aceptadas por el validador de solicitudes; precios y contratos sin cambios. No se garantiza escaneo por cámara ni operación real.
