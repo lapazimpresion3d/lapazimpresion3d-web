@@ -24,6 +24,7 @@ coberturas.get('gestion-profesional').add('Inventario básico');
 const funcionesCatalogo = new Set(Array.from(coberturas.values()).flatMap(s=>Array.from(s)));
 let claveActiva = 'a-medida';
 let paqueteBase = 'a-medida';
+let seleccionEditada = false;
 let modoMedida = false;
 let incluidas = new Set();
 let avisoAjuste = '';
@@ -36,6 +37,7 @@ function seleccionarPaquete(clave) {
   claveActiva = ordenPaquetes.includes(clave) ? clave : 'a-medida';
   modoMedida = claveActiva === 'a-medida';
   paqueteBase = claveActiva;
+  seleccionEditada = false;
   avisoAjuste = '';
   const funciones = new Set(LP_ORIENTACION_WEB.funcionesPorGiro(claveActiva,giroActivo));
   for (const opcion of opcionesWeb) opcion.querySelector('input').checked = funciones.has(opcion.querySelector('input').value);
@@ -56,7 +58,8 @@ function actualizarFunciones() {
     opcion.hidden = false;
     campo.disabled = false;
     opcion.classList.toggle('funcion-seleccionada',campo.checked);
-    const minimo = ordenPaquetes.find(clave=>coberturas.get(clave).has(campo.value));
+    const nivelMinimo = LP_ORIENTACION_WEB.metadatos[campo.value]?.minimo;
+    const minimo = nivelMinimo ? ordenPaquetes[nivelMinimo-1] : null;
     const etiqueta = opcion.querySelector('.nivel-funcion');
     const estado=LP_ORIENTACION_WEB.estadoFuncion(campo.value,giroActivo);
     etiqueta.textContent = ['externa','personalizado','adaptacion'].includes(estado)?(minimo?'Desde P'+(ordenPaquetes.indexOf(minimo)+1)+' · ':'')+({externa:'Integración externa',personalizado:'Desarrollo personalizado',adaptacion:'Adaptación al giro'})[estado]+' · Sujeto a cotización':(minimo?'Desde P'+(ordenPaquetes.indexOf(minimo)+1):'Sujeto a cotización')+(estado==='demo'?' · Disponible en demostración; implementación según propuesta':' · Alcance comercial según propuesta');
@@ -103,21 +106,22 @@ function actualizarDemoCotizacion(){const c=globalThis.LP_DEMOS,p='p'+(ordenPaqu
 function editarFuncion(campo) {
   const opcion = campo.closest('[data-funcion]');
   if (!opcion) return;
-  // Elegir una función dependiente activa su requisito; quitar el requisito retira sus dependientes.
-  if (campo.checked && opcion.dataset.requiere) document.getElementById(opcion.dataset.requiere).checked = true;
-  if (!campo.checked && campo.id) {
-    for (const otra of opcionesWeb) if (otra.dataset.requiere === campo.id) otra.querySelector('input').checked = false;
-  }
+  seleccionEditada = true;
+  const antes=camposSeleccionados(),despues=LP_ORIENTACION_WEB.editar(antes,campo.value,campo.checked);
+  const elegidas=new Set(despues);
+  for(const o of opcionesWeb){const input=o.querySelector('input');input.checked=elegidas.has(input.value);}
+  const agregadas=despues.filter(n=>!antes.includes(n)),retiradas=antes.filter(n=>!elegidas.has(n));
+  avisoAjuste=(agregadas.length?'Requisitos añadidos: '+agregadas.join(', ')+'. ':'')+(retiradas.length?'Funciones dependientes o niveles sustituidos: '+retiradas.join(', ')+'.':'');
   if (!modoMedida) {
     const anterior = claveActiva;
     claveActiva = recomendarPaquete(camposSeleccionados());
-    if (anterior !== claveActiva) avisoAjuste = 'Paquete sugerido actualizado a ' + (planesCotizacion[claveActiva]?.nombre || 'Proyecto a medida') + ' según tus funciones. Se conservaron tus selecciones.';
+    if (anterior !== claveActiva) avisoAjuste += ' Paquete sugerido actualizado a ' + (planesCotizacion[claveActiva]?.nombre || 'Proyecto a medida') + ' según tus funciones.';
   }
   actualizarFunciones();
 }
 formularioWeb.addEventListener('change', evento => {
   if (evento.target?.name === 'funciones') editarFuncion(evento.target);
-  if (evento.target?.name === 'giro') {const nuevo=LP_ORIENTACION_WEB.giroDesdeTexto(evento.target.value);if(nuevo!==giroActivo){giroActivo=nuevo;if(!modoMedida)claveActiva=recomendarPaquete(camposSeleccionados());avisoAjuste='Se conservaron tus selecciones. Las funciones de otro giro se indican como adaptaciones; revisa las recomendaciones.';actualizarFunciones();}}
+  if (evento.target?.name === 'giro') {const nuevo=LP_ORIENTACION_WEB.giroDesdeTexto(evento.target.value);if(nuevo!==giroActivo){const previo=giroActivo;giroActivo=nuevo;if(!previo&&!seleccionEditada&&!modoMedida){seleccionarPaquete(paqueteBase);}else{if(!modoMedida)claveActiva=recomendarPaquete(camposSeleccionados());avisoAjuste='Se conservaron tus selecciones. Las funciones de otro giro se indican como adaptaciones; revisa las recomendaciones.';actualizarFunciones();}}}
 });
 for (const radio of radiosPaquete) {
   radio.addEventListener('change',()=>seleccionarPaquete(radio.value));
@@ -243,6 +247,7 @@ const orientacionInicial = LP_ORIENTACION_WEB.leer(parametrosCatalogo);
 if (orientacionInicial) {
   claveActiva = orientacionInicial.paquete;
   paqueteBase = claveActiva;
+  seleccionEditada = true;
   modoMedida = false;
   const elegidas = new Set(orientacionInicial.funciones);
   for (const opcion of opcionesWeb) opcion.querySelector('input').checked = elegidas.has(opcion.querySelector('input').value);
