@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id),lista=$("lista-alertas"),avisos=$("aviso
 const e=(t,v,c)=>{const n=document.createElement(t);if(v!==undefined)n.textContent=v;if(c)n.className=c;return n;};
 async function api(path,method="GET",body){const r=await fetch(path,{method,credentials:"same-origin",cache:"no-store",headers:body?{"Content-Type":"application/json"}:undefined,body:body?JSON.stringify(body):undefined});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||"Error "+r.status);return d;}
 let datos=null,generacion=0,ocupado=false,ocultarAvisos=false;
-const descartadas=new Set(),clave=x=>JSON.stringify([x.folio,x.tipo,x.fecha]);
+const descartadas=new Set(),clave=x=>JSON.stringify([x.folio,x.tipo,x.fecha,...(x.evento_id?[x.evento_id]:[])]);
 const borrarTodas=$("descartar-alertas"),restaurar=$("restaurar-alertas"),ocultar=$("ocultar-avisos");
 function visibles(){return (datos?.items||[]).filter(x=>!descartadas.has(clave(x)));}
 function guardar(){try{localStorage.setItem("lp_admin_alertas_descartadas_v1",JSON.stringify([...descartadas].slice(-5000)));}catch{}}

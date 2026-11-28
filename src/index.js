@@ -204,6 +204,17 @@ function urlEntrega(v){
  try{const u=new URL(v);return u.protocol==="https:"&&!u.username&&!u.password&&!u.search&&!u.hash&&!u.hostname.endsWith(".local");}catch{return false;}
 }
 function textoEntrega(v,min,max){return typeof v==="string"&&v.trim().length>=min&&v.length<=max;}
+function normalizarSitioMonitoreo(v){
+ try{const u=new URL(v);if(u.protocol!=="https:"||u.username||u.password||u.port||u.search||u.hash||!u.hostname.includes(".")||u.href.length>500)return null;return u.href;}catch{return null;}
+}
+function comprobacionMonitoreoValida(d,ahora){
+ if(!d||typeof d.id!=="string"||!ID_UUID.test(d.id)||typeof d.fecha_comprobacion!=="string"||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(d.fecha_comprobacion))return false;
+ const ts=Date.parse(d.fecha_comprobacion);
+ if(!Number.isFinite(ts)||new Date(ts).toISOString()!==d.fecha_comprobacion||ts>Date.parse(ahora))return false;
+ if(!["disponible","degradado","no_disponible"].includes(d.estado)||!(d.codigo_http===null||Number.isSafeInteger(d.codigo_http)&&d.codigo_http>=100&&d.codigo_http<=599)||!(d.tiempo_ms===null||Number.isSafeInteger(d.tiempo_ms)&&d.tiempo_ms>=0&&d.tiempo_ms<=120000)||!textoEntrega(d.observaciones,0,1000))return false;
+ if(d.estado==="disponible"&&(d.codigo_http!==null&&(d.codigo_http<200||d.codigo_http>=400)))return false;
+ return d.estado==="disponible"||textoEntrega(d.observaciones,3,1000);
+}
 async function historialRevisiones(db,id){
  const existe=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='proyecto_revisiones'").first();
  if(!existe)return {historial_disponible:false,revisiones:[]};
@@ -235,7 +246,9 @@ const TIPOS_ALERTA=Object.freeze({
  primer_pago:["Primer periodo pendiente","alta","mensualidades"],
  renovacion:["Renovación pendiente","alta","mensualidades"],
  vence:["Renovación en los próximos 7 días","normal","mensualidades"],
- garantia:["Garantía de desarrollo termina en los próximos 7 días","normal","proyectos"]
+ garantia:["Garantía de desarrollo termina en los próximos 7 días","normal","proyectos"],
+ monitoreo_fallo:["Última comprobación: sitio no disponible","alta","mensualidades"],
+ monitoreo_degradado:["Última comprobación: sitio degradado","normal","mensualidades"]
 });
 async function alertasComerciales(env,hoy=hoyMensualidad()){
  const db=env.QUIZ_DB,items=[],avisos=[];
@@ -286,6 +299,21 @@ async function alertasComerciales(env,hoy=hoyMensualidad()){
    }catch{avisos.push(grupo+": no se pudo consultar "+TIPOS_ALERTA[tipo][0]+". Comprueba las migraciones y D1.");}
   }
  }
+ // Only report the most recent recorded observation for the current registered URL.
+ try{
+  const existe=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='servicio_monitoreo'").first();
+  if(existe){
+   const rows=await db.prepare("SELECT q.id,q.folio,q.nombre,q.proyecto,p.estado,d.url_final FROM proyecto_entregas d JOIN proyectos_cliente p ON p.id=d.proyecto_id JOIN quiz_propuestas q ON q.id=p.propuesta_id JOIN propuestas_economicas e ON e.propuesta_id=q.id WHERE d.fecha_entrega IS NOT NULL AND p.estado<>'cancelado' AND e.fecha_aceptacion IS NOT NULL AND e.mensualidad>0 AND e.paquete<>'solo_fisico' AND EXISTS(SELECT 1 FROM servicio_monitoreo m WHERE m.propuesta_id=q.id) ORDER BY q.id LIMIT 501").all();
+   if(rows.results.length>500)avisos.push("Monitoreo: consulta limitada a 500 servicios con registros.");
+   // Batch bounded queries, no outbound network requests.
+   const servicios=rows.results.slice(0,500).map(q=>({...q,sitio:normalizarSitioMonitoreo(q.url_final)})).filter(q=>q.sitio);
+   for(let i=0;i<servicios.length;i+=25){
+    const grupo=servicios.slice(i,i+25);
+    const ultimos=await db.batch(grupo.map(q=>db.prepare("SELECT estado,fecha_comprobacion,id FROM servicio_monitoreo WHERE propuesta_id=?1 AND sitio=?2 ORDER BY fecha_comprobacion DESC,fecha_registro DESC,id DESC LIMIT 1").bind(q.id,q.sitio)));
+    for(let k=0;k<grupo.length;k++){const q=grupo[k],m=ultimos[k].results[0];if(!m||m.estado==="disponible")continue;const tipo=m.estado==="no_disponible"?"monitoreo_fallo":"monitoreo_degradado",[titulo,prioridad,seccion]=TIPOS_ALERTA[tipo];items.push({folio:q.folio,nombre:q.nombre,proyecto:q.proyecto,tipo,titulo,prioridad,seccion,servicio:"Monitoreo manual",fecha:m.fecha_comprobacion.slice(0,10),evento_id:m.id});}
+   }
+  }
+ }catch{avisos.push("Monitoreo: consulta no disponible. Comprueba D1 y migraciones.");}
  items.sort((a,b)=>(a.prioridad==="alta"?0:1)-(b.prioridad==="alta"?0:1)||a.fecha.localeCompare(b.fecha)||a.folio.localeCompare(b.folio));
  return {hoy,items,avisos};
 }
@@ -1227,6 +1255,36 @@ async function api(request,env,ctx) {
       const r=await db.prepare(sql+"SELECT * FROM pendientes WHERE "+filtros[filtro]+" ORDER BY CASE prioridad WHEN 'critica' THEN 0 WHEN 'alta' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,CASE WHEN ultimo_autor='cliente' THEN 0 ELSE 1 END,fecha_actualizacion ASC,ticket_id LIMIT 101").all();
       return json({resumen,items:r.results.slice(0,100),limitado:r.results.length>100,mensajes_disponibles:mensajes,origen_disponible:cliente,consultado:new Date().toISOString()});
     }
+    const monitoreo=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/monitoreo$/i);
+    if(monitoreo){
+      const pid=monitoreo[1],db=env.QUIZ_DB,ahora=new Date().toISOString();
+      if(!ID_UUID.test(pid))return error("Identificador inválido",400);
+      const e=await db.prepare("SELECT propuesta_id FROM propuestas_economicas WHERE propuesta_id=?1 AND fecha_aceptacion IS NOT NULL AND mensualidad>0 AND paquete<>'solo_fisico'").bind(pid).first();
+      if(!e)return error("Servicio contratado no encontrado",404);
+      if(!await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='servicio_monitoreo'").first())return error("Monitoreo pendiente de habilitar (0019)",503);
+      if(!await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='proyecto_entregas'").first())return error("Entrega no disponible (0007)",503);
+      const entrega=await db.prepare("SELECT d.url_final FROM proyecto_entregas d JOIN proyectos_cliente p ON p.id=d.proyecto_id WHERE p.propuesta_id=?1 AND p.estado<>'cancelado' AND d.fecha_entrega IS NOT NULL LIMIT 1").bind(pid).first();
+      const sitio=normalizarSitioMonitoreo(entrega?.url_final);
+      if(request.method==="GET"){
+        const r=await db.prepare("SELECT id,sitio,fecha_comprobacion,estado,codigo_http,tiempo_ms,observaciones FROM servicio_monitoreo WHERE propuesta_id=?1 ORDER BY fecha_comprobacion DESC,fecha_registro DESC,id DESC LIMIT 101").bind(pid).all();
+        const ultimo=sitio?await db.prepare("SELECT id,sitio,fecha_comprobacion,estado,codigo_http,tiempo_ms FROM servicio_monitoreo WHERE propuesta_id=?1 AND sitio=?2 ORDER BY fecha_comprobacion DESC,fecha_registro DESC,id DESC LIMIT 1").bind(pid,sitio).first():null;
+        const resumen=sitio?await db.prepare("SELECT COUNT(*) AS muestras,COALESCE(SUM(estado='disponible'),0) AS disponibles,COALESCE(SUM(estado='degradado'),0) AS degradadas,COALESCE(SUM(estado='no_disponible'),0) AS fallidas,ROUND(AVG(tiempo_ms)) AS promedio_ms FROM servicio_monitoreo WHERE propuesta_id=?1 AND sitio=?2 AND fecha_comprobacion>=?3").bind(pid,sitio,new Date(Date.now()-30*86400000).toISOString()).first():null;
+        const ultimoFallo=sitio?await db.prepare("SELECT fecha_comprobacion FROM servicio_monitoreo WHERE propuesta_id=?1 AND sitio=?2 AND estado<>'disponible' ORDER BY fecha_comprobacion DESC,fecha_registro DESC,id DESC LIMIT 1").bind(pid,sitio).first():null;
+        const recuperacion=ultimoFallo?await db.prepare("SELECT MIN(fecha_comprobacion) AS fecha FROM servicio_monitoreo WHERE propuesta_id=?1 AND sitio=?2 AND estado='disponible' AND fecha_comprobacion>?3").bind(pid,sitio,ultimoFallo.fecha_comprobacion).first():null;
+        return json({sitio,ultimo,resumen,ultimo_fallo:ultimoFallo?.fecha_comprobacion||null,recuperacion:recuperacion?.fecha||null,items:r.results.slice(0,100),limitado:r.results.length>100,consultado:ahora});
+      }
+      if(request.method==="POST"){
+        if(!sitio)return error("Registra primero una URL HTTPS final de entrega válida",409);
+        const d=await leerJson(request,10000);
+        if(!comprobacionMonitoreoValida(d,ahora)||d.sitio!==sitio)return error("Revisa la comprobación y la URL registrada",400);
+        const vals=[sitio,d.fecha_comprobacion,d.estado,d.codigo_http,d.tiempo_ms,d.observaciones.trim()];
+        const r=await db.prepare("INSERT INTO servicio_monitoreo(id,propuesta_id,sitio,fecha_comprobacion,estado,codigo_http,tiempo_ms,observaciones,fecha_registro) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9) ON CONFLICT(id) DO NOTHING").bind(d.id,pid,...vals,ahora).run();
+        if(r.meta.changes)return json({ok:true},201);
+        const p=await db.prepare("SELECT * FROM servicio_monitoreo WHERE id=?1 AND propuesta_id=?2").bind(d.id,pid).first();
+        return p&&[p.sitio,p.fecha_comprobacion,p.estado,p.codigo_http,p.tiempo_ms,p.observaciones].every((v,i)=>v===vals[i])?json({ok:true,repetido:true}):error("Identificador en conflicto",409);
+      }
+      return error("Método no permitido",405);
+    }
     const actualizacion=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/actualizaciones$/i);
     if(actualizacion){
       const pid=actualizacion[1],db=env.QUIZ_DB,hoy=hoyMensualidad(),ahora=new Date().toISOString();
@@ -1548,6 +1606,7 @@ async function api(request,env,ctx) {
       if(tablas.has("servicio_respaldos"))borrar("servicio_pruebas_restauracion","respaldo_id IN (SELECT id FROM servicio_respaldos WHERE propuesta_id=?1)");
       borrar("servicio_respaldos","propuesta_id=?1");
       borrar("servicio_actualizaciones","propuesta_id=?1");
+      borrar("servicio_monitoreo","propuesta_id=?1");
       borrar("servicio_vinculos","propuesta_id=?1");
       borrar("pagos_mensualidad","propuesta_id=?1");
       borrar("suscripciones_cliente","propuesta_id=?1");
