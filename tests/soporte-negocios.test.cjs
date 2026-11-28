@@ -1,6 +1,6 @@
 const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs");
 const s=fs.readFileSync("src/integracion-comercial.mjs","utf8");
-const a=new Function(s.replace(/^import .*\n/m,"").replace(/export class IntegracionComercial[\s\S]*$/,"").replace(/export /g,"")+"return {solicitudClienteValida,proyectarSolicitud,listarSoportePrivado,crearSoportePrivado};")();
+const a=new Function(s.replace(/^import .*\n/gm,"").replace(/export class IntegracionComercial[\s\S]*$/,"").replace(/export /g,"")+"return {solicitudClienteValida,proyectarSolicitud,listarSoportePrivado,crearSoportePrivado};")();
 const d={id:"550e8400-e29b-41d4-a716-446655440000",titulo:"Error catálogo",descripcion:"No guarda",categoria:"funcionamiento",modulo:"Catálogo",impacto:"bloqueante"};
 test("valida datos y rechaza control administrativo",()=>{assert.equal(a.solicitudClienteValida(d),true);for(const k of ["prioridad","propuesta_id","estado","autor"])assert.equal(a.solicitudClienteValida({...d,[k]:"x"}),false);assert.equal(a.solicitudClienteValida({...d,descripcion:"  "}),false);});
 test("proyección excluye notas y datos internos",()=>{const x=a.proyectarSolicitud({...d,soporte_id:"x",estado:"abierto",prioridad:"critica",minutos:40,propuesta_id:"privado"});assert.equal(x.id,"x");for(const k of ["prioridad","minutos","propuesta_id"])assert.equal(x[k],undefined);});

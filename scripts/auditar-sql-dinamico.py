@@ -9,15 +9,18 @@ def preparar(db,sql):
         n=re.search(r"uses (\d+)",str(e))
         if not n: raise
         db.execute("EXPLAIN "+sql,[None]*int(n.group(1)))
+def decodificar(s):
+    # JS double-quoted literals also allow an escaped apostrophe, unlike JSON.
+    return json.loads(re.sub(r"(?<!\\)\\'", "'", s))
 def constante(text,name):
     m=re.search(r"\bconst "+name+r"=("+LIT+r");",text)
     if not m: raise ValueError("Constante ausente: "+name)
-    return json.loads(m[1])
+    return decodificar(m[1])
 def concatenar(expr,variables):
     # Restricted grammar, no evaluation of JavaScript.
     tokens=re.findall(LIT+r"|[A-Za-z_]\w*|\+",expr)
     if re.sub(r"\s+","",expr)!=re.sub(r"\s+","","".join(tokens)) or len(tokens)%2!=1 or any(x!="+" for x in tokens[1::2]): raise ValueError(expr)
-    return "".join(json.loads(x) if x.startswith('"') else variables[x] for x in tokens[::2])
+    return "".join(decodificar(x) if x.startswith('"') else variables[x] for x in tokens[::2])
 def variantes(text,variables,required,casos,label):
     count=0
     for i,line in enumerate(text.splitlines(),1):
@@ -35,7 +38,9 @@ def main():
     rpc=(ROOT/"src/integracion-comercial.mjs").read_text(encoding="utf8")
     casos=[]
     for tabla,filtro,cols in [("servicio_costos","","0 AS version,'original' AS accion"),("servicio_costos_vigentes"," AND accion<>'anular'","version,accion")]:
-        text=src.replace('(conCorrecciones?"version,accion":"0 AS version,\'original\' AS accion")',json.dumps(cols))
+        patron=r'\(conCorrecciones\?"version,accion":'+LIT+r'\)'
+        text,n=re.subn(patron,lambda _:json.dumps(cols),src)
+        assert n==1, "Expresión de columnas de costos no encontrada"
         assert variantes(text,{"tablaCostos":tabla,"filtroCosto":filtro},["tablaCostos"],casos,tabla)==4
     g=constante(rpc,"guardiaVinculo")
     j=constante(rpc,"joinsTicket")
