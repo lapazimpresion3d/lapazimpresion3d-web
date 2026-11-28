@@ -3,7 +3,7 @@
   "moneda": "MXN",
   "iva_incluido": false,
   "precios": "comerciales confirmados",
-  "capacidad": "prevista, sujeta a validación y propuesta",
+  "capacidad": "referencia comercial; cupos efectivos confirmados en propuesta",
   "planes": [
     {
       "slug": "presencia-digital",
@@ -11,8 +11,7 @@
       "setup": 750,
       "monthly": 149,
       "users": 1,
-      "branches": 1,
-      "minutes": 15
+      "branches": 1
     },
     {
       "slug": "negocio-interactivo",
@@ -20,8 +19,7 @@
       "setup": 1500,
       "monthly": 249,
       "users": 3,
-      "branches": 1,
-      "minutes": 30
+      "branches": 1
     },
     {
       "slug": "gestion-comercial",
@@ -29,8 +27,7 @@
       "setup": 2500,
       "monthly": 349,
       "users": 5,
-      "branches": 2,
-      "minutes": 45
+      "branches": 2
     },
     {
       "slug": "gestion-profesional",
@@ -38,8 +35,7 @@
       "setup": 3500,
       "monthly": 499,
       "users": 10,
-      "branches": 3,
-      "minutes": 60
+      "branches": 3
     }
   ],
   "modulos_previstos": [
