@@ -201,3 +201,30 @@
 #paginas-web .asistente-paquetes .nota{color:#46536d;font-size:.95rem;line-height:1.5}
 #paginas-web #asistente-aviso{margin:14px 0 0;padding:10px 12px;background:#e9f0fb;border-radius:8px;color:#16203a}
 @media(max-width:700px){#paginas-web .asistente-opciones,#paginas-web .asistente-recomendacion .acciones{grid-template-columns:minmax(0,1fr)}#paginas-web .asistente-contenido,#paginas-web .asistente-cabecera{padding:18px}#paginas-web .asistente-opciones label{padding:12px}#paginas-web .asistente-recomendacion{padding:14px}}
+
+/* Fichas integradas: precios escaneables y demostraciones cómodas en móvil. */
+#paginas-web .plan-integrado .plan-precios{gap:10px}
+#paginas-web .plan-integrado .plan-precios>div{padding:12px 10px;background:#edf3ff;border:1px solid #c6d4ee;border-radius:10px;color:#16203a}
+#paginas-web .plan-integrado .plan-precios>div:last-child{background:#fff8df;border-color:#e9d388}
+#paginas-web .plan-integrado .plan-precios dt{color:#304a78;font-weight:650;line-height:1.35}
+#paginas-web .plan-integrado .plan-precios dd{color:#174ab8;font-size:clamp(1.15rem,2.5vw,1.65rem);line-height:1.25;overflow-wrap:normal;font-variant-numeric:tabular-nums}
+#paginas-web .plan-integrado .plan-precios+ .nota{margin:6px 0 14px}
+#paginas-web .plan-integrado .plan-subtitulo{margin-top:14px;color:var(--titulo)}
+#paginas-web .plan-informacion>ul{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:9px}
+#paginas-web .plan-informacion>ul>li{position:relative;padding-inline-start:21px;line-height:1.45;margin:0}
+#paginas-web .plan-informacion>ul>li::before{content:"";position:absolute;inset-inline-start:3px;top:.4em;width:6px;height:10px;border:solid var(--azul-demo,#174ab8);border-width:0 2px 2px 0;transform:rotate(45deg)}
+#paginas-web .ejemplos-integrados{gap:14px}
+#paginas-web .ejemplo-integrado{background:var(--tarjeta)}
+#paginas-web .demo-identidad .demo-ejemplo{font-size:1.08rem;font-weight:800;color:var(--titulo);line-height:1.3}
+#paginas-web .demo-botones .accion{min-height:48px;font-size:.96rem;line-height:1.3}
+#paginas-web .plan-cotizar .accion{min-height:52px;font-size:1rem;font-weight:800}
+@media(max-width:700px){
+ #paginas-web .planes-integrados{gap:16px}
+ #paginas-web .plan-integrado{padding:14px;gap:18px}
+ #paginas-web .plan-integrado .plan-precios>div{padding:10px 8px}
+ #paginas-web .demo-portada{aspect-ratio:16/9}
+ #paginas-web .demo-cuerpo{padding:12px;gap:8px}
+ #paginas-web .demo-botones .accion{min-height:50px}
+ #paginas-web .plan-demostraciones>.plan-cotizar{margin-top:16px}
+}
+@media(max-width:360px){#paginas-web .plan-integrado{padding:10px}#paginas-web .plan-integrado .plan-precios{gap:6px}#paginas-web .plan-integrado .plan-precios>div{padding:8px 6px}}
