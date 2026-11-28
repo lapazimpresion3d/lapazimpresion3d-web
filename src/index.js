@@ -1217,8 +1217,9 @@ async function api(request,env,ctx) {
       if(!e)return error("Servicio contratado no encontrado",404);
       const tabla=await db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('servicio_soporte','servicio_intervenciones')").first();
       if(tabla.n!==2)return error("Soporte pendiente de habilitar (migración 0011)",503);
+      const clienteSoporte=!!await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='servicio_soporte_cliente'").first();
       if(!tid&&request.method==="GET"){
-        const r=await db.prepare("SELECT t.*,(SELECT COALESCE(SUM(i.minutos),0) FROM servicio_intervenciones i WHERE i.soporte_id=t.id) AS minutos FROM servicio_soporte t WHERE propuesta_id=?1 ORDER BY CASE WHEN estado IN ('resuelto','cancelado') THEN 1 ELSE 0 END,CASE prioridad WHEN 'critica' THEN 0 WHEN 'alta' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,fecha_actualizacion DESC LIMIT 101").bind(pid).all();
+        const r=await db.prepare("SELECT t.*,"+(clienteSoporte?"EXISTS(SELECT 1 FROM servicio_soporte_cliente c WHERE c.soporte_id=t.id)":"0")+" AS desde_panel,(SELECT COALESCE(SUM(i.minutos),0) FROM servicio_intervenciones i WHERE i.soporte_id=t.id) AS minutos FROM servicio_soporte t WHERE propuesta_id=?1 ORDER BY CASE WHEN estado IN ('resuelto','cancelado') THEN 1 ELSE 0 END,CASE prioridad WHEN 'critica' THEN 0 WHEN 'alta' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,fecha_actualizacion DESC LIMIT 101").bind(pid).all();
         const resumen=await db.prepare("SELECT COUNT(*) AS total,COALESCE(SUM(CASE WHEN estado NOT IN ('resuelto','cancelado') THEN 1 ELSE 0 END),0) AS pendientes FROM servicio_soporte WHERE propuesta_id=?1").bind(pid).first();
         const mes=await db.prepare("SELECT i.clasificacion,COALESCE(SUM(i.minutos),0) AS minutos FROM servicio_intervenciones i JOIN servicio_soporte t ON t.id=i.soporte_id WHERE t.propuesta_id=?1 AND substr(i.fecha_trabajo,1,7)=?2 GROUP BY i.clasificacion").bind(pid,hoy.slice(0,7)).all();
         return json({items:r.results.slice(0,100),limitado:r.results.length>100,resumen,mes:mes.results,hoy});
@@ -1253,7 +1254,8 @@ async function api(request,env,ctx) {
       }
       if(!accion&&request.method==="GET"){
         const r=await db.prepare("SELECT * FROM servicio_intervenciones WHERE soporte_id=?1 ORDER BY fecha_trabajo DESC,fecha_registro DESC LIMIT 201").bind(tid).all();
-        return json({solicitud:t,intervenciones:r.results.slice(0,200),limitado:r.results.length>200,hoy});
+        const cliente=clienteSoporte?await db.prepare("SELECT categoria,modulo,impacto,fecha_registro FROM servicio_soporte_cliente WHERE soporte_id=?1").bind(tid).first():null;
+        return json({solicitud:t,cliente,intervenciones:r.results.slice(0,200),limitado:r.results.length>200,hoy});
       }
       if(!accion&&request.method==="PATCH"){
         const d=await leerJson(request,500);if(!d||!SOPORTE_ESTADOS.includes(d.estado)||!SOPORTE_PRIORIDADES.includes(d.prioridad)||!Number.isSafeInteger(d.version))return error("Estado, prioridad o versión inválidos",400);
@@ -1409,6 +1411,7 @@ async function api(request,env,ctx) {
       const stmts=[];
       const borrar=(tabla,filtro)=>{if(tablas.has(tabla))stmts.push(db.prepare("DELETE FROM "+tabla+" WHERE "+filtro+" AND "+guardia).bind(id));};
       if(tablas.has("servicio_soporte")){borrar("servicio_soporte_mensajes","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");borrar("servicio_intervenciones","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");}
+      if(tablas.has("servicio_soporte"))borrar("servicio_soporte_cliente","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");
       borrar("servicio_soporte","propuesta_id=?1");
       borrar("servicio_vinculos","propuesta_id=?1");
       borrar("pagos_mensualidad","propuesta_id=?1");
