@@ -54,7 +54,7 @@ main > #llaveros.servicio-colapsable{margin-top:clamp(24px,4vw,44px)}
 .servicio-ejemplo img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--borde)}
 .servicio-ejemplo figcaption{font-size:.85rem;color:var(--suave);margin-top:6px;line-height:1.45}
 
-.comparativa-publica{margin:0 0 18px;min-width:0}.comparativa-publica table{width:100%;border-collapse:collapse;font-size:.9rem;table-layout:fixed}.comparativa-publica th,.comparativa-publica td{padding:9px 5px;border-bottom:1px solid var(--borde);text-align:left;overflow-wrap:anywhere}.comparativa-publica th:first-child{width:36%}.comparativa-publica .nota{margin-bottom:0}
+.comparativa-publica{margin:0 0 18px;min-width:0}.comparativa-publica .nota{margin-bottom:0}
 
 .accesos-servicios{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:20px 0}
 .accesos-servicios a{display:flex;flex-direction:column;min-width:0;background:var(--tarjeta);border:1px solid var(--borde);border-radius:12px;overflow:hidden;text-decoration:none;color:var(--titulo)}
@@ -72,7 +72,6 @@ main > #llaveros.servicio-colapsable{margin-top:clamp(24px,4vw,44px)}
 .whatsapp-flotante:visited{color:#fff}.whatsapp-flotante:focus-visible{outline:3px solid #ffc82a;outline-offset:3px}
 html:has(.whatsapp-flotante){scroll-padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
 .pie-comercial{padding-bottom:calc(86px + env(safe-area-inset-bottom, 0px))}
-@media(max-width:700px){.comparativa-publica table{font-size:.76rem}.comparativa-publica th,.comparativa-publica td{padding:8px 3px}.comparativa-publica th:first-child{width:36%}}
 
 /* Paleta comercial D: azul intenso, azul claro y amarillo. */
 .inicio-catalogo .accion.accion-panel{background:var(--azul-panel);color:var(--azul-panel-texto);border-color:#8aadd9}
@@ -111,25 +110,15 @@ html:has(.whatsapp-flotante){scroll-padding-bottom:calc(84px + env(safe-area-ins
  .inicio-catalogo #paginas-web .plan-informacion h3{font-size:1.55rem}
 }
 
-/* Refinamiento móvil: comparativa legible y controles plegables coherentes. */
+/* Refinamiento móvil: navegación y controles plegables coherentes. */
 .inicio-catalogo #navegacion .nav-guia-nfc{background:#c9def8;color:#174ab8;border:1px solid #8aadd9;border-radius:10px;font-weight:800;padding:0 12px;justify-content:center}
 .inicio-catalogo #navegacion .nav-guia-nfc:hover{background:#b5d0f2;color:#123b94}
-.inicio-catalogo .comparativa-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-width:auto}
-.inicio-catalogo .comparativa-scroll:focus-visible{outline:2px solid var(--azul);outline-offset:-2px}
-.inicio-catalogo .comparativa-publica table{min-width:520px;font-size:.9rem}
-.inicio-catalogo .comparativa-publica th,.inicio-catalogo .comparativa-publica td{padding:10px 7px}
-.inicio-catalogo .comparativa-publica thead th{background:#edf2fc;color:#174ab8}
-.inicio-catalogo .comparativa-publica td{white-space:nowrap;text-align:center}
-.inicio-catalogo .comparativa-publica thead th:not(:first-child){text-align:center}
-.inicio-catalogo .comparativa-publica tbody tr:nth-child(even){background:#f7f9fd}
-.inicio-catalogo .comparativa-aviso{display:none}
 .inicio-catalogo .ventajas-resumen{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;list-style:none;min-height:44px}
 .inicio-catalogo .ventajas-resumen::-webkit-details-marker{display:none}
 .inicio-catalogo .ventajas-resumen::marker{content:""}
 .inicio-catalogo .ventajas-resumen h3{margin:0;min-width:0}
 .inicio-catalogo .ventajas-resumen .servicio-indicador{flex:none}
 .inicio-catalogo .ventajas-suscripcion[open]>.ventajas-resumen .servicio-indicador::after{transform:rotate(225deg);margin-top:4px}
-@media(max-width:650px){.inicio-catalogo .comparativa-aviso{display:block;margin:0 0 8px;font-size:.82rem;color:var(--suave)}}
 
 /* Comparativa opcional: lectura vertical, sin columnas estrechas ni desplazamiento lateral. */
 .inicio-catalogo .comparativa-publica.ventajas-suscripcion{margin:20px 0 24px}
@@ -194,3 +183,7 @@ html:has(.whatsapp-flotante){scroll-padding-bottom:calc(84px + env(safe-area-ins
 .pagina-guia-nfc .nfc-soporte{margin-top:20px}
 .pagina-guia-nfc .nfc-soporte .accion{min-height:50px}
 @media(max-width:600px){.pagina-guia-nfc .nfc-apps{grid-template-columns:minmax(0,1fr)}.pagina-guia-nfc .guia .pasos li{padding:12px;gap:10px}.pagina-guia-nfc .nfc-soporte .accion{width:100%}}
+
+/* Contraste de encabezados en paneles de fondo claro, incluso en modo oscuro. */
+.inicio-catalogo .ventajas-suscripcion>.ventajas-resumen h3{color:#174ab8}
+.inicio-catalogo .comparativa-lectura h4{color:#174ab8}
