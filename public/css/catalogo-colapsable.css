@@ -172,3 +172,25 @@ html:has(.whatsapp-flotante){scroll-padding-bottom:calc(84px + env(safe-area-ins
  #piezas-a-medida .piezas-presentacion{grid-template-columns:minmax(0,1fr)}
  #impresion-resina .accion-cotizar,#piezas-a-medida .accion-cotizar{width:100%}
 }
+
+/* Guía NFC: instrucciones de uso, lectura móvil y soporte posventa. */
+.pagina-guia-nfc .envoltura{max-width:840px}
+.pagina-guia-nfc .guia{border:0;padding:0;background:transparent}
+.pagina-guia-nfc .guia h2{font-size:clamp(1.25rem,3vw,1.65rem);margin:24px 0 12px}
+.pagina-guia-nfc .nfc-requisitos{padding:16px;background:#edf3ff;border:1px solid #a9c2e8;border-radius:12px;color:#16203a;line-height:1.6}
+.pagina-guia-nfc .nfc-requisitos strong{color:#174ab8}
+.pagina-guia-nfc .nfc-apps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pagina-guia-nfc .nfc-apps .accion{width:100%;min-height:52px;white-space:normal}
+.pagina-guia-nfc .guia .pasos{gap:12px}
+.pagina-guia-nfc .guia .pasos li{padding:16px;border:1px solid var(--borde);border-radius:12px;background:var(--tarjeta);line-height:1.55}
+.pagina-guia-nfc .guia .pasos li::before{background:#dce8fa;color:#174ab8;width:34px;height:34px;flex:none}
+.pagina-guia-nfc .guia .pasos li>span{min-width:0;overflow-wrap:anywhere}
+.pagina-guia-nfc .nfc-paso-titulo{display:block;color:var(--titulo);font-size:1.08rem;margin-bottom:5px}
+.pagina-guia-nfc .nfc-aviso{background:#edf3ff;border:1px solid #a9c2e8;border-inline-start:4px solid #174ab8;border-radius:10px;padding:14px;color:#16203a;line-height:1.55}
+.pagina-guia-nfc .nfc-aviso strong{color:#174ab8}
+.pagina-guia-nfc .nfc-ayuda{margin-top:20px;padding:14px;border:1px solid var(--borde);border-radius:12px;background:var(--tarjeta)}
+.pagina-guia-nfc .nfc-ayuda summary{color:var(--titulo);font-weight:800;min-height:44px;padding:8px 0}
+.pagina-guia-nfc .nfc-ayuda li+li{margin-top:8px}
+.pagina-guia-nfc .nfc-soporte{margin-top:20px}
+.pagina-guia-nfc .nfc-soporte .accion{min-height:50px}
+@media(max-width:600px){.pagina-guia-nfc .nfc-apps{grid-template-columns:minmax(0,1fr)}.pagina-guia-nfc .guia .pasos li{padding:12px;gap:10px}.pagina-guia-nfc .nfc-soporte .accion{width:100%}}
