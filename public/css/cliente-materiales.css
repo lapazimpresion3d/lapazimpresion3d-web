@@ -21,3 +21,13 @@
 .indicaciones-revision{background:#fff1f2;border:1px solid #f0a3ab;border-left:5px solid #b91c1c;color:#881337;box-shadow:0 2px 10px #991b1b12}.indicaciones-revision h2{display:flex;align-items:center;gap:9px;color:#991b1b}.indicaciones-revision h2 svg{flex:none;width:24px;height:24px}.indicaciones-revision .aviso-indicaciones{margin:8px 0 12px;font-weight:600;color:#9f1239}.indicaciones-revision #texto-indicaciones{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;padding:12px 14px;background:#fff;border:1px solid #fecdd3;border-radius:8px;color:#641b26}.estado-material{display:inline-block;font-size:.88rem;font-weight:700;color:#435578;overflow-wrap:anywhere}.estado-material[data-revision=aprobado]{color:#166534}.estado-material[data-revision=requiere_correccion]{color:#a01b2e}.lista-archivos .archivo .estado-material{flex:0 1 auto;min-width:0}
 
 .entrega-proyecto{border-left:4px solid var(--amarillo)}.entrega-proyecto p{white-space:pre-wrap;overflow-wrap:anywhere}.entrega-proyecto a{color:var(--azul);font-weight:700;overflow-wrap:anywhere}
+
+/* Mensajes independientes: el color expresa el tipo, no cambia el estado del proyecto. */
+.indicaciones-revision{background:#fff;border:1px solid var(--borde);border-left:5px solid var(--azul);color:var(--marino);box-shadow:0 2px 10px #0f23470a}
+.indicaciones-revision h2{color:var(--marino)}.indicaciones-revision .aviso-indicaciones{color:#435578;font-weight:500}
+.indicaciones-revision #texto-indicaciones{display:grid;gap:12px;background:transparent;border:0;padding:0;color:inherit}
+.indicacion-cliente{--tono:#991b1b;--fondo-nota:#fff1f2;--borde-nota:#fecdd3;background:var(--fondo-nota);border:1px solid var(--borde-nota);border-left:5px solid var(--tono);border-radius:8px;padding:14px;color:var(--tono)}
+.indicacion-cliente[data-color=amarillo]{--tono:#854d0e;--fondo-nota:#fefce8;--borde-nota:#fde68a}
+.indicacion-cliente[data-color=verde]{--tono:#166534;--fondo-nota:#f0fdf4;--borde-nota:#bbf7d0}
+.indicacion-cliente[data-color=azul]{--tono:#1e40af;--fondo-nota:#eff6ff;--borde-nota:#bfdbfe}
+.indicacion-cliente h3{font-size:1rem;margin:0 0 8px;color:inherit}.indicacion-cliente p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;color:inherit}
