@@ -178,9 +178,10 @@ botonEnviar.addEventListener('click', async () => {
   botonEnviar.textContent = 'Registrando solicitud…';
   errorWeb.hidden = true;
   try {
+    const token = await globalThis.LP_Turnstile.token('cotizacion_web',botonEnviar);
     const res = await fetch('/api/web/propuestas', {
       method: 'POST', credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Turnstile-Token':token },
       body: JSON.stringify(datosPendientes)
     });
     const data = await res.json().catch(() => ({}));
