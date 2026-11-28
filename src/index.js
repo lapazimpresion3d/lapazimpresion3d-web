@@ -325,6 +325,22 @@ async function leerSeguimiento(db,p){
  return {raw:row.seguimiento_json,estado:row.estado,data:row.seguimiento_json?JSON.parse(row.seguimiento_json):seguimientoVacio(p)};
 }
 
+
+async function tablaAvances(db){
+ return !!await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='proyecto_avances_fotos'").first();
+}
+async function fotosAvances(db,id){
+ return (await db.prepare("SELECT id,version_avance,descripcion,fecha_subida FROM proyecto_avances_fotos WHERE proyecto_id=?1 ORDER BY fecha_subida DESC,id").bind(id).all()).results;
+}
+async function imagenAvance(env,id,foto){
+ if(!env.COTIZACIONES_R2)return error("Almacenamiento no configurado",503);
+ const a=await env.QUIZ_DB.prepare("SELECT tipo_mime FROM proyecto_avances_fotos WHERE proyecto_id=?1 AND id=?2").bind(id,foto).first();
+ if(!a)return error("Imagen no encontrada",404);
+ const obj=await env.COTIZACIONES_R2.get("avances/"+id+"/"+foto);
+ if(!obj)return error("Imagen no encontrada",404);
+ return new Response(obj.body,{headers:{"Content-Type":a.tipo_mime,"Content-Disposition":"inline","Cache-Control":"private,no-store","X-Content-Type-Options":"nosniff","Content-Security-Policy":"default-src 'none'; sandbox","X-Frame-Options":"DENY"}});
+}
+
 async function proyectoDeCliente(request,env,tokenExplicito) {
   const cookie=(request.headers.get("Cookie")||"").split(";").map(x=>x.trim()).find(x=>x.startsWith("lp3d_cliente="));
   const token=tokenExplicito||cookie?.slice("lp3d_cliente=".length);
@@ -670,7 +686,13 @@ async function api(request,env,ctx) {
     if(!p)return error("Acceso del proyecto no autorizado o vencido",401);
     if(path==="/api/cliente/seguimiento"&&request.method==="GET"){
       const s=await leerSeguimiento(env.QUIZ_DB,p);
-      return json({seguimiento:s?.data||seguimientoVacio(p),disponible:!!s});
+      const fotos=s&&await tablaAvances(env.QUIZ_DB)?await fotosAvances(env.QUIZ_DB,p.id):[];
+      return json({seguimiento:s?.data||seguimientoVacio(p),disponible:!!s,fotos});
+    }
+    const fotoAvanceCliente=path.match(/^\/api\/cliente\/avances\/([0-9a-f-]{36})$/i);
+    if(fotoAvanceCliente&&request.method==="GET"){
+      if(!await tablaAvances(env.QUIZ_DB))return error("Imagen no encontrada",404);
+      return imagenAvance(env,p.id,fotoAvanceCliente[1]);
     }
     if(path==="/api/cliente/materiales" && request.method==="GET") {
       const secciones=await env.QUIZ_DB.prepare("SELECT clave,contenido,estado,fecha_actualizacion FROM proyecto_secciones WHERE proyecto_id=?1")
@@ -774,6 +796,43 @@ async function api(request,env,ctx) {
       const res=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json","Idempotency-Key":"alertas-comerciales-"+alertas.hoy},body:JSON.stringify(body)});
       if(!res.ok)return error("El proveedor de correo no confirmó el envío. Si ya solicitaste un resumen hoy, consulta el panel.",502);
       return json({ok:true,hoy:alertas.hoy,total:alertas.items.length});
+    }
+    const fotosAdmin=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/avances(?:\/([0-9a-f-]{36}))?$/i);
+    if(fotosAdmin){
+      const db=env.QUIZ_DB,id=fotosAdmin[1],foto=fotosAdmin[2];
+      if(!await tablaAvances(db))return error("Fotografías pendientes de habilitar (migración 0009)",503);
+      const p=await db.prepare("SELECT p.id,q.ficha_json FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.id=?1").bind(id).first();
+      if(!p)return error("Proyecto no encontrado",404);
+      if(request.method==="GET")return foto?imagenAvance(env,id,foto):json({fotos:await fotosAvances(db,id)});
+      if(!env.COTIZACIONES_R2)return error("Almacenamiento no configurado",503);
+      if(request.method==="POST"&&!foto){
+        const s=await leerSeguimiento(db,p);
+        if(!s||!s.data.version||s.estado==="cancelado")return error("Publica primero un avance en un proyecto activo",409);
+        if(Number(request.headers.get("content-length")||0)>IMG_MAX+150000)return error("Imagen demasiado grande",413);
+        if(!request.headers.get("content-type")?.toLowerCase().startsWith("multipart/form-data"))return error("Formato inválido",415);
+        let form;try{form=await request.formData();}catch{return error("Formulario inválido",400);}
+        const archivo=form.get("imagen"),descripcion=form.get("descripcion"),v=Number(form.get("version"));
+        if(!Number.isSafeInteger(v)||v<1||v>s.data.version||typeof descripcion!=="string"||descripcion.length>500||!(archivo instanceof File)||!Object.hasOwn(IMG_MIME,archivo.type)||archivo.size===0||archivo.size>IMG_MAX)return error("Revisa la imagen, descripción y avance",400);
+        const bytes=new Uint8Array(await archivo.arrayBuffer());
+        if(!imagenReal(bytes,archivo.type))return error("Imagen inválida",400);
+        const nuevo=crypto.randomUUID(),clave="avances/"+id+"/"+nuevo;
+        await env.COTIZACIONES_R2.put(clave,bytes,{httpMetadata:{contentType:archivo.type}});
+        let resultado;
+        try{
+          resultado=await db.prepare("INSERT INTO proyecto_avances_fotos(id,proyecto_id,version_avance,descripcion,tipo_mime,fecha_subida) SELECT ?1,id,?2,?3,?4,?5 FROM proyectos_cliente WHERE id=?6 AND estado<>'cancelado' AND seguimiento_json=?7 AND (SELECT COUNT(*) FROM proyecto_avances_fotos WHERE proyecto_id=?6)<60 AND (SELECT COUNT(*) FROM proyecto_avances_fotos WHERE proyecto_id=?6 AND version_avance=?2)<6").bind(nuevo,v,descripcion.trim(),archivo.type,new Date().toISOString(),id,s.raw).run();
+        }catch(e){await env.COTIZACIONES_R2.delete(clave).catch(()=>{});throw e;}
+        if(!resultado.meta.changes){await env.COTIZACIONES_R2.delete(clave);return error("Proyecto modificado o límite de imágenes alcanzado. Actualiza.",409);}
+        return json({ok:true,id:nuevo},201);
+      }
+      if(request.method==="DELETE"&&foto){
+        const d=await leerJson(request,200);
+        if(d?.confirmacion!=="RETIRAR")return error("Confirma retirar la imagen",400);
+        const r=await db.prepare("DELETE FROM proyecto_avances_fotos WHERE proyecto_id=?1 AND id=?2").bind(id,foto).run();
+        if(!r.meta.changes)return error("Imagen no encontrada",404);
+        try{await env.COTIZACIONES_R2.delete("avances/"+id+"/"+foto);}catch{console.error("Limpieza de avance pendiente",id,foto);return json({ok:true,limpieza_pendiente:true});}
+        return json({ok:true});
+      }
+      return error("Método no permitido",405);
     }
     const seguimientoAdmin=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/seguimiento$/i);
     if(seguimientoAdmin){
@@ -1109,20 +1168,24 @@ async function api(request,env,ctx) {
         const archivos=await db.prepare("SELECT clave_r2 FROM proyecto_archivos WHERE proyecto_id IN ("+proyecto+")").bind(id).all();
         claves.push(...archivos.results.map(x=>x.clave_r2));
       }
-      if(claves.length&&!env.COTIZACIONES_R2)return error("Almacenamiento de imágenes no disponible.",503);
+      const tieneFotos=tieneProyecto&&tablas.has("proyecto_avances_fotos");
+      if((claves.length||tieneFotos)&&!env.COTIZACIONES_R2)return error("Almacenamiento de imágenes no disponible.",503);
       const stmts=[];
       const borrar=(tabla,filtro)=>{if(tablas.has(tabla))stmts.push(db.prepare("DELETE FROM "+tabla+" WHERE "+filtro+" AND "+guardia).bind(id));};
       borrar("pagos_mensualidad","propuesta_id=?1");
       borrar("suscripciones_cliente","propuesta_id=?1");
       borrar("pagos_propuesta","propuesta_id=?1");
       borrar("propuestas_economicas","propuesta_id=?1");
+      let indiceFotos=-1;
       if(tieneProyecto){
+        if(tieneFotos){indiceFotos=stmts.length;stmts.push(db.prepare("DELETE FROM proyecto_avances_fotos WHERE proyecto_id IN ("+proyecto+") AND "+guardia+" RETURNING proyecto_id,id").bind(id));}
         for(const tabla of ["proyecto_cambios","proyecto_entregas","proyecto_archivos","proyecto_secciones"])borrar(tabla,"proyecto_id IN ("+proyecto+")");
         borrar("proyectos_cliente","propuesta_id=?1");
       }
       stmts.push(db.prepare("DELETE FROM quiz_propuestas WHERE id=?1 AND "+desbloqueada).bind(id));
       const resultados=await db.batch(stmts);
       if(!resultados[resultados.length-1].meta.changes)return error("Solicitud protegida con candado o ya eliminada.",409);
+      if(indiceFotos>=0)for(const a of resultados[indiceFotos].results||[])claves.push("avances/"+a.proyecto_id+"/"+a.id);
       const limpieza=await Promise.allSettled([...new Set(claves)].map(k=>env.COTIZACIONES_R2.delete(k)));
       const pendientes=limpieza.filter(x=>x.status==="rejected").length;
       if(pendientes)console.error("Limpieza R2 pendiente para solicitud",id,pendientes);

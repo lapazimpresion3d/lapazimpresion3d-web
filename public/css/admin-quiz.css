@@ -46,3 +46,5 @@ summary:focus-visible{outline:3px solid #e4ac00;outline-offset:2px}
 .seguimiento-admin fieldset{min-width:0;border:1px solid #cbd5e1;padding:12px}
 .seguimiento-admin .seguimiento-check{display:flex;align-items:center;gap:8px;margin:8px 0}
 .seguimiento-admin .seguimiento-check input{width:auto}
+
+.avance-galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:12px;margin:12px 0}.avance-galeria figure{margin:0;border:1px solid #cbd5e1;border-radius:8px;padding:8px;min-width:0}.avance-galeria img,.avance-miniatura{display:block;width:100%;max-height:240px;object-fit:contain;background:#f1f5f9;border-radius:5px}.avance-miniatura[hidden]{display:none}.avance-galeria figcaption{overflow-wrap:anywhere;margin:8px 0;font-size:.9em;color:#14283f}.avance-fotos-admin{border-top:2px solid #eab308;margin-top:16px;padding-top:12px}

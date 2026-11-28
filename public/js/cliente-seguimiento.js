@@ -8,14 +8,17 @@ async function cargar(){
  try{
   const r=await fetch("/api/cliente/seguimiento",{credentials:"same-origin",cache:"no-store"});
   if(!r.ok)throw Error();
-  const {seguimiento:s,disponible}=await r.json(),etapas=LP_SEGUIMIENTO.etapas[s.modalidad];
+  const {seguimiento:s,disponible,fotos=[]}=await r.json(),etapas=LP_SEGUIMIENTO.etapas[s.modalidad];
   caja.append(el("p","Etapa actual: "+(s.actual===null?"Por confirmar":etapas[s.actual]),"seguimiento-actual"),el("p","Entrega estimada: "+fecha(s.fecha_estimada)));
   const lista=el("ol",undefined,"seguimiento-etapas");
   etapas.forEach((nombre,i)=>{const estado=LP_SEGUIMIENTO.estadoEtapa(s,i),li=el("li");li.dataset.estado=estado;if(s.actual===i)li.setAttribute("aria-current","step");li.append(el("strong",nombre),el("span",estado));lista.append(li);});caja.append(lista);
   if(!disponible||!s.version)caja.append(el("p","Aún no se han publicado avances.","mensaje"));
   caja.append(el("h3","Historial de avances"));
   if(!s.historial.length)caja.append(el("p","Todavía no hay actualizaciones.","mensaje"));
-  for(const h of s.historial){const art=el("article",undefined,"seguimiento-avance");art.append(el("strong",new Date(h.fecha).toLocaleString("es-MX",{timeZone:"America/Mazatlan"})),el("p","Etapa: "+(h.actual===null?"Por confirmar":etapas[h.actual])+" · Entrega estimada: "+fecha(h.fecha_estimada)),el("p","Completadas: "+(h.completadas.map(i=>etapas[i]).join(", ")||"Ninguna registrada")));if(h.mensaje)art.append(el("p",h.mensaje));caja.append(art);}
+  for(const [i,h] of s.historial.entries()){const art=el("article",undefined,"seguimiento-avance");art.append(el("strong",new Date(h.fecha).toLocaleString("es-MX",{timeZone:"America/Mazatlan"})),el("p","Etapa: "+(h.actual===null?"Por confirmar":etapas[h.actual])+" · Entrega estimada: "+fecha(h.fecha_estimada)),el("p","Completadas: "+(h.completadas.map(i=>etapas[i]).join(", ")||"Ninguna registrada")));if(h.mensaje)art.append(el("p",h.mensaje));
+   const adjuntos=fotos.filter(a=>a.version_avance===s.version-i);
+   if(adjuntos.length){const grid=el("div",undefined,"avance-galeria");for(const a of adjuntos){const fig=el("figure"),link=el("a"),img=el("img");link.href="/api/cliente/avances/"+encodeURIComponent(a.id);link.target="_blank";link.rel="noopener noreferrer";img.src=link.href;img.loading="lazy";img.alt=a.descripcion||"Fotografía del avance";link.append(img);fig.append(link,el("figcaption",a.descripcion||"Fotografía del proceso"));grid.append(fig);}art.append(grid);}
+   caja.append(art);}
  }catch{caja.append(el("p","No se pudo consultar el seguimiento. Actualiza el portal para intentar de nuevo.","mensaje"));}
 }
 globalThis.LP_CLIENTE_SEGUIMIENTO={cargar};
