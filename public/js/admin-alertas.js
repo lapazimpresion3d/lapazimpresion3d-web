@@ -23,7 +23,7 @@ function pintar(){
  if(restaurar)restaurar.disabled=!descartadas.size&&!ocultarAvisos;
  for(const x of filas){
   const art=e("article",undefined,"registro alerta-registro");art.dataset.prioridad=x.prioridad;
-  art.append(e("h3",x.titulo),e("p",x.folio+" · "+x.nombre+(x.proyecto?" · "+x.proyecto:"")),e("p",(x.prioridad==="alta"?"Prioritaria · ":"")+x.fecha,"metadatos"));
+  art.append(e("h3",x.titulo+(x.servicio?" · "+x.servicio:"")),e("p",x.folio+" · "+x.nombre+(x.proyecto?" · "+x.proyecto:"")),e("p",(x.prioridad==="alta"?"Prioritaria · ":"")+x.fecha,"metadatos"));
   const acciones=e("div",undefined,"acciones"),ir=e("button","Ver solicitud","secundario");ir.type="button";
   ir.addEventListener("click",()=>{$("filtro-propuestas").value="";$("buscar-propuestas").value=x.folio;$("actualizar-propuestas").click();$("titulo-solicitudes").scrollIntoView({block:"start"});});acciones.append(ir);
   if(x.seccion!=="solicitudes"){const link=e("a",x.seccion==="proyectos"?"Ir a proyectos":"Ir a mensualidades","boton-enlace");link.href=x.seccion==="proyectos"?"#titulo-proyectos":"#titulo-mensualidades";acciones.append(link);}
