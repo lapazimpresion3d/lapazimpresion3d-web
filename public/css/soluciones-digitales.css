@@ -231,3 +231,6 @@
 
 /* Valor recurrente: separar el alcance del paquete de sus prestaciones mensuales. */
 .valor-mensual-plan,.valor-mensual-detalle{margin:15px 0;padding:13px 15px;background:#edf3ff;border:1px solid #c6d4ee;border-left:4px solid #ffc82a;border-radius:9px;color:#16203a}.valor-mensual-plan strong,.valor-mensual-detalle h3{color:#0f2347}.valor-mensual-plan p{margin:6px 0;font-size:.94rem;line-height:1.5}.valor-mensual-plan a{font-weight:700;color:#174ab8}.mensual-cuadricula{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.mensual-cuadricula>div{padding:14px;border:1px solid #c6d4ee;background:#f6f8fc;border-radius:9px;color:#16203a}.mensual-cuadricula h3{margin:0 0 6px;color:#0f2347}.mensual-cuadricula strong{color:#174ab8}.mensual-cuadricula p{margin:7px 0}.prestaciones-propuestas{padding:12px 15px;border:1px solid #cbd5e1;border-radius:9px;margin:12px 0}.prestaciones-propuestas summary{font-weight:700;cursor:pointer;color:#0f2347}.prestaciones-propuestas ul{margin-top:10px}@media(max-width:560px){.mensual-cuadricula{grid-template-columns:1fr}}
+
+/* Autoadministración como valor principal, apoyo como prestación secundaria. */
+.mensual-cuadricula .nota{font-size:.85rem;color:#46536d;font-weight:400}.valor-mensual-plan p{line-height:1.55}
