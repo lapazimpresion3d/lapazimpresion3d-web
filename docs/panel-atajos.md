@@ -1,0 +1,2 @@
+# Navegación rápida de proyectos
+Accesos directos a seguimiento, materiales, entrega y acceso privado; orientación basada en registros existentes, sin inferir aprobación ni cambiar estados. Estado de revisión visible en el encabezado del bloque. Al volver a pintar después de guardar se conservan las subsecciones abiertas y cerradas. Sin cambios en APIs o D1. Pruebas de navegador pendientes.

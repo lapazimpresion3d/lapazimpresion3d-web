@@ -313,7 +313,10 @@ async function cargarProyectos(){
    }
    revisar.addEventListener("click",()=>{if(!materialesCargados||confirm("¿Actualizar materiales? Se descartarán las indicaciones que no hayas guardado."))cargarMateriales();});
    materiales.addEventListener("toggle",()=>{if(materiales.open&&!materialesCargados)cargarMateriales();});
-   globalThis.LP_ADMIN_SEGUIMIENTO?.agregar(art,p);art.append(materiales);globalThis.LP_ADMIN_ENTREGA?.agregar(art,p);art.append(accesoDetalle);plegarRegistro(art,p.id,p.proyecto||p.nombre,p.folio+" · "+p.nombre,estadosProyecto[p.estado]||p.estado,abiertos.has(p.id));listaProyectos.append(art);
+   const atajos=elem("nav","proyecto-atajos");atajos.setAttribute("aria-label","Acciones del proyecto "+p.folio);art.append(atajos);
+   globalThis.LP_ADMIN_SEGUIMIENTO?.agregar(art,p);art.append(materiales);globalThis.LP_ADMIN_ENTREGA?.agregar(art,p);art.append(accesoDetalle);
+   for(const [texto,selector] of [["Seguimiento",".seguimiento-admin"],["Materiales",".materiales-desplegables"],["Entrega",".entrega-admin"],["Acceso",".acceso-proyecto"]]){const b=elem("button","secundario",texto);b.type="button";b.addEventListener("click",()=>{const d=art.querySelector(selector);if(!d)return;d.open=true;d.querySelector("summary")?.focus({preventScroll:true});d.scrollIntoView({block:"nearest"});});atajos.append(b);}
+   plegarRegistro(art,p.id,p.proyecto||p.nombre,p.folio+" · "+p.nombre,estadosProyecto[p.estado]||p.estado,abiertos.has(p.id));listaProyectos.append(art);
   }
   filtrarProyectos();
  }catch(e){estadoProyectos.textContent="Proyectos no disponibles: "+e.message+". Comprueba que la migración 0004 esté aplicada a D1.";}

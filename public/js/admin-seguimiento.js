@@ -36,7 +36,7 @@ function agregar(art,p){
  async function cargar(){if(ocupado)return;ocupado=true;caja.replaceChildren(el("p","Cargando…"));try{pintar(await api(ruta));cargado=true;}catch(e){const b=el("button","Reintentar","secundario");b.type="button";b.addEventListener("click",cargar);caja.replaceChildren(el("p",e.message),b);}finally{ocupado=false;}}
  function pintar(s){
   controlEntrega.abort();controlEntrega=new AbortController();
-  const abiertos=new Set([...caja.querySelectorAll("details[open][data-bloque]")].map(d=>d.dataset.bloque));
+  const anteriores=[...caja.querySelectorAll("details[data-bloque]")],abiertos=new Set(anteriores.filter(d=>d.open).map(d=>d.dataset.bloque));
   caja.replaceChildren();
   const nombres=LP_SEGUIMIENTO.etapasDe(s),cab=el("div",undefined,"seguimiento-cabecera"),titulo=el("div");
   titulo.append(el("h3","Resumen del seguimiento"),el("p",s.version?"Información publicada en el portal del cliente.":"Aún no se han publicado avances.","metadatos"));
@@ -45,22 +45,31 @@ function agregar(art,p){
   function indicador(t,v){const n=el("div");n.append(el("span",t),el("strong",v));return n;}
   indicadores.append(indicador("Etapa actual",s.actual===null?"Por confirmar":nombres[s.actual]),indicador("Etapas completadas",s.completadas.length+" de "+nombres.length),indicador("Entrega estimada",s.fecha_estimada?new Date(s.fecha_estimada+"T12:00:00").toLocaleDateString("es-MX",{dateStyle:"medium"}):"Por confirmar"));caja.append(indicadores);
   const linea=el("ol",undefined,"seguimiento-linea");nombres.forEach((nombre,i)=>{const estado=LP_SEGUIMIENTO.estadoEtapa(s,i),li=el("li");li.dataset.estado=estado;if(s.actual===i)li.setAttribute("aria-current","step");li.append(el("span",String(i+1),"seguimiento-numero"),el("strong",nombre),el("span",estado,"seguimiento-estado"));linea.append(li);});caja.append(linea);
-  function bloque(id,titulo,abierto=false){const d=el("details",undefined,"seguimiento-bloque");d.dataset.bloque=id;d.open=abiertos.has(id)||abierto;const sum=el("summary",titulo),body=el("div",undefined,"seguimiento-bloque-cuerpo");d.append(sum,body);caja.append(d);return {d,body};}
+  function bloque(id,titulo,abierto=false){const d=el("details",undefined,"seguimiento-bloque");d.dataset.bloque=id;d.open=anteriores.length?abiertos.has(id):abierto;const sum=el("summary",titulo),body=el("div",undefined,"seguimiento-bloque-cuerpo");d.append(sum,body);caja.append(d);return {d,body};}
+  const acciones=el("div",undefined,"seguimiento-atajos"),orientacion=el("p",undefined,"seguimiento-orientacion");caja.append(orientacion,acciones);
   const revision=bloque("revision","Revisión, aprobación y entrega");
   const materiales=bloque("materiales",s.recepcion?"Recopilación de materiales · Confirmada":"Recopilación de materiales · Por confirmar",!s.recepcion);
   const avance=bloque("avance","Actualizar etapas y publicar avance",true);
   const fotografias=bloque("fotos","Fotografías y vistas previas");
   const historial=bloque("historial","Historial publicado · "+s.historial.length);
+  function atajo(t,b){const n=el("button",t,"secundario");n.type="button";n.addEventListener("click",()=>{b.d.open=true;b.d.querySelector("summary").focus({preventScroll:true});b.d.scrollIntoView({block:"nearest"});});acciones.append(n);return n;}
+  if(!["cancelado","finalizado"].includes(p.estado)){atajo("Publicar avance",avance);if(!s.recepcion)atajo("Confirmar materiales",materiales);}
+  atajo("Ver revisión",revision);atajo("Ver historial",historial);
+  if(p.estado==="cancelado")orientacion.textContent="Proyecto cancelado. Consulta los registros existentes.";
+  else if(p.estado==="finalizado")orientacion.textContent="Proyecto finalizado. Consulta el historial y la entrega registrada.";
+  else if(!s.recepcion)orientacion.textContent="Por revisar: confirma si ya tienes la información suficiente para trabajar.";
+  else if(!s.version||s.actual===null)orientacion.textContent="Por revisar: define la etapa actual si corresponde.";
+  else orientacion.textContent="Etapa publicada: "+nombres[s.actual]+". Actualiza el seguimiento cuando exista un avance confirmado.";
   const evidencia=el("div",undefined,"resumen-entrega-seguimiento");revision.body.append(evidencia);
   async function consultarEntrega(){
    evidencia.replaceChildren(el("p","Consultando revisión y entrega…"));
-   try{const r=await fetch("/api/admin/proyectos/"+encodeURIComponent(p.id)+"/entrega",{credentials:"same-origin",cache:"no-store"}),d=await r.json();if(!r.ok)throw Error(d.error);const q=d.entrega,z=LP_SEGUIMIENTO.resumenEntrega(q);evidencia.dataset.estado=z.estado;evidencia.replaceChildren(el("strong",z.titulo),el("p",z.detalle));
+   try{const r=await fetch("/api/admin/proyectos/"+encodeURIComponent(p.id)+"/entrega",{credentials:"same-origin",cache:"no-store"}),d=await r.json();if(!r.ok)throw Error(d.error);const q=d.entrega,z=LP_SEGUIMIENTO.resumenEntrega(q);revision.d.querySelector("summary").textContent="Revisión y entrega · "+z.titulo;evidencia.dataset.estado=z.estado;evidencia.replaceChildren(el("strong",z.titulo),el("p",z.detalle));
     if(q?.fecha_decision)evidencia.append(el("p","Decisión: "+q.fecha_decision));
     if(q?.fecha_publicacion)evidencia.append(el("p","Publicación: "+q.fecha_publicacion));
     if(q?.fecha_entrega)evidencia.append(el("p","Entrega: "+q.fecha_entrega));
     if(q?.garantia_hasta)evidencia.append(el("p","Garantía hasta: "+q.garantia_hasta));
     if(q&&q.modalidad!==s.modalidad)evidencia.append(el("p","La modalidad de revisión difiere del seguimiento. Revisa los registros antes de publicar."));
-   }catch{evidencia.replaceChildren(el("p","No se pudo consultar la revisión y entrega."));}
+   }catch{revision.d.querySelector("summary").textContent="Revisión y entrega · No disponible";evidencia.replaceChildren(el("p","No se pudo consultar la revisión y entrega."));}
    const b=el("button","Consultar revisión y entrega","secundario");b.type="button";b.addEventListener("click",()=>art.dispatchEvent(new Event("lp:abrir-entrega")));evidencia.append(b);
   }
   consultarEntrega();art.addEventListener("lp:entrega-actualizada",()=>{if(evidencia.isConnected)consultarEntrega();},{signal:controlEntrega.signal});
