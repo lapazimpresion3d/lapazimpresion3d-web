@@ -134,7 +134,7 @@ busqueda.addEventListener("input",()=>{
   const esReferencia=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(texto);
   if(esReferencia || (ultimaConsulta && !esReferencia)) { ultimaConsulta=esReferencia?texto:""; cargar(); }
   else filtrarBusqueda();
-});document.querySelector("#salir").addEventListener("click",async()=>{await req("/api/admin/salir",{method:"POST",body:"{}"}).catch(()=>{});panel.hidden=true;acceso.hidden=false;lista.replaceChildren();listaPropuestas.replaceChildren();listaProyectos.replaceChildren();resumenProyectos.replaceChildren();resultadosProyectos.textContent="";buscarProyectos.value="";filtroProyectos.value="";propuestasVisibles=[];actualizarSeleccion();});
+});document.querySelector("#salir").addEventListener("click",async()=>{await req("/api/admin/salir",{method:"POST",body:"{}"}).catch(()=>{});panel.hidden=true;acceso.hidden=false;lista.replaceChildren();listaPropuestas.replaceChildren();listaProyectos.replaceChildren();resumenProyectos.replaceChildren();tableroSecuencia++;tableroDatos=null;tableroLista.replaceChildren();tableroMetricas.replaceChildren();tableroAvisos.textContent="";tableroFiltro.value="todos";resultadosProyectos.textContent="";buscarProyectos.value="";filtroProyectos.value="";propuestasVisibles=[];actualizarSeleccion();});
 req("/api/admin/sesion").then(()=>{acceso.hidden=true;panel.hidden=false;abrirSeccion(location.hash.slice(1),false);return Promise.all([cargar(),cargarPropuestas(),cargarProyectos(),globalThis.LP_ADMIN_ALERTAS?.cargar()]);}).catch(()=>{});
 
 const listaProyectos=document.querySelector("#lista-proyectos"),estadoProyectos=document.querySelector("#estado-proyectos");
@@ -174,10 +174,46 @@ function pintarResumenProyectos(items){
   const b=elem("button","proyectos-metrica");b.type="button";b.dataset.filtro=f;b.append(elem("strong",null,String(n)),elem("span",null,t));b.addEventListener("click",()=>{filtroProyectos.value=f;filtrarProyectos();});resumenProyectos.append(b);
  }
 }
-async function cargarProyectos(){
+const tableroLista=document.querySelector("#tablero-lista"),tableroMetricas=document.querySelector("#tablero-metricas"),tableroAvisos=document.querySelector("#tablero-avisos"),tableroFiltro=document.querySelector("#tablero-filtro");
+let tableroDatos=null,tableroSecuencia=0;
+function clasificarTablero(p,hoy,disponible){
+ const s=p.seguimiento,fecha=s?.fecha_estimada||"",entregado=!!p.fecha_entrega;
+ const dias=fecha?Math.round((Date.parse(fecha+"T00:00:00Z")-Date.parse(hoy+"T00:00:00Z"))/86400000):null;
+ return {vencida:!entregado&&dias!==null&&dias<0,proxima:!entregado&&dias!==null&&dias>=0&&dias<=7,revision:!entregado&&["pendiente","requiere_cambios"].includes(p.decision),materiales:disponible&&!p.seguimiento_error&&!entregado&&!s?.materiales_confirmados,sin_fecha:disponible&&!p.seguimiento_error&&!entregado&&!fecha};
+}
+function pintarTablero(){
+ if(!tableroDatos)return;
+ const {items,hoy,seguimiento_disponible:sd,revision_disponible:rd,limitado}=tableroDatos;
+ const filas=items.map(p=>({...p,tareas:clasificarTablero(p,hoy,sd)}));
+ tableroMetricas.replaceChildren();
+ for(const [k,t,n] of [["todos","Activos",filas.length],["vencida","Fecha vencida",filas.filter(p=>p.tareas.vencida).length],["proxima","Próximos 7 días",filas.filter(p=>p.tareas.proxima).length],["revision","Por revisar",filas.filter(p=>p.tareas.revision).length]]){
+  const b=elem("button","proyectos-metrica tablero-metrica");b.type="button";b.dataset.tipo=k;b.setAttribute("aria-pressed",String(tableroFiltro.value===k));b.append(elem("strong",null,(!sd&&["vencida","proxima"].includes(k)||!rd&&k==="revision")?"—":String(n)),elem("span",null,t));b.addEventListener("click",()=>{tableroFiltro.value=k;pintarTablero();});tableroMetricas.append(b);
+ }
+ tableroAvisos.textContent="Fecha de referencia (La Paz): "+hoy+". "+(!sd?"Seguimiento no habilitado (0008). ":"")+(!rd?"Revisiones no habilitadas (0007). ":"")+(limitado?"Se muestran hasta 500 proyectos activos. ":"")+"Las fechas son estimadas; no representan compromisos de entrega ni pagos.";
+ const visibles=filas.filter(p=>tableroFiltro.value==="todos"||p.tareas[tableroFiltro.value]).sort((a,b)=>Number(b.tareas.vencida)-Number(a.tareas.vencida)||Number(b.tareas.proxima)-Number(a.tareas.proxima)||Number(b.tareas.revision)-Number(a.tareas.revision)||(a.seguimiento?.fecha_estimada||"9999").localeCompare(b.seguimiento?.fecha_estimada||"9999"));
+ tableroLista.replaceChildren();
+ if(!visibles.length){tableroLista.append(elem("p","metadatos","No hay proyectos en esta vista."));return;}
+ const tabla=elem("div","tablero-filas");tableroLista.append(tabla);
+ for(const p of visibles){const fila=elem("article","tablero-fila");fila.dataset.urgencia=p.tareas.vencida?"vencida":p.tareas.proxima?"proxima":"normal";
+  const identidad=elem("div","tablero-identidad");identidad.append(elem("strong",null,p.proyecto||p.nombre),elem("span","metadatos",p.folio+" · "+p.nombre),elem("span","metadatos",estadosProyecto[p.estado]||p.estado));
+  const etapa=elem("div","tablero-dato"),s=p.seguimiento,n=s?LP_SEGUIMIENTO.etapasDe(s):null;etapa.append(elem("span","metadatos","Etapa publicada"),elem("strong",null,p.seguimiento_error?"No disponible":!s||s.actual===null?"Por confirmar":n[s.actual]));
+  if(s)etapa.append(elem("span","metadatos",s.completadas.length+" de "+n.length+" etapas completas"));
+  const fecha=elem("div","tablero-dato");fecha.append(elem("span","metadatos","Entrega"),elem("strong",null,p.fecha_entrega?"Realizada: "+p.fecha_entrega:s?.fecha_estimada||"Sin fecha"));
+  const tareas=elem("div","tablero-tareas");for(const [k,t] of [["vencida","Fecha vencida"],["proxima","Entrega próxima"],["revision",p.decision==="requiere_cambios"?"Cambios solicitados":"Aprobación pendiente"],["materiales","Confirmar materiales"],["sin_fecha","Definir fecha"]])if(p.tareas[k]){const n=elem("span","tablero-etiqueta",t);n.dataset.tipo=k;tareas.append(n);}
+  if(p.seguimiento_error)tareas.append(elem("span","metadatos","Seguimiento no legible"));
+  const b=elem("button","secundario","Abrir proyecto");b.type="button";b.addEventListener("click",async()=>{b.disabled=true;try{let d=[...listaProyectos.querySelectorAll(".registro-desplegable")].find(n=>n.dataset.registro===p.id);if(!d){await cargarProyectos(p.id);d=[...listaProyectos.querySelectorAll(".registro-desplegable")].find(n=>n.dataset.registro===p.id);}if(!d)throw Error("Proyecto no disponible");buscarProyectos.value="";filtroProyectos.value="";filtrarProyectos();d.open=true;const seg=d.querySelector(".seguimiento-admin");if(seg)seg.open=true;d.querySelector("summary")?.focus({preventScroll:true});d.scrollIntoView({block:"start"});}catch(e){tableroAvisos.textContent=e.message;}finally{b.disabled=false;}});
+  fila.append(identidad,etapa,fecha,tareas,b);tabla.append(fila);
+ }
+}
+async function cargarTablero(){const sec=++tableroSecuencia;tableroAvisos.textContent="Consultando proyectos activos…";try{const d=await req("/api/admin/proyectos/tablero");if(sec!==tableroSecuencia||panel.hidden)return;tableroDatos=d;pintarTablero();}catch(e){if(sec===tableroSecuencia){tableroAvisos.textContent="Tablero no disponible: "+e.message;}}}
+tableroFiltro.addEventListener("change",pintarTablero);document.querySelector("#actualizar-tablero").addEventListener("click",cargarTablero);
+listaProyectos.addEventListener("lp:tablero-actualizar",cargarTablero);
+async function cargarProyectos(idExtra=null){
  estadoProyectos.textContent="Cargando proyectos…";
  try {
   const d=await req("/api/admin/proyectos");
+  if(typeof idExtra==="string"&&!d.items.some(p=>p.id===idExtra)){const extra=await req("/api/admin/proyectos?id="+encodeURIComponent(idExtra));d.items.push(...extra.items);}
+  cargarTablero();
   const abiertos=abiertosRegistros(listaProyectos);listaProyectos.replaceChildren();
   estadoProyectos.textContent=`${d.items.length} proyecto(s) registrado(s). Los enlaces privados se generan individualmente.`;
   pintarResumenProyectos(d.items);

@@ -102,7 +102,7 @@ function agregar(art,p){
     editar.addEventListener("click",()=>{ef.hidden=false;editar.hidden=true;nota.focus();});
     cancelar.addEventListener("click",()=>{origen.value=r.origen;nota.value=r.observaciones;aviso.textContent="";ef.hidden=true;editar.hidden=false;});
     ef.addEventListener("submit",async e=>{e.preventDefault();if(ocupado)return;if(!nota.value.trim()){aviso.textContent="Escribe una observación.";return;}ocupado=true;guardar.disabled=cancelar.disabled=boton.disabled=true;
-     try{const res=await fetch(ruta,{method:"PATCH",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({origen:origen.value,observaciones:nota.value,version:s.version,revision_edicion:r.revision_edicion||0})});const d=await res.json();if(!res.ok)throw Error(d.error||"No se pudo guardar");pintar(d.seguimiento);caja.prepend(el("p","Corrección guardada.","metadatos"));}
+     try{const res=await fetch(ruta,{method:"PATCH",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({origen:origen.value,observaciones:nota.value,version:s.version,revision_edicion:r.revision_edicion||0})});const d=await res.json();if(!res.ok)throw Error(d.error||"No se pudo guardar");pintar(d.seguimiento);art.dispatchEvent(new Event("lp:tablero-actualizar",{bubbles:true}));caja.prepend(el("p","Corrección guardada.","metadatos"));}
      catch(e){aviso.textContent=e.message;}finally{ocupado=false;guardar.disabled=cancelar.disabled=boton.disabled=false;}
     });
    }
@@ -113,12 +113,12 @@ function agregar(art,p){
    const rb=el("button","Confirmar recopilación de materiales");rb.type="submit";const aviso=el("p");aviso.setAttribute("role","status");rf.append(rb,aviso);recepcion.append(el("p","Confirma que tienes información suficiente. No es obligatorio subir archivos al portal. Elige la modalidad y tipo de seguimiento abajo antes de confirmar."),rf);
    rf.addEventListener("submit",async e=>{e.preventDefault();if(ocupado)return;if(!nota.value.trim()){aviso.textContent="Escribe una observación.";return;}if(!confirm("¿Confirmas que ya tienes los materiales necesarios para iniciar o continuar el proyecto?"))return;
     ocupado=true;rb.disabled=true;boton.disabled=true;
-    try{const a=actual.value===""?null:Number(actual.value),c=checks.flatMap((x,i)=>x.checked&&i!==a?[i]:[]);pintar(await api(ruta,{modalidad:modalidad.value,formato:formato.value,actual:a,completadas:c,fecha_estimada:fecha.value,mensaje:"Recopilación de materiales confirmada.",version:s.version,recepcion:{origen:origen.value,observaciones:nota.value}}));}catch(e){aviso.textContent=e.message;}finally{ocupado=false;rb.disabled=false;boton.disabled=false;}
+    try{const a=actual.value===""?null:Number(actual.value),c=checks.flatMap((x,i)=>x.checked&&i!==a?[i]:[]);pintar(await api(ruta,{modalidad:modalidad.value,formato:formato.value,actual:a,completadas:c,fecha_estimada:fecha.value,mensaje:"Recopilación de materiales confirmada.",version:s.version,recepcion:{origen:origen.value,observaciones:nota.value}}));art.dispatchEvent(new Event("lp:tablero-actualizar",{bubbles:true}));}catch(e){aviso.textContent=e.message;}finally{ocupado=false;rb.disabled=false;boton.disabled=false;}
    });
   }
   if(p.estado==="cancelado")for(const n of f.querySelectorAll("input,select,textarea,button"))n.disabled=true;
   f.addEventListener("submit",async e=>{e.preventDefault();if(ocupado)return;const a=actual.value===""?null:Number(actual.value),completadas=checks.flatMap((c,i)=>c.checked?[i]:[]);if(completadas.includes(a)){msg.textContent="La etapa actual no puede estar completada.";return;}if(!confirm("¿Publicar esta actualización en el portal privado del cliente?"))return;
-   ocupado=true;boton.disabled=true;try{pintar(await api(ruta,{modalidad:modalidad.value,formato:formato.value,actual:a,completadas,fecha_estimada:fecha.value,mensaje:mensaje.value,version:s.version}));}catch(e){msg.textContent=e.message;}finally{ocupado=false;boton.disabled=false;}
+   ocupado=true;boton.disabled=true;try{pintar(await api(ruta,{modalidad:modalidad.value,formato:formato.value,actual:a,completadas,fecha_estimada:fecha.value,mensaje:mensaje.value,version:s.version}));art.dispatchEvent(new Event("lp:tablero-actualizar",{bubbles:true}));}catch(e){msg.textContent=e.message;}finally{ocupado=false;boton.disabled=false;}
   });
   const fotos=el("section",undefined,"avance-fotos-admin");fotografias.body.append(fotos);
   let fotosCargadas=false;function abrirFotos(){if(!fotosCargadas&&fotografias.d.open){fotosCargadas=true;gestionarFotos(fotos,s,p);}}fotografias.d.addEventListener("toggle",abrirFotos);abrirFotos();

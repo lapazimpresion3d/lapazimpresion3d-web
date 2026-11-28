@@ -1051,10 +1051,27 @@ async function api(request,env,ctx) {
     }
     // Proyectos aceptados: endpoints exclusivos del panel con sesión administrativa.
     // No se generan enlaces para clientes hasta habilitar el portal privado.
+    if(path==="/api/admin/proyectos/tablero"&&request.method==="GET"){
+      const db=env.QUIZ_DB,hoy=hoyMensualidad();
+      const columnas=(await db.prepare("PRAGMA table_info(proyectos_cliente)").all()).results;
+      const seguimientoDisponible=columnas.some(c=>c.name==="seguimiento_json");
+      const tablas=(await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='proyecto_entregas'").all()).results;
+      const revisionDisponible=tablas.length>0;
+      const rows=await db.prepare("SELECT p.id,p.estado,p.fecha_actualizacion,q.folio,q.nombre,q.proyecto,"+(seguimientoDisponible?"p.seguimiento_json":"NULL")+" AS seguimiento_json,"+(revisionDisponible?"e.decision,e.fecha_entrega,e.version AS revision_version":"NULL AS decision,NULL AS fecha_entrega,NULL AS revision_version")+" FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id "+(revisionDisponible?"LEFT JOIN proyecto_entregas e ON e.proyecto_id=p.id ":"")+"WHERE p.estado NOT IN ('finalizado','cancelado') ORDER BY p.fecha_actualizacion DESC LIMIT 501").all();
+      const items=rows.results.slice(0,500).map(({seguimiento_json,...p})=>{
+        let s=null,seguimientoError=false;try{if(seguimiento_json)s=JSON.parse(seguimiento_json);if(s&&(!Object.hasOwn(ETAPAS_SEGUIMIENTO,s.modalidad)||!Array.isArray(s.completadas)))throw Error();}catch{s=null;seguimientoError=true;}
+        const n=s?(formatoSeguimiento(s)==="simplificado"?4:ETAPAS_SEGUIMIENTO[s.modalidad]):null;
+        const seguimiento=s?{modalidad:s.modalidad,formato:formatoSeguimiento(s),actual:Number.isInteger(s.actual)&&s.actual>=0&&s.actual<n?s.actual:null,completadas:s.completadas.filter(i=>Number.isInteger(i)&&i>=0&&i<n),fecha_estimada:fechaMensualidad(s.fecha_estimada)?s.fecha_estimada:"",version:s.version,materiales_confirmados:!!s.recepcion}:null;
+        return {...p,seguimiento,seguimiento_error:seguimientoError};
+      });
+      return json({hoy,items,seguimiento_disponible:seguimientoDisponible,revision_disponible:revisionDisponible,limitado:rows.results.length>500});
+    }
     if(path==="/api/admin/proyectos" && request.method==="GET") {
+      const id=url.searchParams.get("id");
+      if(id!==null&&!ID_UUID.test(id))return error("Identificador inválido",400);
       const rows=await env.QUIZ_DB.prepare(
-        "SELECT p.id,p.propuesta_id,p.fecha_creacion,p.fecha_actualizacion,p.estado,p.acceso_expira,p.acceso_revocado,CASE WHEN p.acceso_token_hash IS NOT NULL THEN 1 ELSE 0 END AS tiene_acceso,q.folio,q.nombre,q.proyecto,q.telefono FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id ORDER BY p.fecha_actualizacion DESC LIMIT 100"
-      ).all();
+        "SELECT p.id,p.propuesta_id,p.fecha_creacion,p.fecha_actualizacion,p.estado,p.acceso_expira,p.acceso_revocado,CASE WHEN p.acceso_token_hash IS NOT NULL THEN 1 ELSE 0 END AS tiene_acceso,q.folio,q.nombre,q.proyecto,q.telefono FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE (?1 IS NULL OR p.id=?1) ORDER BY p.fecha_actualizacion DESC LIMIT 100"
+      ).bind(id).all();
       return json({items:rows.results});
     }
     const proyectoNuevo=path.match(/^\/api\/admin\/propuestas\/([0-9a-f-]{36})\/proyecto$/i);

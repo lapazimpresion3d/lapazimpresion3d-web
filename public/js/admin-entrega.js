@@ -15,7 +15,7 @@ function agregar(art,p){
   const q=d.entrega,cerrado=["finalizado","cancelado"].includes(p.estado);
   const actualizar=btn("Actualizar revisión y entrega");actualizar.addEventListener("click",()=>{if(confirm("¿Actualizar? Se descartarán los cambios no guardados."))cargar();});caja.replaceChildren(el("h3","Entrega y publicación · "+p.folio),actualizar);
   const msg=el("p","","metadatos");msg.setAttribute("role","status");caja.append(msg);
-  async function guardar(b,path,metodo,payload){b.disabled=true;msg.textContent="Guardando…";try{await api(path,metodo,payload);await cargar();art.dispatchEvent(new Event("lp:entrega-actualizada"));}catch(e){msg.textContent=e.message;b.disabled=false;}}
+  async function guardar(b,path,metodo,payload){b.disabled=true;msg.textContent="Guardando…";try{await api(path,metodo,payload);await cargar();art.dispatchEvent(new Event("lp:entrega-actualizada"));art.dispatchEvent(new Event("lp:tablero-actualizar",{bubbles:true}));}catch(e){msg.textContent=e.message;b.disabled=false;}}
   if(!q?.fecha_entrega&&!cerrado){
    const f=el("form",undefined,"economica-form"),mod=select(f,"Modalidad",{web:"Página web / sistema digital",fisica:"Fabricación física",combinada:"Proyecto combinado"});mod.value=q?.modalidad||"web";
    const rev=campo(f,"Nombre de la revisión (ej. Diseño v1)");rev.required=true;rev.maxLength=120;rev.value=q?.revision||"";
