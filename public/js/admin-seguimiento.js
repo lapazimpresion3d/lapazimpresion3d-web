@@ -51,24 +51,39 @@ function agregar(art,p){
   }
   consultarEntrega();art.addEventListener("lp:entrega-actualizada",()=>{if(evidencia.isConnected)consultarEntrega();},{signal:controlEntrega.signal});
   const f=el("form",undefined,"economica-form"),modalidad=campo(f,"Modalidad","select");opcion(modalidad,"fisica","Fabricación física");opcion(modalidad,"web","Servicio digital");opcion(modalidad,"combinada","Proyecto combinado");modalidad.value=s.modalidad;modalidad.disabled=!!s.version;
+  const formato=campo(f,"Tipo de seguimiento","select");opcion(formato,"detallado","Detallado");opcion(formato,"simplificado","Simplificado (4 etapas)");formato.value=s.formato||"detallado";formato.disabled=!!s.version;
+  if(s.version)f.append(el("p","La modalidad y el tipo se conservan después de la primera publicación para proteger el historial.","metadatos"));
   const actual=campo(f,"Etapa actual","select"),lista=el("fieldset");lista.append(el("legend","Etapas completadas (confirmar individualmente)"));f.append(lista);
   const fecha=campo(f,"Fecha estimada de entrega (opcional)","input");fecha.type="date";fecha.value=s.fecha_estimada;
   const mensaje=campo(f,"Mensaje de actualización para el cliente (opcional)","textarea");mensaje.maxLength=2000;mensaje.rows=4;
   const boton=el("button","Publicar avance"),msg=el("p");msg.setAttribute("role","status");boton.type="submit";f.append(boton,msg);caja.append(f);
   let checks=[];
   function etapas(){actual.replaceChildren();lista.replaceChildren(el("legend","Etapas completadas (confirmar individualmente)"));opcion(actual,"","Sin etapa definida");checks=[];
-   LP_SEGUIMIENTO.etapas[modalidad.value].forEach((nombre,i)=>{opcion(actual,String(i),nombre);const l=el("label",undefined,"seguimiento-check"),c=el("input");c.type="checkbox";c.checked=modalidad.value===s.modalidad&&s.completadas.includes(i);l.append(c,document.createTextNode(nombre));lista.append(l);checks.push(c);});
-   actual.value=modalidad.value===s.modalidad&&s.actual!==null?String(s.actual):"";
+   LP_SEGUIMIENTO.etapasDe({modalidad:modalidad.value,formato:formato.value}).forEach((nombre,i)=>{opcion(actual,String(i),nombre);const l=el("label",undefined,"seguimiento-check"),c=el("input");c.type="checkbox";c.checked=modalidad.value===s.modalidad&&formato.value===(s.formato||"detallado")&&s.completadas.includes(i);l.append(c,document.createTextNode(nombre));lista.append(l);checks.push(c);});
+   actual.value=modalidad.value===s.modalidad&&formato.value===(s.formato||"detallado")&&s.actual!==null?String(s.actual):"";
   }
-  etapas();modalidad.addEventListener("change",etapas);
+  etapas();modalidad.addEventListener("change",etapas);formato.addEventListener("change",etapas);
+  if(s.recepcion&&checks[0])checks[0].disabled=true;
+  const recepcion=el("section",undefined,"recepcion-materiales-admin");caja.insertBefore(recepcion,f);
+  recepcion.append(el("h4","Recopilación de materiales"));
+  if(s.recepcion){recepcion.append(el("p","Confirmada · "+LP_SEGUIMIENTO.origenes[s.recepcion.origen]+" · "+new Date(s.recepcion.fecha).toLocaleString("es-MX")),el("p",s.recepcion.observaciones));}
+  else if(!["finalizado","cancelado"].includes(p.estado)){
+   const rf=el("form",undefined,"economica-form"),origen=campo(rf,"Origen de los materiales","select");opcion(origen,"","Selecciona el origen");for(const [k,v] of Object.entries(LP_SEGUIMIENTO.origenes))opcion(origen,k,v);origen.required=true;
+   const nota=campo(rf,"Observaciones visibles al cliente","textarea");nota.required=true;nota.maxLength=1000;
+   const rb=el("button","Confirmar recopilación de materiales");rb.type="submit";const aviso=el("p");aviso.setAttribute("role","status");rf.append(rb,aviso);recepcion.append(el("p","Confirma que tienes información suficiente. No es obligatorio subir archivos al portal. Elige la modalidad y tipo de seguimiento abajo antes de confirmar."),rf);
+   rf.addEventListener("submit",async e=>{e.preventDefault();if(ocupado)return;if(!nota.value.trim()){aviso.textContent="Escribe una observación.";return;}if(!confirm("¿Confirmas que ya tienes los materiales necesarios para iniciar o continuar el proyecto?"))return;
+    ocupado=true;rb.disabled=true;boton.disabled=true;
+    try{const a=actual.value===""?null:Number(actual.value),c=checks.flatMap((x,i)=>x.checked&&i!==a?[i]:[]);pintar(await api(ruta,{modalidad:modalidad.value,formato:formato.value,actual:a,completadas:c,fecha_estimada:fecha.value,mensaje:"Recopilación de materiales confirmada.",version:s.version,recepcion:{origen:origen.value,observaciones:nota.value}}));}catch(e){aviso.textContent=e.message;}finally{ocupado=false;rb.disabled=false;boton.disabled=false;}
+   });
+  }
   if(p.estado==="cancelado")for(const n of f.querySelectorAll("input,select,textarea,button"))n.disabled=true;
   f.addEventListener("submit",async e=>{e.preventDefault();if(ocupado)return;const a=actual.value===""?null:Number(actual.value),completadas=checks.flatMap((c,i)=>c.checked?[i]:[]);if(completadas.includes(a)){msg.textContent="La etapa actual no puede estar completada.";return;}if(!confirm("¿Publicar esta actualización en el portal privado del cliente?"))return;
-   ocupado=true;boton.disabled=true;try{pintar(await api(ruta,{modalidad:modalidad.value,actual:a,completadas,fecha_estimada:fecha.value,mensaje:mensaje.value,version:s.version}));}catch(e){msg.textContent=e.message;}finally{ocupado=false;boton.disabled=false;}
+   ocupado=true;boton.disabled=true;try{pintar(await api(ruta,{modalidad:modalidad.value,formato:formato.value,actual:a,completadas,fecha_estimada:fecha.value,mensaje:mensaje.value,version:s.version}));}catch(e){msg.textContent=e.message;}finally{ocupado=false;boton.disabled=false;}
   });
   const fotos=el("section",undefined,"avance-fotos-admin");caja.append(fotos);gestionarFotos(fotos,s,p);
   caja.append(el("h4","Historial publicado"));
   if(!s.historial.length)caja.append(el("p","Sin avances publicados."));
-  for(const h of s.historial)caja.append(el("p",new Date(h.fecha).toLocaleString("es-MX",{timeZone:"America/Mazatlan"})+" · "+(h.actual===null?"Sin etapa":LP_SEGUIMIENTO.etapas[s.modalidad][h.actual])+" · "+(h.mensaje||"Actualización de etapas/fecha"),"metadatos"));
+  for(const h of s.historial)caja.append(el("p",new Date(h.fecha).toLocaleString("es-MX",{timeZone:"America/Mazatlan"})+" · "+(h.actual===null?"Sin etapa":LP_SEGUIMIENTO.etapasDe(s)[h.actual])+" · "+(h.mensaje||"Actualización de etapas/fecha"),"metadatos"));
  }
  detalle.addEventListener("toggle",()=>{if(detalle.open)cargar();});
 }

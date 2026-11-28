@@ -306,15 +306,24 @@ function datosIndicaciones(valor){
 
 // Seguimiento publicado: separado del estado general y de las decisiones de entrega.
 const ETAPAS_SEGUIMIENTO={fisica:6,web:7,combinada:9};
+const ORIGEN_MATERIALES=new Set(["portal","whatsapp","correo","personal","cotizacion","mixto","ninguno"]);
+function formatoSeguimiento(d){return d.formato||"detallado";}
+function recepcionValida(r){return !!r&&ORIGEN_MATERIALES.has(r.origen)&&typeof r.observaciones==="string"&&r.observaciones.trim().length>0&&r.observaciones.length<=1000;}
+function aplicarRecepcion(s,r,ahora){
+ const completadas=[...new Set([...s.completadas,0])].sort((a,b)=>a-b);
+ const actual=s.actual===0||s.actual===null?(completadas.includes(1)?null:1):s.actual;
+ return {...s,actual,completadas,recepcion:{origen:r.origen,observaciones:r.observaciones.trim(),fecha:ahora}};
+}
 function modalidadSeguimiento(p){
  let f={};try{f=JSON.parse(p.ficha_json||"{}");}catch{}
  return ["llaveros","soporte_qr","fdm_medida","resina"].includes(f.servicio)||
  (f.tipo_documento==="ficha_quiz"&&["R1","R2","R6","R7"].includes(f.recomendacion?.id))?"fisica":"web";
 }
-function seguimientoVacio(p){return {modalidad:modalidadSeguimiento(p),actual:null,completadas:[],fecha_estimada:"",historial:[],version:0};}
+function seguimientoVacio(p){return {modalidad:modalidadSeguimiento(p),formato:"detallado",actual:null,completadas:[],fecha_estimada:"",historial:[],version:0};}
 function seguimientoValido(d){
  if(!d||!Object.hasOwn(ETAPAS_SEGUIMIENTO,d.modalidad)||!Number.isSafeInteger(d.version)||d.version<0)return false;
- const n=ETAPAS_SEGUIMIENTO[d.modalidad],indice=i=>Number.isInteger(i)&&i>=0&&i<n;
+ if(!["detallado","simplificado"].includes(formatoSeguimiento(d)))return false;
+ const n=formatoSeguimiento(d)==="simplificado"?4:ETAPAS_SEGUIMIENTO[d.modalidad],indice=i=>Number.isInteger(i)&&i>=0&&i<n;
  return (d.actual===null||indice(d.actual))&&Array.isArray(d.completadas)&&d.completadas.length<=n&&d.completadas.every(indice)&&new Set(d.completadas).size===d.completadas.length&&!d.completadas.includes(d.actual)&&
  typeof d.fecha_estimada==="string"&&(d.fecha_estimada===""||fechaMensualidad(d.fecha_estimada))&&typeof d.mensaje==="string"&&d.mensaje.length<=2000;
 }
@@ -847,11 +856,15 @@ async function api(request,env,ctx) {
         const d=await leerJson(request,8000);
         if(!seguimientoValido(d))return error("Datos de seguimiento inválidos",400);
         if(d.version!==s.data.version)return error("El seguimiento cambió. Vuelve a cargarlo.",409);
-        if(d.modalidad!==s.data.modalidad&&s.data.version!==0)return error("La modalidad ya fue publicada",409);
+        if(s.data.version!==0&&(d.modalidad!==s.data.modalidad||formatoSeguimiento(d)!==formatoSeguimiento(s.data)))return error("La modalidad y el formato ya fueron publicados",409);
+        if(d.recepcion!==undefined&&!recepcionValida(d.recepcion))return error("Confirma el origen y las observaciones de los materiales",400);
+        if(d.recepcion&&(s.estado==="finalizado"||s.data.recepcion))return error("La recopilación ya está confirmada o el proyecto está cerrado",409);
+        if(s.data.recepcion&&!d.completadas.includes(0))return error("La recopilación confirmada no se puede desmarcar desde este formulario",409);
         const mensaje=d.mensaje.trim();
-        const nuevo={modalidad:d.modalidad,actual:d.actual,completadas:[...d.completadas].sort((a,b)=>a-b),fecha_estimada:d.fecha_estimada,historial:s.data.historial,version:d.version+1};
+        let nuevo={...s.data,modalidad:d.modalidad,formato:formatoSeguimiento(d),actual:d.actual,completadas:[...d.completadas].sort((a,b)=>a-b),fecha_estimada:d.fecha_estimada,historial:s.data.historial,version:d.version+1};
+        if(d.recepcion)nuevo=aplicarRecepcion(nuevo,d.recepcion,new Date().toISOString());
         if(nuevo.historial.length>=200)return error("Límite de 200 actualizaciones alcanzado",409);
-        nuevo.historial=[{fecha:new Date().toISOString(),mensaje,actual:nuevo.actual,completadas:nuevo.completadas,fecha_estimada:nuevo.fecha_estimada},...nuevo.historial];
+        nuevo.historial=[{fecha:new Date().toISOString(),mensaje,actual:nuevo.actual,completadas:nuevo.completadas,fecha_estimada:nuevo.fecha_estimada,...(d.recepcion?{recepcion:nuevo.recepcion}:{})},...nuevo.historial];
         const r=await db.prepare("UPDATE proyectos_cliente SET seguimiento_json=?1 WHERE id=?2 AND seguimiento_json=?3 AND estado<>'cancelado'").bind(JSON.stringify(nuevo),id,s.raw).run();
         return r.meta.changes?json({seguimiento:nuevo}):error("El proyecto cambió. Vuelve a cargarlo.",409);
       }

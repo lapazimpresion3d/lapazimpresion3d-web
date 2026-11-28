@@ -22,8 +22,14 @@ async function cargar(){
  try{
   const r=await fetch("/api/cliente/seguimiento",{credentials:"same-origin",cache:"no-store"});
   if(!r.ok)throw Error();
-  const {seguimiento:s,disponible,fotos=[]}=await r.json(),etapas=LP_SEGUIMIENTO.etapas[s.modalidad];
+  const {seguimiento:s,disponible,fotos=[]}=await r.json(),etapas=LP_SEGUIMIENTO.etapasDe(s);
   caja.append(el("p","Etapa actual: "+(s.actual===null?"Por confirmar":etapas[s.actual]),"seguimiento-actual"),el("p","Entrega estimada: "+fecha(s.fecha_estimada)));
+  if(s.recepcion){
+   const aviso=el("section",undefined,"recepcion-materiales-confirmada");aviso.append(el("strong","Materiales confirmados"),el("p","Origen: "+LP_SEGUIMIENTO.origenes[s.recepcion.origen]+" · "+new Date(s.recepcion.fecha).toLocaleDateString("es-MX",{timeZone:"America/Mazatlan"})),el("p",s.recepcion.observaciones),el("p","Ya contamos con la información necesaria. No tienes que volver a enviarla, salvo que te solicitemos cambios."));
+   caja.append(aviso);
+   const materiales=document.querySelector("#materiales-cliente");if(materiales)materiales.open=false;
+   const texto=document.querySelector("#ayuda-materiales");if(texto)texto.textContent="La recopilación ya fue confirmada. Usa estos apartados solo si deseas agregar información o atender una indicación.";
+  }
   const resumen=el("section",undefined,"resumen-entrega-seguimiento");resumen.id="resumen-entrega-seguimiento";caja.append(resumen);mostrarEntrega(entregaActual,entregaConsultada);
   caja.append(el("p","Las etapas son avances publicados por Lapazimpresion3d. Las decisiones y fechas de entrega se muestran por separado.","mensaje"));
   const lista=el("ol",undefined,"seguimiento-etapas");
@@ -31,7 +37,7 @@ async function cargar(){
   if(!disponible||!s.version)caja.append(el("p","Aún no se han publicado avances.","mensaje"));
   const historial=el("details",undefined,"portal-detalle");historial.open=true;historial.append(el("summary","Historial de avances ("+s.historial.length+")"));caja.append(historial);
   if(!s.historial.length)historial.append(el("p","Todavía no hay actualizaciones.","mensaje"));
-  for(const [i,h] of s.historial.entries()){const art=el("article",undefined,"seguimiento-avance");art.append(el("strong",new Date(h.fecha).toLocaleString("es-MX",{timeZone:"America/Mazatlan"})),el("p","Etapa: "+(h.actual===null?"Por confirmar":etapas[h.actual])+" · Entrega estimada: "+fecha(h.fecha_estimada)),el("p","Completadas: "+(h.completadas.map(i=>etapas[i]).join(", ")||"Ninguna registrada")));if(h.mensaje)art.append(el("p",h.mensaje));
+  for(const [i,h] of s.historial.entries()){const art=el("article",undefined,"seguimiento-avance");art.append(el("strong",new Date(h.fecha).toLocaleString("es-MX",{timeZone:"America/Mazatlan"})),el("p","Etapa: "+(h.actual===null?"Por confirmar":etapas[h.actual])+" · Entrega estimada: "+fecha(h.fecha_estimada)),el("p","Completadas: "+(h.completadas.map(i=>etapas[i]).join(", ")||"Ninguna registrada")));if(h.mensaje)art.append(el("p",h.mensaje));if(h.recepcion)art.append(el("p","Materiales: "+LP_SEGUIMIENTO.origenes[h.recepcion.origen]+" · "+h.recepcion.observaciones));
    const adjuntos=fotos.filter(a=>a.version_avance===s.version-i);
    if(adjuntos.length){const grid=el("div",undefined,"avance-galeria");for(const a of adjuntos){const fig=el("figure"),link=el("a"),img=el("img");link.href="/api/cliente/avances/"+encodeURIComponent(a.id);link.target="_blank";link.rel="noopener noreferrer";img.src=link.href;img.loading="lazy";img.alt=a.descripcion||"Fotografía del avance";link.append(img);fig.append(link,el("figcaption",a.descripcion||"Fotografía del proceso"));grid.append(fig);}art.append(grid);}
    historial.append(art);}
