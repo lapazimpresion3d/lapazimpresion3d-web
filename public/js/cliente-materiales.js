@@ -75,7 +75,19 @@ function resumenCotizacionLlaveros(cotizacion){
 const mensaje=document.querySelector("#mensaje-acceso"),panel=document.querySelector("#proyecto"),contenedor=document.querySelector("#secciones"),imagenes=document.querySelector("#imagenes-proyecto"),lista=document.querySelector("#lista-archivos"),estadoFotos=document.querySelector("#estado-archivos");
 let estadoProyecto="",archivos=[],guardados=[],confirmando=false;
 const confirmarMateriales=document.querySelector("#confirmar-materiales"),estadoConfirmacion=document.querySelector("#estado-confirmacion");
-const estadosMaterial={pendiente:"Pendiente",recibido:"Recibido · por revisar",requiere_correccion:"Requiere corrección",aprobado:"Aprobado"};
+const estadosMaterial={pendiente:"Sin completar",recibido:"Guardado · por revisar",requiere_correccion:"Requiere corrección",aprobado:"Aprobado",opcional:"Opcional · datos previos",sin_guardar:"Cambios sin guardar",guardando:"Guardando…"};
+function actualizarAvance(){
+ const total=guardados.length,conTexto=guardados.filter(g=>g.guardado()).length,opcionales=guardados.filter(g=>g.estado()==="opcional").length;
+ const pendientes=guardados.filter(g=>g.estado()==="pendiente").length,correcciones=guardados.filter(g=>g.revision()==="requiere_correccion").length+archivos.filter(a=>a.estado==="requiere_correccion").length;
+ const cambios=guardados.filter(g=>g.pendiente()).length,aprobados=guardados.filter(g=>g.estado()==="aprobado").length;
+ document.querySelector("#avance-textos").textContent=conTexto+" de "+total;
+ document.querySelector("#avance-opcionales").textContent=opcionales;
+ document.querySelector("#avance-aprobados").textContent=aprobados;
+ document.querySelector("#avance-imagenes").textContent=archivos.length;
+ document.querySelector("#avance-pendientes").textContent=pendientes+" sin completar · "+correcciones+" requieren corrección · "+cambios+" con cambios sin guardar";
+ document.querySelector("#avance-pendientes").dataset.atencion=correcciones?"correccion":cambios||pendientes?"pendiente":"normal";
+ document.querySelector("#resumen-imagenes").textContent=archivos.length?archivos.length+" imagen(es) guardada(s)":"Sin imágenes guardadas";
+}
 function pintarEstado(el,estado){el.textContent=estadosMaterial[estado]||estadosMaterial.pendiente;el.dataset.revision=estado||"pendiente";}
 async function api(path,method="GET",data){
  const r=await fetch(path,{method,credentials:"same-origin",headers:data?{"Content-Type":"application/json"}:undefined,body:data?JSON.stringify(data):undefined,cache:"no-store"});
@@ -84,7 +96,7 @@ async function api(path,method="GET",data){
  return value;
 }
 function pintarArchivos(){
- lista.replaceChildren();
+ lista.replaceChildren();actualizarAvance();
  if(!archivos.length){lista.textContent="Todavía no hay fotografías o logotipos.";return;}
  for(const a of archivos){
   const fila=document.createElement("li");fila.className="archivo";
@@ -145,6 +157,7 @@ async function iniciar(){
   const config=configuraciones[p.categoria]||configuraciones.web;
   document.querySelector("#folio").textContent=p.folio;
   document.querySelector("#nombre-proyecto").textContent=p.proyecto||"Proyecto de "+p.nombre;
+  document.querySelector("#nombre-cliente").textContent=p.nombre||"Sin indicar";
   document.querySelector("#tipo-proyecto").textContent=config.nombre;
   const estados={preparacion:"Preparación",recabando_materiales:"Recabando materiales",en_desarrollo:"En desarrollo",en_revision:"En revisión",finalizado:"Finalizado",cancelado:"Cancelado"};
   document.querySelector("#estado-proyecto").textContent=estados[p.estado]||p.estado;
@@ -152,12 +165,13 @@ async function iniciar(){
   const llaveros=p.categoria==="llaveros"&&data.cotizacion;
   const previo=llaveros?datosLlaveros(data.cotizacion):null;
   if(llaveros)contenedor.append(resumenCotizacionLlaveros(data.cotizacion));
-  for(const [clave,titulo,ayuda] of config.secciones){
+  for(const [indice,[clave,titulo,ayuda]] of config.secciones.entries()){
    const registro=data.secciones.find(s=>s.clave===clave);
    const pendientes=llaveros?(previo.faltantes[clave]||[]):[];
    const esOpcional=llaveros&&pendientes.length===0&&!registro?.contenido?.trim()&&registro?.estado!=="requiere_correccion";
-   const area=document.createElement("section");area.className="bloque";
+   const area=document.createElement("section");area.className="bloque material-apartado";
    const encabezado=document.createElement("h2");encabezado.textContent=llaveros&&clave!=="indicaciones"?(pendientes.length?"Información por completar: "+titulo:"Aclaraciones: "+titulo):titulo;
+   const cabecera=document.createElement("div");cabecera.className="material-cabecera";const numero=document.createElement("span");numero.className="material-numero";numero.textContent=String(indice+1).padStart(2,"0");
    const descripcion=document.createElement("p");descripcion.className="mensaje";
    descripcion.textContent=llaveros
      ?(pendientes.length?"Solo necesitamos confirmar: "+pendientes.join(" · "):"La información básica ya está en tu cotización. Completa este apartado únicamente si hay cambios o detalles adicionales.")
@@ -166,27 +180,34 @@ async function iniciar(){
    const input=document.createElement("textarea");input.id=id;input.maxLength=10000;input.value=registro?.contenido||"";input.placeholder=llaveros?(pendientes.join("\n")||"Solo si deseas aclarar algo de lo cotizado"):ayuda;
    const controls=document.createElement("div");controls.className="controles";
    const button=document.createElement("button");button.type="button";button.textContent="Guardar apartado";
-   const estado=document.createElement("span");estado.className="mensaje";estado.setAttribute("role","status");estado.classList.add("estado-material");pintarEstado(estado,registro?.estado||"pendiente");
-   let ultimoGuardado=input.value;
+   const estado=document.createElement("span");estado.className="estado-material";estado.setAttribute("role","status");
+   const aviso=document.createElement("span");aviso.className="mensaje";aviso.setAttribute("role","status");
+   let ultimoGuardado=input.value,revision=registro?.estado||"pendiente",ocupado=false;
+   const opcional=llaveros&&pendientes.length===0;
+   const cerrado=["finalizado","cancelado"].includes(p.estado);
+   function estadoActual(){if(ocupado)return "guardando";if(input.value!==ultimoGuardado)return "sin_guardar";if(revision==="requiere_correccion")return revision;if(!ultimoGuardado.trim())return opcional?"opcional":"pendiente";return revision==="aprobado"?"aprobado":"recibido";}
+   function actualizarEstado(){const actual=estadoActual();pintarEstado(estado,actual);area.dataset.revision=actual;actualizarAvance();}
    async function guardar(){
     if(button.disabled)return false;
-    button.disabled=true;estado.classList.remove("error");estado.textContent="Guardando…";
-    try{const contenido=input.value;await api("/api/cliente/secciones/"+clave,"PUT",{contenido});ultimoGuardado=contenido;pintarEstado(estado,"recibido");return true;}
-    catch(e){estado.textContent=e.message;estado.classList.add("error");return false;}
-    finally{button.disabled=false;}
+    if(input.value===ultimoGuardado){aviso.textContent="No hay cambios nuevos que guardar.";return true;}
+    ocupado=true;button.disabled=true;aviso.classList.remove("error");aviso.textContent="";actualizarEstado();
+    try{const contenido=input.value;await api("/api/cliente/secciones/"+clave,"PUT",{contenido});ultimoGuardado=contenido;revision="recibido";aviso.textContent="Cambios guardados.";return true;}
+    catch(e){aviso.textContent=e.message;aviso.classList.add("error");return false;}
+    finally{ocupado=false;button.disabled=cerrado;actualizarEstado();}
    }
    button.addEventListener("click",guardar);
-   guardados.push({input,button,pendiente:()=>input.value!==ultimoGuardado,guardar});
-   if(["finalizado","cancelado"].includes(p.estado)){button.disabled=true;input.readOnly=true;}
-   controls.append(button,estado);
-   area.append(encabezado,descripcion,label,input,controls);
+   input.addEventListener("input",()=>{aviso.textContent="";aviso.classList.remove("error");estadoConfirmacion.textContent="";actualizarEstado();});
+   guardados.push({input,button,pendiente:()=>input.value!==ultimoGuardado,guardar,guardado:()=>!!ultimoGuardado.trim(),estado:estadoActual,revision:()=>revision});
+   if(cerrado){button.disabled=true;input.readOnly=true;}
+   cabecera.append(numero,encabezado,estado);controls.append(button,aviso);
+   area.append(cabecera,descripcion,label,input,controls);actualizarEstado();
    if(esOpcional&&clave!=="indicaciones"){
      const detalle=document.createElement("details");
-     const sum=document.createElement("summary");sum.textContent="Agregar una aclaración (opcional)";
+     const sum=document.createElement("summary");sum.textContent=titulo+" · Datos previos, aclaración opcional";
      detalle.append(sum,area);contenedor.append(detalle);
    }else contenedor.append(area);
   }
-  archivos=data.archivos||[];pintarArchivos();
+  archivos=data.archivos||[];pintarArchivos();actualizarAvance();
   if(["finalizado","cancelado"].includes(p.estado)){document.querySelector("#subir-imagenes").disabled=true;imagenes.disabled=true;}
   confirmarMateriales.disabled=["finalizado","cancelado"].includes(p.estado);
   mensaje.hidden=true;panel.hidden=false;document.querySelector("#salir").hidden=false;
