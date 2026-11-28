@@ -10,6 +10,8 @@ jobs:
       - uses: actions/checkout@v5
       - name: Migraciones y SQL literal
         run: python3 scripts/auditar-migraciones.py
+      - name: Regresión de descuentos y migración 0030
+        run: python3 scripts/probar-descuentos.py
       - name: SQL dinámico seleccionado
         run: python3 scripts/auditar-sql-dinamico.py
   javascript:

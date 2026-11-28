@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parents[1]
 def main():
     files=sorted((ROOT/"migrations").glob("*.sql"))
     nums=[int(p.name.split("_")[0]) for p in files]
-    assert nums==list(range(1,30)), f"Secuencia inesperada: {nums}"
+    assert nums==list(range(1,31)), f"Secuencia inesperada: {nums}"
     db=sqlite3.connect(":memory:")
     db.execute("PRAGMA foreign_keys=ON")
     for p in files:
