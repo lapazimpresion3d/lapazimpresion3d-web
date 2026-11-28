@@ -45,7 +45,7 @@ function pintar(){
   art.append(info);
   const b=boton("Gestionar renovación"),caja=el("section",undefined,"economica-panel");caja.hidden=true;
   b.addEventListener("click",()=>{if(!caja.hidden){caja.hidden=true;return;}detalle(x,caja,b);});
-  art.append(b,caja);lista.append(art);
+  art.append(b,caja);globalThis.LP_SOPORTE?.agregar(art,x);lista.append(art);
  }
  if(!visibles.length)lista.append(el("p","No hay servicios con este filtro."));
 }

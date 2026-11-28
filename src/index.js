@@ -172,6 +172,9 @@ function finMensualidad(inicio,ancla){
  const [y,m]=inicio.split("-").map(Number);const ultimo=new Date(Date.UTC(y,m+1,0)).getUTCDate();
  return new Date(Date.UTC(y,m,Math.min(ancla,ultimo))).toISOString().slice(0,10);
 }
+const SOPORTE_TIPOS=["incidencia","mantenimiento","cambio_menor","adicional"],SOPORTE_PRIORIDADES=["baja","normal","alta","critica"],SOPORTE_ESTADOS=["abierto","en_proceso","espera_cliente","resuelto","cancelado"],SOPORTE_ORIGENES=["whatsapp","correo","telefono","presencial","interno","otro"],SOPORTE_CLASES=["soporte","mantenimiento","bolsa","adicional","sin_cargo"];
+function soporteNuevoValido(d){return !!d&&ID_UUID.test(d.id||"")&&textoEntrega(d.titulo,3,120)&&textoEntrega(d.descripcion,3,2000)&&SOPORTE_TIPOS.includes(d.tipo)&&SOPORTE_PRIORIDADES.includes(d.prioridad)&&SOPORTE_ORIGENES.includes(d.origen);}
+function intervencionValida(d,hoy){return !!d&&ID_UUID.test(d.id||"")&&textoEntrega(d.descripcion,3,2000)&&Number.isInteger(d.minutos)&&d.minutos>=0&&d.minutos<=1440&&fechaMensualidad(d.fecha_trabajo)&&d.fecha_trabajo<=hoy&&SOPORTE_CLASES.includes(d.clasificacion)&&textoEntrega(d.autorizacion,d.clasificacion==="adicional"?3:0,500);}
 function estadoMensualidad(q,ultimo,hoy){
  if(!q.inicio)return {situacion:"sin_iniciar",proxima:null,dia_ancla:null};
  const proxima=ultimo?.fin||q.inicio,ancla=ultimo?.dia_ancla||Number(q.inicio.slice(-2));
@@ -1177,6 +1180,47 @@ async function api(request,env,ctx) {
       const hoy=hoyMensualidad();
       return json({hoy,limitado:rows.results.length>200,entregas_disponibles:conEntrega,items:rows.results.slice(0,200).map(q=>({...q,...estadoMensualidad(q,q.ultimo_fin?{fin:q.ultimo_fin}:null,hoy)}))});
     }
+    const soporte=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/soporte(?:\/([0-9a-f-]{36})(?:\/(intervenciones))?)?$/i);
+    if(soporte){
+      const db=env.QUIZ_DB,[,pid,tid,accion]=soporte,hoy=hoyMensualidad(),ahora=new Date().toISOString();
+      const e=await db.prepare("SELECT paquete,fecha_aceptacion FROM propuestas_economicas WHERE propuesta_id=?1 AND fecha_aceptacion IS NOT NULL AND mensualidad>0 AND paquete<>'solo_fisico'").bind(pid).first();
+      if(!e)return error("Servicio contratado no encontrado",404);
+      const tabla=await db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('servicio_soporte','servicio_intervenciones')").first();
+      if(tabla.n!==2)return error("Soporte pendiente de habilitar (migración 0011)",503);
+      if(!tid&&request.method==="GET"){
+        const r=await db.prepare("SELECT t.*,(SELECT COALESCE(SUM(i.minutos),0) FROM servicio_intervenciones i WHERE i.soporte_id=t.id) AS minutos FROM servicio_soporte t WHERE propuesta_id=?1 ORDER BY CASE WHEN estado IN ('resuelto','cancelado') THEN 1 ELSE 0 END,CASE prioridad WHEN 'critica' THEN 0 WHEN 'alta' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,fecha_actualizacion DESC LIMIT 101").bind(pid).all();
+        const resumen=await db.prepare("SELECT COUNT(*) AS total,COALESCE(SUM(CASE WHEN estado NOT IN ('resuelto','cancelado') THEN 1 ELSE 0 END),0) AS pendientes FROM servicio_soporte WHERE propuesta_id=?1").bind(pid).first();
+        const mes=await db.prepare("SELECT i.clasificacion,COALESCE(SUM(i.minutos),0) AS minutos FROM servicio_intervenciones i JOIN servicio_soporte t ON t.id=i.soporte_id WHERE t.propuesta_id=?1 AND substr(i.fecha_trabajo,1,7)=?2 GROUP BY i.clasificacion").bind(pid,hoy.slice(0,7)).all();
+        return json({items:r.results.slice(0,100),limitado:r.results.length>100,resumen,mes:mes.results,hoy});
+      }
+      if(!tid&&request.method==="POST"){
+        const d=await leerJson(request,10000);if(!soporteNuevoValido(d))return error("Revisa los datos de la solicitud",400);
+        const res=await db.prepare("INSERT INTO servicio_soporte(id,propuesta_id,titulo,descripcion,tipo,prioridad,origen,fecha_registro,fecha_actualizacion) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?8) ON CONFLICT(id) DO NOTHING").bind(d.id,pid,d.titulo.trim(),d.descripcion.trim(),d.tipo,d.prioridad,d.origen,ahora).run();
+        if(res.meta.changes)return json({ok:true},201);
+        const previo=await db.prepare("SELECT * FROM servicio_soporte WHERE id=?1 AND propuesta_id=?2").bind(d.id,pid).first();
+        return previo&&previo.titulo===d.titulo.trim()&&previo.descripcion===d.descripcion.trim()&&previo.tipo===d.tipo&&previo.prioridad===d.prioridad&&previo.origen===d.origen?json({ok:true,repetido:true}):error("Identificador ya utilizado",409);
+      }
+      if(!tid)return error("Método no permitido",405);
+      const t=await db.prepare("SELECT * FROM servicio_soporte WHERE id=?1 AND propuesta_id=?2").bind(tid,pid).first();
+      if(!t)return error("Solicitud no encontrada",404);
+      if(!accion&&request.method==="GET"){
+        const r=await db.prepare("SELECT * FROM servicio_intervenciones WHERE soporte_id=?1 ORDER BY fecha_trabajo DESC,fecha_registro DESC LIMIT 201").bind(tid).all();
+        return json({solicitud:t,intervenciones:r.results.slice(0,200),limitado:r.results.length>200,hoy});
+      }
+      if(!accion&&request.method==="PATCH"){
+        const d=await leerJson(request,500);if(!d||!SOPORTE_ESTADOS.includes(d.estado)||!SOPORTE_PRIORIDADES.includes(d.prioridad)||!Number.isSafeInteger(d.version))return error("Estado, prioridad o versión inválidos",400);
+        const r=await db.prepare("UPDATE servicio_soporte SET estado=?1,prioridad=?2,version=version+1,fecha_actualizacion=?3 WHERE id=?4 AND propuesta_id=?5 AND version=?6").bind(d.estado,d.prioridad,ahora,tid,pid,d.version).run();
+        return r.meta.changes?json({ok:true}):error("La solicitud cambió. Actualiza.",409);
+      }
+      if(accion==="intervenciones"&&request.method==="POST"){
+        const d=await leerJson(request,12000);if(!intervencionValida(d,hoy)||d.fecha_trabajo<e.fecha_aceptacion)return error("Revisa fecha, minutos y autorización del trabajo adicional",400);
+        const previo=await db.prepare("SELECT * FROM servicio_intervenciones WHERE id=?1").bind(d.id).first();
+        if(previo)return previo.soporte_id===tid&&previo.descripcion===d.descripcion.trim()&&previo.minutos===d.minutos&&previo.fecha_trabajo===d.fecha_trabajo&&previo.clasificacion===d.clasificacion&&previo.autorizacion===d.autorizacion.trim()?json({ok:true,repetido:true}):error("Identificador ya utilizado",409);
+        const r=await db.prepare("INSERT INTO servicio_intervenciones(id,soporte_id,descripcion,minutos,fecha_trabajo,clasificacion,autorizacion,fecha_registro) SELECT ?1,id,?2,?3,?4,?5,?6,?7 FROM servicio_soporte WHERE id=?8 AND propuesta_id=?9 AND estado<>'cancelado' ON CONFLICT(id) DO NOTHING").bind(d.id,d.descripcion.trim(),d.minutos,d.fecha_trabajo,d.clasificacion,d.autorizacion.trim(),ahora,tid,pid).run();
+        return r.meta.changes?json({ok:true},201):error("Solicitud cancelada o registro duplicado. Actualiza.",409);
+      }
+      return error("Método no permitido",405);
+    }
     const mensual=path.match(/^\/api\/admin\/mensualidades\/([0-9a-f-]{36})(?:\/(pagos))?$/i);
     if(mensual){
       const id=mensual[1],accion=mensual[2],db=env.QUIZ_DB,hoy=hoyMensualidad();
@@ -1316,6 +1360,8 @@ async function api(request,env,ctx) {
       if((claves.length||tieneFotos)&&!env.COTIZACIONES_R2)return error("Almacenamiento de imágenes no disponible.",503);
       const stmts=[];
       const borrar=(tabla,filtro)=>{if(tablas.has(tabla))stmts.push(db.prepare("DELETE FROM "+tabla+" WHERE "+filtro+" AND "+guardia).bind(id));};
+      if(tablas.has("servicio_soporte"))borrar("servicio_intervenciones","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");
+      borrar("servicio_soporte","propuesta_id=?1");
       borrar("pagos_mensualidad","propuesta_id=?1");
       borrar("suscripciones_cliente","propuesta_id=?1");
       borrar("pagos_propuesta","propuesta_id=?1");
