@@ -328,10 +328,13 @@ function agregarEconomica(art,x){
  art.append(abrir,panel);
 }
 const seleccionarVisibles=document.querySelector("#seleccionar-propuestas"),borrarSeleccion=document.querySelector("#borrar-seleccion"),borrarTodas=document.querySelector("#borrar-todas"),estadoBorrado=document.querySelector("#estado-borrado");
+const controlesBorrado=Boolean(seleccionarVisibles&&borrarSeleccion&&borrarTodas&&estadoBorrado);
 let borrando=false;
 function casillasPropuestas(){return Array.from(listaPropuestas.querySelectorAll("input[data-propuesta-id]"));}
 function actualizarSeleccion(){
+ if(!controlesBorrado)return;
  const cajas=casillasPropuestas(),n=cajas.filter(c=>c.checked).length;
+ for(const c of cajas)c.disabled=borrando;
  seleccionarVisibles.checked=cajas.length>0&&n===cajas.length;
  seleccionarVisibles.indeterminate=n>0&&n<cajas.length;
  seleccionarVisibles.disabled=borrando||!cajas.length;
@@ -339,7 +342,7 @@ function actualizarSeleccion(){
  borrarSeleccion.textContent="Eliminar seleccionadas ("+n+")";
  borrarTodas.disabled=borrando;
 }
-seleccionarVisibles.addEventListener("change",()=>{for(const c of casillasPropuestas())c.checked=seleccionarVisibles.checked;actualizarSeleccion();});
+seleccionarVisibles?.addEventListener("change",()=>{for(const c of casillasPropuestas())c.checked=seleccionarVisibles.checked;actualizarSeleccion();});
 async function borrarGrupo(todas){
  if(borrando)return;
  borrando=true;actualizarSeleccion();estadoBorrado.textContent="";
@@ -359,8 +362,8 @@ async function borrarGrupo(todas){
   await cargarPropuestas();await globalThis.LP_ADMIN_ALERTAS?.cargar();
  }catch(e){estadoBorrado.textContent=e.message;}finally{borrando=false;actualizarSeleccion();}
 }
-borrarSeleccion.addEventListener("click",()=>borrarGrupo(false));
-borrarTodas.addEventListener("click",()=>borrarGrupo(true));
+borrarSeleccion?.addEventListener("click",()=>borrarGrupo(false));
+borrarTodas?.addEventListener("click",()=>borrarGrupo(true));
 actualizarSeleccion();
 async function cargarPropuestas(){
  estadoPropuestas.textContent="Cargando solicitudes…";
@@ -431,7 +434,7 @@ async function cargarPropuestas(){
      actions.append(crearProyecto);
    }
    const jsonBoton=elem("button","secundario","Descargar JSON");jsonBoton.addEventListener("click",()=>descargar({...x.ficha,contacto:{nombre:x.nombre,proyecto:x.proyecto,telefono:x.telefono,comentario:x.comentario},folio:x.folio,estado_solicitud:x.estado}));actions.append(jsonBoton);
-   const borrar=elem("button","secundario","Eliminar");borrar.addEventListener("click",async()=>{if(borrando||!confirm(`¿Eliminar definitivamente ${x.folio}?`))return;try{const d=await req(`/api/admin/propuestas/${encodeURIComponent(x.id)}`,{method:"DELETE"});await cargarPropuestas();estadoBorrado.textContent=d.imagenes_pendientes?"Solicitud eliminada; imágenes pendientes de limpieza: "+d.imagenes_pendientes+".":"Solicitud eliminada.";await globalThis.LP_ADMIN_ALERTAS?.cargar();}catch(e){estadoPropuestas.textContent=e.message;}});actions.append(borrar);
+   const borrar=elem("button","secundario","Eliminar");borrar.addEventListener("click",async()=>{if(borrando||!confirm(`¿Eliminar definitivamente ${x.folio}?`))return;try{const d=await req(`/api/admin/propuestas/${encodeURIComponent(x.id)}`,{method:"DELETE"});await cargarPropuestas(); (estadoBorrado||estadoPropuestas).textContent=d.imagenes_pendientes?"Solicitud eliminada; imágenes pendientes de limpieza: "+d.imagenes_pendientes+".":"Solicitud eliminada.";await globalThis.LP_ADMIN_ALERTAS?.cargar();}catch(e){estadoPropuestas.textContent=e.message;}});actions.append(borrar);
    art.append(actions);listaPropuestas.append(art);
   }
   actualizarSeleccion();
