@@ -10,7 +10,7 @@ function cotizacion(p,n){if(!Object.hasOwn(planes,p)||(n!==undefined&&!Object.ha
 const vistasPracticaPublicas=true;
 const verificadas=Object.freeze([]);
 const generalesVerificadas=Object.freeze({galeria:false,comparador:false});
-function url(n,p,v='cliente'){if(!Object.hasOwn(representativos,n)||!Object.hasOwn(planes,p)||!['cliente','panel'].includes(v))return null;return base+'/'+n+(v==='panel'?'/panel':'')+'?plan='+encodeURIComponent(p);}
+function url(n,p,v='cliente'){if(!Object.hasOwn(representativos,n)||!Object.hasOwn(planes,p)||!['cliente','panel'].includes(v))return null;return base+'/'+(n==='auto-servicio-bahia'?'torque-automotriz':n)+(v==='panel'?'/panel':'')+'?plan='+encodeURIComponent(p);}
 function general(t){return t==='galeria'?base+'/':t==='comparador'?base+'/demostraciones/configurar/':null;}
 const api=Object.freeze({base,negocios,planes,giros,representativos,cotizacion,vistasPracticaPublicas,verificadas,generalesVerificadas,url,general,verificada:(n,p)=>verificadas.includes(n+'/'+p)});
 if(typeof module==='object'&&module.exports)module.exports=api;else root.LP_DEMOS=api;

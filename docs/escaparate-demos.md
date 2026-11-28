@@ -40,3 +40,6 @@ P1 Café Mirador; P2 Barbería Élite; P3 Mundo Mascotas y Auto Servicio Bahía;
 
 ## Identidad Torque Automotriz
 El taller representativo P3 cambia de nombre a Torque Automotriz en las dos páginas comerciales y en el selector. Logo importado sin modificaciones de prueba-cloudflare, commit 64946db0473f85f681498f385b8885fe1d4f78f8, blob 1fc330140a3dda1b45c094f98ce874f6042f68e8. La portada existente coincide byte a byte (blob 24b17a971295304b2bcfc03c0c2f2b8fa84564f2) con la portada del commit de referencia; inspección visual de rótulos pendiente. Se conserva temporalmente el identificador y las rutas auto-servicio-bahia con plan=p3: las consultas a las nuevas rutas torque-automotriz y torque-automotriz/panel devolvieron cache miss, no prueba de ausencia de publicación. Cambiar rutas centralizadas y enlaces HTML cuando se comprueben. No cambiar el selector de combinaciones en esta fase. Precios, cotizador, sistemas internos y repo de demos intactos.
+
+## Enlaces comerciales de Torque
+Por indicación del usuario de que la identidad se actualizó en el proyecto independiente, se sustituyen los destinos HTML y el generador central por /torque-automotriz y /torque-automotriz/panel, preservando plan explícito e identificador interno. No se certifica publicación HTTP. No se toca el repo de demos ni se cambia el selector de paquetes.
