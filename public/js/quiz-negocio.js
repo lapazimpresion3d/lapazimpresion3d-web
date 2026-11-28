@@ -406,7 +406,8 @@
         const cuerpo=new FormData();
         cuerpo.set("solicitud",JSON.stringify(solicitud));
         for(const archivo of imagenes.files)cuerpo.append("imagenes",archivo,archivo.name);
-        const r=await fetch("/api/quiz/propuestas",{method:"POST",credentials:"same-origin",body:cuerpo});
+        const token=await globalThis.LP_Turnstile.token("cotizacion_quiz",enviar);
+        const r=await fetch("/api/quiz/propuestas",{method:"POST",credentials:"same-origin",headers:{"X-Turnstile-Token":token},body:cuerpo});
         const data=await r.json().catch(()=>({}));
         if(!r.ok || !data.ok) throw new Error(data.error||"No se pudo registrar. Intenta de nuevo.");
         const confirmacion=document.createElement("div");confirmacion.className="quiz-confirmacion";
