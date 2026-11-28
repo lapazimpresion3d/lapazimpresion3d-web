@@ -98,7 +98,18 @@ async function cargar(){estado.textContent="Cargando diagnósticos...";try{const
     const sep=params?"&":"?";
     const d=await req(`/api/admin/diagnosticos${params}${ref?sep+"referencia="+encodeURIComponent(ref):""}`);
     ultimosItems=d.items;filtrarBusqueda();}catch(e){estado.textContent=e.message;if(e.message==="Acceso restringido"){panel.hidden=true;acceso.hidden=false;}}}
-acceso.addEventListener("submit",async(e)=>{e.preventDefault();error.textContent="";try{await req("/api/admin/login",{method:"POST",body:JSON.stringify({password:document.querySelector("#password").value})});document.querySelector("#password").value="";acceso.hidden=true;panel.hidden=false;await Promise.all([cargar(),cargarPropuestas(),cargarProyectos(),globalThis.LP_ADMIN_ALERTAS?.cargar()]);}catch(e){error.textContent=e.message;}});
+acceso.addEventListener("submit",async(e)=>{
+ e.preventDefault();const boton=acceso.querySelector('button[type="submit"]');if(boton.disabled)return;
+ boton.disabled=true;error.textContent="";
+ try{
+  const config=await req("/api/admin/login/config");
+  const headers={};
+  if(config.turnstile){error.textContent="Comprobando seguridad…";headers["X-Turnstile-Token"]=await globalThis.LP_Turnstile.token("admin_login",boton);}
+  await req("/api/admin/login",{method:"POST",headers,body:JSON.stringify({password:document.querySelector("#password").value})});
+  document.querySelector("#password").value="";error.textContent="";acceso.hidden=true;panel.hidden=false;
+  await Promise.all([cargar(),cargarPropuestas(),cargarProyectos(),globalThis.LP_ADMIN_ALERTAS?.cargar()]);
+ }catch(e){error.textContent=e.message;}finally{boton.disabled=false;}
+});
 document.querySelector("#actualizar").addEventListener("click",cargar);filtro.addEventListener("change",cargar);let ultimaConsulta="";
 busqueda.addEventListener("input",()=>{
   const texto=busqueda.value.trim();
