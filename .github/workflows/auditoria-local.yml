@@ -1,0 +1,12 @@
+name: Auditoría local SQLite
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sqlite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Migraciones y SQL literal
+        run: python3 scripts/auditar-migraciones.py
