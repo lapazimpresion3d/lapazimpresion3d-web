@@ -66,7 +66,23 @@ function agregar(art,p){
   if(s.recepcion&&checks[0])checks[0].disabled=true;
   const recepcion=el("section",undefined,"recepcion-materiales-admin");caja.insertBefore(recepcion,f);
   recepcion.append(el("h4","Recopilación de materiales"));
-  if(s.recepcion){recepcion.append(el("p","Confirmada · "+LP_SEGUIMIENTO.origenes[s.recepcion.origen]+" · "+new Date(s.recepcion.fecha).toLocaleString("es-MX")),el("p",s.recepcion.observaciones));}
+  if(s.recepcion){
+   const r=s.recepcion;recepcion.append(el("p","Confirmada · "+LP_SEGUIMIENTO.origenes[r.origen]+" · "+new Date(r.fecha).toLocaleString("es-MX",{timeZone:"America/Mazatlan"})),el("p",r.observaciones));
+   if(r.fecha_edicion)recepcion.append(el("p","Última corrección: "+new Date(r.fecha_edicion).toLocaleString("es-MX",{timeZone:"America/Mazatlan"}),"metadatos"));
+   if(p.estado!=="cancelado"){
+    const editar=el("button","Editar recopilación","secundario");editar.type="button";recepcion.append(editar);
+    const ef=el("form",undefined,"economica-form");ef.hidden=true;
+    const origen=campo(ef,"Origen de los materiales","select");for(const [k,v] of Object.entries(LP_SEGUIMIENTO.origenes))opcion(origen,k,v);origen.value=r.origen;
+    const nota=campo(ef,"Observaciones visibles al cliente","textarea");nota.required=true;nota.maxLength=1000;nota.value=r.observaciones;nota.rows=3;
+    const guardar=el("button","Guardar corrección"),cancelar=el("button","Cancelar","secundario"),aviso=el("p");guardar.type="submit";cancelar.type="button";aviso.setAttribute("role","status");ef.append(guardar,cancelar,aviso);recepcion.append(ef);
+    editar.addEventListener("click",()=>{ef.hidden=false;editar.hidden=true;nota.focus();});
+    cancelar.addEventListener("click",()=>{origen.value=r.origen;nota.value=r.observaciones;aviso.textContent="";ef.hidden=true;editar.hidden=false;});
+    ef.addEventListener("submit",async e=>{e.preventDefault();if(ocupado)return;if(!nota.value.trim()){aviso.textContent="Escribe una observación.";return;}ocupado=true;guardar.disabled=cancelar.disabled=boton.disabled=true;
+     try{const res=await fetch(ruta,{method:"PATCH",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({origen:origen.value,observaciones:nota.value,version:s.version,revision_edicion:r.revision_edicion||0})});const d=await res.json();if(!res.ok)throw Error(d.error||"No se pudo guardar");pintar(d.seguimiento);caja.prepend(el("p","Corrección guardada.","metadatos"));}
+     catch(e){aviso.textContent=e.message;}finally{ocupado=false;guardar.disabled=cancelar.disabled=boton.disabled=false;}
+    });
+   }
+  }
   else if(!["finalizado","cancelado"].includes(p.estado)){
    const rf=el("form",undefined,"economica-form"),origen=campo(rf,"Origen de los materiales","select");opcion(origen,"","Selecciona el origen");for(const [k,v] of Object.entries(LP_SEGUIMIENTO.origenes))opcion(origen,k,v);origen.required=true;
    const nota=campo(rf,"Observaciones visibles al cliente","textarea");nota.required=true;nota.maxLength=1000;

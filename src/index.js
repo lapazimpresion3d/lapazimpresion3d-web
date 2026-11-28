@@ -309,6 +309,10 @@ const ETAPAS_SEGUIMIENTO={fisica:6,web:7,combinada:9};
 const ORIGEN_MATERIALES=new Set(["portal","whatsapp","correo","personal","cotizacion","mixto","ninguno"]);
 function formatoSeguimiento(d){return d.formato||"detallado";}
 function recepcionValida(r){return !!r&&ORIGEN_MATERIALES.has(r.origen)&&typeof r.observaciones==="string"&&r.observaciones.trim().length>0&&r.observaciones.length<=1000;}
+function corregirRecepcion(s,r,ahora){
+ const recepcion={...s.recepcion,origen:r.origen,observaciones:r.observaciones.trim(),fecha_edicion:ahora,revision_edicion:(s.recepcion.revision_edicion||0)+1};
+ return {...s,recepcion,historial:s.historial.map(h=>h.recepcion?{...h,recepcion}:h)};
+}
 function aplicarRecepcion(s,r,ahora){
  const completadas=[...new Set([...s.completadas,0])].sort((a,b)=>a-b);
  const actual=s.actual===0||s.actual===null?(completadas.includes(1)?null:1):s.actual;
@@ -851,6 +855,16 @@ async function api(request,env,ctx) {
       const s=await leerSeguimiento(db,p);
       if(!s)return error("Seguimiento pendiente de habilitar: la base D1 conectada no contiene la columna seguimiento_json o no devolvió el proyecto. Verifica la migración 0008 en lapazimpresion3d-quiz.",503);
       if(request.method==="GET")return json({seguimiento:s.data});
+      if(request.method==="PATCH"){
+        if(s.estado==="cancelado")return error("Proyecto cancelado",409);
+        const d=await leerJson(request,8000);
+        if(!recepcionValida(d))return error("Revisa el origen y las observaciones",400);
+        if(!s.data.recepcion)return error("La recopilación todavía no está confirmada",409);
+        if(d.version!==s.data.version||d.revision_edicion!==(s.data.recepcion.revision_edicion||0))return error("El registro cambió. Vuelve a abrir el seguimiento.",409);
+        const nuevo=corregirRecepcion(s.data,d,new Date().toISOString());
+        const r=await db.prepare("UPDATE proyectos_cliente SET seguimiento_json=?1 WHERE id=?2 AND seguimiento_json=?3 AND estado<>'cancelado'").bind(JSON.stringify(nuevo),id,s.raw).run();
+        return r.meta.changes?json({seguimiento:nuevo}):error("El proyecto cambió. Vuelve a cargarlo.",409);
+      }
       if(request.method==="PUT"){
         if(s.estado==="cancelado")return error("Proyecto cancelado",409);
         const d=await leerJson(request,8000);
