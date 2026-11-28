@@ -300,13 +300,21 @@ async function cargarProyectos(){
          bloque.append(controlRevisionMaterial(p,a,"secciones"));
          caja.append(bloque);
        }
-       caja.append(elem("h4",null,"Imágenes recibidas ("+d.archivos.length+")"));
-       if(!d.archivos.length)caja.append(elem("p",null,"Aún no hay imágenes."));
-       for(const a of d.archivos){
-         const link=elem("a","boton-enlace",a.nombre_original||"Ver imagen");
-         link.href="/api/admin/proyectos/"+encodeURIComponent(p.id)+"/archivos/"+encodeURIComponent(a.id);
-         link.target="_blank";link.rel="noopener noreferrer";const bloque=elem("div","apartado-recibido");bloque.append(link,controlRevisionMaterial(p,a,"archivos"));caja.append(bloque);
+       const adjuntos=elem("section","materiales-adjuntar");adjuntos.append(elem("h4",null,"Imágenes y referencias del proyecto"),elem("p","metadatos","Los materiales que agregues estarán disponibles en el portal privado del cliente. No se publican como avances ni se aprueban automáticamente."));
+       const galeria=elem("div","materiales-galeria");adjuntos.append(galeria);
+       const agregarImagen=a=>{const bloque=elem("div","apartado-recibido"),link=elem("a","material-imagen-enlace");link.href="/api/admin/proyectos/"+encodeURIComponent(p.id)+"/archivos/"+encodeURIComponent(a.id);link.target="_blank";link.rel="noopener noreferrer";const img=elem("img");img.src=link.href;img.alt=a.nombre_original||"Referencia";img.loading="lazy";link.append(img,elem("span",null,a.nombre_original||"Ver imagen"));bloque.append(link,controlRevisionMaterial(p,a,"archivos"));galeria.prepend(bloque);};
+       for(const a of [...d.archivos].reverse())agregarImagen(a);
+       if(!cerrado){
+        const formulario=elem("form","economica-form"),cat=elem("select"),archivo=elem("input"),labelCat=elem("label",null,"Categoría"),labelArchivo=elem("label",null,"Imagen recibida por WhatsApp u otro medio"),b=elem("button",null,"Adjuntar al proyecto"),m=elem("p","metadatos");
+        for(const [k,v] of [["logotipo","Logotipo"],["fotografias","Fotografía o referencia"],["otros","Otra imagen"]]){const o=elem("option",null,v);o.value=k;cat.append(o);}cat.value="fotografias";archivo.type="file";archivo.accept="image/jpeg,image/png,image/webp";archivo.required=true;labelCat.append(cat);labelArchivo.append(archivo);b.type="submit";m.setAttribute("role","status");formulario.append(labelCat,labelArchivo,b,m);adjuntos.append(formulario);
+        let subiendo=false;
+        async function adjuntar(body,boton){if(subiendo)return false;subiendo=true;boton.disabled=true;m.textContent="Guardando…";try{const r=await fetch("/api/admin/proyectos/"+encodeURIComponent(p.id)+"/materiales/adjuntar",{method:"POST",credentials:"same-origin",body}),v=await r.json();if(!r.ok)throw Error(v.error||"No se pudo adjuntar");if(v.archivo){d.archivos.push(v.archivo);agregarImagen(v.archivo);resumenMateriales.textContent="Materiales del proyecto · "+d.secciones.length+" apartados · "+d.archivos.length+" imágenes";}m.textContent=v.repetida?"La referencia ya estaba incorporada.":"Imagen guardada en el proyecto.";return true;}catch(e){m.textContent=e.message;return false;}finally{subiendo=false;boton.disabled=false;}}
+        formulario.addEventListener("submit",async e=>{e.preventDefault();if(!archivo.files[0]||archivo.files[0].size>4*1024*1024){m.textContent="Selecciona una imagen de hasta 4 MB.";return;}if(!confirm("¿Incorporar esta imagen al portal privado del cliente?"))return;const body=new FormData();body.append("imagen",archivo.files[0]);body.append("categoria",cat.value);if(await adjuntar(body,b))archivo.value="";});
+        if(d.referencias?.length){const refs=elem("div","referencias-solicitud");refs.append(elem("h4",null,"Referencias de la solicitud original"));for(const a of d.referencias){const fila=elem("div","acciones"),link=elem("a","boton-enlace",a.nombre||"Ver referencia"),copiar=elem("button","secundario",a.importada?"Ya incorporada":"Incorporar al proyecto");link.href="/api/admin/propuestas/"+encodeURIComponent(d.propuesta_id)+"/imagen/"+a.indice;link.target="_blank";link.rel="noopener noreferrer";copiar.type="button";copiar.disabled=a.importada;copiar.addEventListener("click",async()=>{if(!confirm("¿Copiar esta referencia al portal privado del cliente?"))return;const body=new FormData();body.append("referencia",String(a.indice));body.append("categoria",cat.value);if(await adjuntar(body,copiar)){copiar.textContent="Ya incorporada";copiar.disabled=true;}});fila.append(link,copiar);refs.append(fila);}adjuntos.append(refs);}
        }
+       caja.append(adjuntos);
+       /* Lista anterior sustituida por galería. */
+
        materialesCargados=true;
        resumenMateriales.textContent="Materiales del proyecto · "+d.secciones.length+" apartados · "+d.archivos.length+" imágenes";
      }catch(e){estadoProyectos.textContent=e.message;if(!materialesCargados)caja.replaceChildren(elem("p","metadatos",e.message),revisar);}finally{materialesCargando=false;revisar.disabled=false;}

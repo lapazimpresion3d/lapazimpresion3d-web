@@ -512,6 +512,7 @@ async function notificarPropuesta(env,info) {
 // Adjuntos opcionales: solo imágenes seguras, privadas, por solicitud.
 const IMG_MIME={"image/jpeg":"jpg","image/png":"png","image/webp":"webp"};
 const IMG_MAX=4*1024*1024;
+async function idReferenciaProyecto(id,i){const b=new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode("referencia-proyecto:"+id+":"+i)));b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;const h=Array.from(b.slice(0,16),n=>n.toString(16).padStart(2,"0")).join("");return h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20);}
 function imagenReal(bytes,mime){
  if(mime==='image/jpeg')return bytes[0]===255&&bytes[1]===216&&bytes[2]===255;
  if(mime==='image/png')return [137,80,78,71,13,10,26,10].every((x,i)=>bytes[i]===x);
@@ -938,11 +939,44 @@ async function api(request,env,ctx) {
     }
     const materialesAdmin=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/materiales$/i);
     if(materialesAdmin && request.method==="GET"){
-      const p=await env.QUIZ_DB.prepare("SELECT p.id,p.instrucciones,q.folio FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.id=?1").bind(materialesAdmin[1]).first();
+      const p=await env.QUIZ_DB.prepare("SELECT p.id,p.instrucciones,p.estado,p.propuesta_id,q.folio,q.ficha_json FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.id=?1").bind(materialesAdmin[1]).first();
       if(!p)return error("Proyecto no encontrado",404);
       const sec=await env.QUIZ_DB.prepare("SELECT clave,contenido,estado,fecha_actualizacion FROM proyecto_secciones WHERE proyecto_id=?1").bind(p.id).all();
       const archivos=await env.QUIZ_DB.prepare("SELECT id,nombre_original,tipo_mime,tamano_bytes,fecha_subida,estado FROM proyecto_archivos WHERE proyecto_id=?1 ORDER BY fecha_subida DESC").bind(p.id).all();
-      return json({folio:p.folio,...datosIndicaciones(p.instrucciones),secciones:sec.results,archivos:archivos.results});
+      const referencias=[];for(const [i,a] of (JSON.parse(p.ficha_json).imagenes||[]).slice(0,3).entries()){if(a.clave?.startsWith("solicitudes/"+p.propuesta_id+"/")){const id=await idReferenciaProyecto(p.id,i);referencias.push({indice:i,nombre:a.nombre,importada:archivos.results.some(x=>x.id===id)});}}
+      return json({folio:p.folio,propuesta_id:p.propuesta_id,referencias,...datosIndicaciones(p.instrucciones),secciones:sec.results,archivos:archivos.results});
+    }
+    const adjuntarAdmin=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/materiales\/adjuntar$/i);
+    if(adjuntarAdmin&&request.method==="POST"){
+      const db=env.QUIZ_DB,p=await db.prepare("SELECT p.id,p.estado,p.propuesta_id,q.ficha_json FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.id=?1").bind(adjuntarAdmin[1]).first();
+      if(!p)return error("Proyecto no encontrado",404);
+      if(["finalizado","cancelado"].includes(p.estado))return error("Proyecto cerrado",409);
+      if(!env.COTIZACIONES_R2)return error("Almacenamiento no disponible",503);
+      if(Number(request.headers.get("content-length")||0)>IMG_MAX+150000)return error("Imagen demasiado grande",413);
+      if(!request.headers.get("content-type")?.toLowerCase().startsWith("multipart/form-data"))return error("Formato inválido",415);
+      let form;try{form=await request.formData();}catch{return error("Formulario inválido",400);}
+      const categoria=form.get("categoria");if(!["logotipo","fotografias","otros"].includes(categoria))return error("Categoría inválida",400);
+      let id=crypto.randomUUID(),nombre,mime,bytes;
+      const indice=form.get("referencia");
+      if(indice!==null){
+        if(!["0","1","2"].includes(indice)||form.has("imagen"))return error("Referencia inválida",400);
+        const a=JSON.parse(p.ficha_json).imagenes?.[Number(indice)];
+        if(!a||!a.clave?.startsWith("solicitudes/"+p.propuesta_id+"/")||!Object.hasOwn(IMG_MIME,a.tipo))return error("Referencia no encontrada",404);
+        id=await idReferenciaProyecto(p.id,Number(indice));
+        if(await db.prepare("SELECT id FROM proyecto_archivos WHERE id=?1 AND proyecto_id=?2").bind(id,p.id).first())return json({ok:true,repetida:true});
+        const obj=await env.COTIZACIONES_R2.get(a.clave);if(!obj)return error("Archivo original no encontrado",404);if(obj.size>IMG_MAX)return error("Imagen demasiado grande",400);
+        bytes=new Uint8Array(await obj.arrayBuffer());nombre=String(a.nombre||"Referencia").slice(0,120);mime=a.tipo;
+      }else{
+        const a=form.get("imagen");if(!(a instanceof File)||!Object.hasOwn(IMG_MIME,a.type)||a.size===0||a.size>IMG_MAX)return error("Selecciona JPG, PNG o WebP de hasta 4 MB",400);
+        bytes=new Uint8Array(await a.arrayBuffer());nombre=a.name.slice(0,120);mime=a.type;
+      }
+      if(!bytes.length||bytes.length>IMG_MAX||!imagenReal(bytes,mime))return error("Imagen inválida",400);
+      const clave="proyectos/"+p.id+"/"+crypto.randomUUID()+"."+IMG_MIME[mime],ahora=new Date().toISOString();
+      await env.COTIZACIONES_R2.put(clave,bytes,{httpMetadata:{contentType:mime}});
+      let r;try{r=await db.prepare("INSERT INTO proyecto_archivos(id,proyecto_id,categoria,nombre_original,clave_r2,tipo_mime,tamano_bytes,fecha_subida) SELECT ?1,id,?2,?3,?4,?5,?6,?7 FROM proyectos_cliente WHERE id=?8 AND estado NOT IN ('finalizado','cancelado') AND (SELECT COUNT(*) FROM proyecto_archivos WHERE proyecto_id=?8)<30 ON CONFLICT(id) DO NOTHING").bind(id,categoria,nombre,clave,mime,bytes.length,ahora,p.id).run();}catch(e){await env.COTIZACIONES_R2.delete(clave).catch(()=>{});throw e;}
+      if(!r.meta.changes){await env.COTIZACIONES_R2.delete(clave).catch(()=>{});if(indice!==null&&await db.prepare("SELECT id FROM proyecto_archivos WHERE id=?1 AND proyecto_id=?2").bind(id,p.id).first())return json({ok:true,repetida:true});return error("Proyecto cerrado o límite de 30 imágenes alcanzado",409);}
+      await db.prepare("UPDATE proyectos_cliente SET fecha_actualizacion=?1 WHERE id=?2").bind(ahora,p.id).run();
+      return json({ok:true,archivo:{id,nombre_original:nombre,tipo_mime:mime,tamano_bytes:bytes.length,fecha_subida:ahora,estado:"recibido"}},201);
     }
     // Revisión de entregas: sesión administrativa, origen y ámbito del proyecto.
     const revisionTexto=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/materiales\/secciones\/(datos_negocio|servicios_productos|horarios_contacto|indicaciones)$/i);

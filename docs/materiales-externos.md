@@ -1,0 +1,2 @@
+# Materiales externos
+Desde materiales del proyecto se pueden adjuntar imágenes o copiar referencias de la solicitud original. Se mantienen objetos R2 separados, no se mueve ni elimina el original. Confirmación explícita de visibilidad privada al cliente, estado recibido sin aprobación automática. Límite 30 archivos, JPG PNG WebP 4 MB. Importación idempotente por proyecto e índice. No requiere migración. Pruebas D1/R2 y navegador pendientes.
