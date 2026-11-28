@@ -3,6 +3,22 @@
 "use strict";
 const nombres=Object.freeze({"solo_fisico":"Productos físicos · pago único","presencia-digital":"Presencia digital","negocio-interactivo":"Negocio interactivo","gestion-comercial":"Gestión comercial","gestion-profesional":"Gestión profesional","a-medida":"Proyecto a medida"});
 const dinero=n=>new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(n/100);
+function calcularDescuentoPropuesta(d){
+ const campos=["implementacion","fabricacion","extras","mensualidad"];
+ if(!d||!campos.every(k=>Number.isSafeInteger(d[k])&&d[k]>=0&&d[k]<=100000000))throw Error("Importes inválidos.");
+ const bruto=Object.fromEntries(campos.map(k=>[k,d[k]])),v=d.descuento??{inicial:0,mensual:0,motivo:""};
+ if(!v||typeof v!=="object"||Array.isArray(v)||!Number.isInteger(v.inicial)||v.inicial<0||v.inicial>10000||!Number.isInteger(v.mensual)||v.mensual<0||v.mensual>=10000||typeof v.motivo!=="string"||v.motivo.length>240)throw Error("Descuento inválido. Mensualidad inferior al 100%.");
+ const suma=bruto.implementacion+bruto.fabricacion+bruto.extras;
+ if((v.inicial&&!suma)||(v.mensual&&!bruto.mensualidad)||((v.inicial||v.mensual)&&!v.motivo.trim()))throw Error("Indica un importe base y el motivo del descuento.");
+ const redondear=(n,p)=>Math.floor((n*p+5000)/10000);
+ const neto={};let acumulado=0,anterior=0;
+ for(const k of campos.slice(0,3)){acumulado+=bruto[k];const rebaja=redondear(acumulado,v.inicial);neto[k]=bruto[k]-(rebaja-anterior);anterior=rebaja;}
+ neto.mensualidad=bruto.mensualidad-redondear(bruto.mensualidad,v.mensual);
+ if(bruto.mensualidad&&!neto.mensualidad)throw Error("La mensualidad neta debe ser mayor que cero.");
+ if(!campos.some(k=>neto[k]>0))throw Error("La propuesta debe conservar un importe positivo.");
+ const detalle=v.inicial||v.mensual?{version:1,bruto,inicial:v.inicial,mensual:v.mensual,motivo:v.motivo.trim()}:null;
+ return {neto,detalle,rebajaInicial:suma-neto.implementacion-neto.fabricacion-neto.extras,rebajaMensual:bruto.mensualidad-neto.mensualidad};
+}
 function modelo(x,d){
  const q=d?.propuesta;
  if(!q||!Object.hasOwn(nombres,q.paquete)||q.propuesta_id!==x.id)throw Error("No hay una propuesta guardada para esta solicitud.");
@@ -13,6 +29,9 @@ function modelo(x,d){
  const iva=n=>Math.floor((n*16+50)/100);
  if(q.total_inicial!==subtotal+iva(subtotal)||q.total_mensual!==q.mensualidad+iva(q.mensualidad))throw Error("Los totales guardados no coinciden. Revisa la propuesta.");
  if(q.paquete==="solo_fisico"&&(q.implementacion||q.mensualidad))throw Error("La propuesta física contiene importes digitales.");
+ const guardado=q.descuento_json?JSON.parse(q.descuento_json):{};
+ let rebajaInicial=0,rebajaMensual=0,bruto=q;
+ if(guardado.bruto){if(guardado.version!==1)throw Error("Versión de descuento inválida.");const c=calcularDescuentoPropuesta({...guardado.bruto,descuento:{inicial:guardado.inicial,mensual:guardado.mensual,motivo:guardado.motivo}});if([...campos.map(x=>x[1]),"mensualidad"].some(k=>q[k]!==c.neto[k]))throw Error("Descuento guardado inconsistente.");bruto=guardado.bruto;rebajaInicial=c.rebajaInicial;rebajaMensual=c.rebajaMensual;}
  const aceptada=!!q.fecha_aceptacion;
  const pagado=aceptada?d.pagado:0;
  if(!Number.isSafeInteger(pagado)||pagado<0||pagado>q.total_inicial)throw Error("Saldo de pagos inválido.");
@@ -24,7 +43,7 @@ function modelo(x,d){
  if(q.mensualidad>0)condiciones.push("Sin plazos forzosos de permanencia. Puedes cancelar futuras mensualidades sin penalización avisando antes de la siguiente renovación. El servicio permanece activo mientras la mensualidad esté vigente; los pagos previamente adquiridos siguen siendo exigibles.","La mensualidad cubre el uso, alojamiento, seguridad y mantenimiento técnico según el alcance contratado. No incluye nuevas funcionalidades ni soporte ilimitado.");
  if(q.paquete!=="solo_fisico")condiciones.push("Garantía de 60 días para errores atribuibles al desarrollo originalmente contratado, según el alcance aprobado.");
  if(!aceptada)condiciones.push("Propuesta para revisión del cliente. No implica contratación ni genera un cargo automático.");
- return {folio:String(x.folio),cliente:String(x.nombre||""),negocio:String(x.proyecto||""),telefono:String(x.telefono||""),paquete:nombres[q.paquete],alcance:String(q.alcance||""),version:q.version,fecha:String(q.fecha_actualizacion||"").slice(0,10),aceptada,fechaAceptacion:aceptada?String(q.fecha_aceptacion):"",conceptos:campos.filter(c=>q[c[1]]>0).map(c=>[c[0],q[c[1]]]),subtotal,iva:iva(subtotal),total:q.total_inicial,mensualidad:q.mensualidad,ivaMensual:iva(q.mensualidad),totalMensual:q.total_mensual,pagado,saldo:q.total_inicial-pagado,condiciones};
+ return {folio:String(x.folio),cliente:String(x.nombre||""),negocio:String(x.proyecto||""),telefono:String(x.telefono||""),paquete:nombres[q.paquete],alcance:String(q.alcance||""),version:q.version,fecha:String(q.fecha_actualizacion||"").slice(0,10),aceptada,fechaAceptacion:aceptada?String(q.fecha_aceptacion):"",conceptos:campos.filter(c=>bruto[c[1]]>0).map(c=>[c[0],bruto[c[1]]]),rebajaInicial,rebajaMensual,mensualidadBruta:bruto.mensualidad,subtotal,iva:iva(subtotal),total:q.total_inicial,mensualidad:q.mensualidad,ivaMensual:iva(q.mensualidad),totalMensual:q.total_mensual,pagado,saldo:q.total_inicial-pagado,condiciones};
 }
 function pintar(doc,m,origen,acciones){
  doc.documentElement.lang="es";
@@ -47,8 +66,8 @@ function pintar(doc,m,origen,acciones){
  function tabla(t,filas){const sec=e("section",undefined,"tabla-documento");sec.append(e("h2",t));const table=e("table"),thead=e("thead"),tr=e("tr");for(const k of ["Concepto","Importe MXN"]){const th=e("th",k);th.scope="col";tr.append(th);}thead.append(tr);table.append(thead);const body=e("tbody");
  for(const [k,n,total] of filas){const row=e("tr",undefined,total?"total-documento":undefined);const th=e("th",k);th.scope="row";row.append(th,e("td",dinero(n)));body.append(row);}
  table.append(body);sec.append(table);return sec;}
- hoja.append(tabla("Inversión inicial",[...m.conceptos,["Subtotal",m.subtotal],["IVA 16%",m.iva],["Total inicial",m.total,true]]));
- if(m.mensualidad>0)hoja.append(tabla("Servicio mensual (independiente de la inversión inicial)",[["Mensualidad antes de IVA",m.mensualidad],["IVA 16%",m.ivaMensual],["Total mensual",m.totalMensual,true]]));
+ hoja.append(tabla("Inversión inicial",[...m.conceptos,...(m.rebajaInicial?[["Descuento especial",-m.rebajaInicial]]:[]),["Subtotal",m.subtotal],["IVA 16%",m.iva],["Total inicial",m.total,true]]));
+ if(m.mensualidad>0)hoja.append(tabla("Servicio mensual (independiente de la inversión inicial)",[...(m.rebajaMensual?[["Mensualidad antes de descuento",m.mensualidadBruta],["Descuento especial",-m.rebajaMensual]]:[]),["Mensualidad antes de IVA",m.mensualidad],["IVA 16%",m.ivaMensual],["Total mensual",m.totalMensual,true]]));
  if(m.aceptada)hoja.append(tabla("Resumen de pagos iniciales registrados",[["Total inicial",m.total],["Pagos recibidos",m.pagado],["Saldo pendiente",m.saldo,true]]));
  const condiciones=e("section",undefined,"condiciones-documento");condiciones.append(e("h2","Condiciones comerciales"));const ul=e("ul");for(const v of m.condiciones)ul.append(e("li",v));condiciones.append(ul);hoja.append(condiciones);
  hoja.append(e("footer","Documento comercial · No es factura fiscal (CFDI).","pie-documento"));

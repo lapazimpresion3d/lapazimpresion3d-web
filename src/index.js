@@ -149,6 +149,22 @@ const SECCIONES_CLIENTE=["datos_negocio","servicios_productos","horarios_contact
 const PAQUETES_ECONOMICOS=new Set(["solo_fisico","presencia-digital","negocio-interactivo","gestion-comercial","gestion-profesional","a-medida"]);
 const CAMPOS_IMPORTE=["implementacion","fabricacion","extras","mensualidad"];
 function importeValido(n){return Number.isSafeInteger(n)&&n>=0&&n<=100000000;}
+function calcularDescuentoPropuesta(d){
+ const campos=["implementacion","fabricacion","extras","mensualidad"];
+ if(!d||!campos.every(k=>Number.isSafeInteger(d[k])&&d[k]>=0&&d[k]<=100000000))throw Error("Importes inválidos.");
+ const bruto=Object.fromEntries(campos.map(k=>[k,d[k]])),v=d.descuento??{inicial:0,mensual:0,motivo:""};
+ if(!v||typeof v!=="object"||Array.isArray(v)||!Number.isInteger(v.inicial)||v.inicial<0||v.inicial>10000||!Number.isInteger(v.mensual)||v.mensual<0||v.mensual>=10000||typeof v.motivo!=="string"||v.motivo.length>240)throw Error("Descuento inválido. Mensualidad inferior al 100%.");
+ const suma=bruto.implementacion+bruto.fabricacion+bruto.extras;
+ if((v.inicial&&!suma)||(v.mensual&&!bruto.mensualidad)||((v.inicial||v.mensual)&&!v.motivo.trim()))throw Error("Indica un importe base y el motivo del descuento.");
+ const redondear=(n,p)=>Math.floor((n*p+5000)/10000);
+ const neto={};let acumulado=0,anterior=0;
+ for(const k of campos.slice(0,3)){acumulado+=bruto[k];const rebaja=redondear(acumulado,v.inicial);neto[k]=bruto[k]-(rebaja-anterior);anterior=rebaja;}
+ neto.mensualidad=bruto.mensualidad-redondear(bruto.mensualidad,v.mensual);
+ if(bruto.mensualidad&&!neto.mensualidad)throw Error("La mensualidad neta debe ser mayor que cero.");
+ if(!campos.some(k=>neto[k]>0))throw Error("La propuesta debe conservar un importe positivo.");
+ const detalle=v.inicial||v.mensual?{version:1,bruto,inicial:v.inicial,mensual:v.mensual,motivo:v.motivo.trim()}:null;
+ return {neto,detalle,rebajaInicial:suma-neto.implementacion-neto.fabricacion-neto.extras,rebajaMensual:bruto.mensualidad-neto.mensualidad};
+}
 function totalesEconomicos(d){
  const inicial=d.implementacion+d.fabricacion+d.extras;
  const iva=n=>Math.floor((n*16+50)/100);
@@ -157,9 +173,10 @@ function totalesEconomicos(d){
 const ORIGEN_SOLICITUD_MANUAL=new Set(["whatsapp","presencial","instagram","facebook","telefono","correo","otro"]);
 const SERVICIO_MANUAL={llaveros:"LLA",soporte_qr:"QR",fdm_medida:"FDM",resina:"RES",web:"WEB",combinado:"COM",otro:"OTR"};
 function solicitudManualValida(d){
- return !!d&&typeof d.id==="string"&&ID_UUID.test(d.id)&&ORIGEN_SOLICITUD_MANUAL.has(d.origen)&&Object.hasOwn(SERVICIO_MANUAL,d.servicio)&&textoWeb(d.nombre,2,100)&&textoWeb(d.proyecto,2,120)&&typeof d.telefono==="string"&&/^\d{10}$/.test(d.telefono)&&textoWeb(d.detalles,3,1200)&&typeof d.privacidad==="boolean"&&typeof d.aceptada==="boolean"&&(!d.aceptada||(propuestaEconomicaValida(d.economica)&&d.economica.version===0&&fechaEconomicaValida(d.fecha_aceptacion)&&d.fecha_aceptacion<=hoyMensualidad()&&(!Object.hasOwn(TIPOS_FISICOS,d.servicio)||d.economica.paquete==="solo_fisico")&&(!["web","combinado"].includes(d.servicio)||d.economica.paquete!=="solo_fisico")));
+ return !!d&&typeof d.id==="string"&&ID_UUID.test(d.id)&&ORIGEN_SOLICITUD_MANUAL.has(d.origen)&&Object.hasOwn(SERVICIO_MANUAL,d.servicio)&&textoWeb(d.nombre,2,100)&&textoWeb(d.proyecto,2,120)&&typeof d.telefono==="string"&&/^\d{10}$/.test(d.telefono)&&textoWeb(d.detalles,3,1200)&&typeof d.privacidad==="boolean"&&typeof d.aceptada==="boolean"&&(!d.aceptada||(propuestaEconomicaValida(d.economica)&&d.economica.descuento==null&&d.economica.version===0&&fechaEconomicaValida(d.fecha_aceptacion)&&d.fecha_aceptacion<=hoyMensualidad()&&(!Object.hasOwn(TIPOS_FISICOS,d.servicio)||d.economica.paquete==="solo_fisico")&&(!["web","combinado"].includes(d.servicio)||d.economica.paquete!=="solo_fisico")));
 }
 function propuestaEconomicaValida(d){
+ try{calcularDescuentoPropuesta(d);}catch{return false;}
  return !!d&&PAQUETES_ECONOMICOS.has(d.paquete)&&typeof d.alcance==="string"&&d.alcance.trim().length>=3&&d.alcance.length<=4000&&CAMPOS_IMPORTE.every(k=>importeValido(d[k]))&&Number.isSafeInteger(d.version)&&d.version>=0&&d.version<=1000000&&(d.paquete!=="solo_fisico"||(!d.implementacion&&!d.mensualidad))&&CAMPOS_IMPORTE.some(k=>d[k]>0);
 }
 function fechaEconomicaValida(v){
@@ -1848,11 +1865,24 @@ async function api(request,env,ctx) {
       if(!accion&&request.method==="PUT"){
         const d=await leerJson(request,26000);
         if(!propuestaEconomicaValida(d))return error("Revisa alcance, paquete e importes; la fabricación de pago único no admite mensualidad ni implementación web.",400);
-        const t=totalesEconomicos(d),ahora=new Date().toISOString();
-        const args=[id,d.paquete,d.alcance.trim(),d.implementacion,d.fabricacion,d.extras,d.mensualidad,t.total_inicial,t.total_mensual,ahora];
-        const res=d.version===0
-          ?await db.prepare("INSERT INTO propuestas_economicas(propuesta_id,paquete,alcance,implementacion,fabricacion,extras,mensualidad,total_inicial,total_mensual,fecha_actualizacion) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10) ON CONFLICT(propuesta_id) DO NOTHING").bind(...args).run()
-          :await db.prepare("UPDATE propuestas_economicas SET paquete=?2,alcance=?3,implementacion=?4,fabricacion=?5,extras=?6,mensualidad=?7,total_inicial=?8,total_mensual=?9,fecha_actualizacion=?10,version=version+1 WHERE propuesta_id=?1 AND version=?11 AND fecha_aceptacion IS NULL").bind(...args,d.version).run();
+        const descuento=calcularDescuentoPropuesta(d),n=descuento.neto,t=totalesEconomicos(n),ahora=new Date().toISOString();
+        const previo=await db.prepare("SELECT * FROM propuestas_economicas WHERE propuesta_id=?1").bind(id).first();
+        if(previo?.descuento_json&&previo.descuento_json!=="{}"&&d.descuento==null)return error("Actualiza el panel para editar una propuesta con descuento.",409);
+        const args=[id,d.paquete,d.alcance.trim(),n.implementacion,n.fabricacion,n.extras,n.mensualidad,t.total_inicial,t.total_mensual,ahora];
+        let res;
+        // Sin descuento se conserva la ruta histórica incluso antes de aplicar la migración.
+        if(descuento.detalle||previo?.descuento_json&&previo.descuento_json!=="{}"){
+          const columnas=await db.prepare("PRAGMA table_info(propuestas_economicas)").all();
+          if(!columnas.results.some(c=>c.name==="descuento_json"))return error("Aplica la migración 0030 de descuentos antes de guardar.",503);
+          const detalle=JSON.stringify(descuento.detalle||{});
+          res=d.version===0
+            ?await db.prepare("INSERT INTO propuestas_economicas(propuesta_id,paquete,alcance,implementacion,fabricacion,extras,mensualidad,total_inicial,total_mensual,fecha_actualizacion,descuento_json) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11) ON CONFLICT(propuesta_id) DO NOTHING").bind(...args,detalle).run()
+            :await db.prepare("UPDATE propuestas_economicas SET paquete=?2,alcance=?3,implementacion=?4,fabricacion=?5,extras=?6,mensualidad=?7,total_inicial=?8,total_mensual=?9,fecha_actualizacion=?10,version=version+1,descuento_json=?12 WHERE propuesta_id=?1 AND version=?11 AND fecha_aceptacion IS NULL").bind(...args,d.version,detalle).run();
+        }else{
+          res=d.version===0
+            ?await db.prepare("INSERT INTO propuestas_economicas(propuesta_id,paquete,alcance,implementacion,fabricacion,extras,mensualidad,total_inicial,total_mensual,fecha_actualizacion) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10) ON CONFLICT(propuesta_id) DO NOTHING").bind(...args).run()
+            :await db.prepare("UPDATE propuestas_economicas SET paquete=?2,alcance=?3,implementacion=?4,fabricacion=?5,extras=?6,mensualidad=?7,total_inicial=?8,total_mensual=?9,fecha_actualizacion=?10,version=version+1 WHERE propuesta_id=?1 AND version=?11 AND fecha_aceptacion IS NULL").bind(...args,d.version).run();
+        }
         return res.meta.changes?json({ok:true}):error("La propuesta cambió o fue aceptada. Vuelve a cargarla.",409);
       }
       if(accion==="aceptar"&&request.method==="POST"){

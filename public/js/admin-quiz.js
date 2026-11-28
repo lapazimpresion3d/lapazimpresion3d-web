@@ -397,6 +397,22 @@ function centavosEconomicos(v){
  const [a,b=""]=v.split(".");return Number(a)*100+Number(b.padEnd(2,"0"));
 }
 function fechaLocalEconomica(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function calcularDescuentoPropuesta(d){
+ const campos=["implementacion","fabricacion","extras","mensualidad"];
+ if(!d||!campos.every(k=>Number.isSafeInteger(d[k])&&d[k]>=0&&d[k]<=100000000))throw Error("Importes inválidos.");
+ const bruto=Object.fromEntries(campos.map(k=>[k,d[k]])),v=d.descuento??{inicial:0,mensual:0,motivo:""};
+ if(!v||typeof v!=="object"||Array.isArray(v)||!Number.isInteger(v.inicial)||v.inicial<0||v.inicial>10000||!Number.isInteger(v.mensual)||v.mensual<0||v.mensual>=10000||typeof v.motivo!=="string"||v.motivo.length>240)throw Error("Descuento inválido. Mensualidad inferior al 100%.");
+ const suma=bruto.implementacion+bruto.fabricacion+bruto.extras;
+ if((v.inicial&&!suma)||(v.mensual&&!bruto.mensualidad)||((v.inicial||v.mensual)&&!v.motivo.trim()))throw Error("Indica un importe base y el motivo del descuento.");
+ const redondear=(n,p)=>Math.floor((n*p+5000)/10000);
+ const neto={};let acumulado=0,anterior=0;
+ for(const k of campos.slice(0,3)){acumulado+=bruto[k];const rebaja=redondear(acumulado,v.inicial);neto[k]=bruto[k]-(rebaja-anterior);anterior=rebaja;}
+ neto.mensualidad=bruto.mensualidad-redondear(bruto.mensualidad,v.mensual);
+ if(bruto.mensualidad&&!neto.mensualidad)throw Error("La mensualidad neta debe ser mayor que cero.");
+ if(!campos.some(k=>neto[k]>0))throw Error("La propuesta debe conservar un importe positivo.");
+ const detalle=v.inicial||v.mensual?{version:1,bruto,inicial:v.inicial,mensual:v.mensual,motivo:v.motivo.trim()}:null;
+ return {neto,detalle,rebajaInicial:suma-neto.implementacion-neto.fabricacion-neto.extras,rebajaMensual:bruto.mensualidad-neto.mensualidad};
+}
 function agregarEconomica(art,x){
  const abrir=elem("button","secundario","Propuesta económica y pagos");abrir.type="button";
  const panel=elem("section","economica-panel");panel.hidden=true;
@@ -410,6 +426,7 @@ function agregarEconomica(art,x){
  function pintar(d){
   panel.replaceChildren(elem("h3",null,"Propuesta económica · "+x.folio));
   const q=d.propuesta,aceptada=!!q?.fecha_aceptacion;
+  const guardado=q?.descuento_json?JSON.parse(q.descuento_json):{},bruto=guardado.bruto||q;
   panel.append(elem("p","metadatos",aceptada?"Aceptada el "+q.fecha_aceptacion+" · importes bloqueados":"Borrador · no enviado al cliente"));
   const form=elem("form","economica-form");
   function campo(etiqueta,tag="input"){const l=elem("label",null,etiqueta),v=elem(tag);l.append(v);form.append(l);return v;}
@@ -420,19 +437,29 @@ function agregarEconomica(art,x){
   const alcance=campo("Alcance y funciones acordadas","textarea");alcance.rows=5;alcance.maxLength=4000;alcance.required=true;
   alcance.value=q?.alcance||"";
   const importes={};for(const [k,t] of [["implementacion","Implementación web"],["fabricacion","Fabricación / productos físicos"],["extras","Extras de pago único"],["mensualidad","Mensualidad"]]){
-    const v=campo(t+" (MXN antes de IVA)");v.type="number";v.min="0";v.max="1000000";v.step="0.01";v.required=true;v.value=((q?.[k]||0)/100).toFixed(2);importes[k]=v;
+    const v=campo(t+" (MXN antes de IVA)");v.type="number";v.min="0";v.max="1000000";v.step="0.01";v.required=true;v.value=((bruto?.[k]||0)/100).toFixed(2);importes[k]=v;
   }
+  const aplicar=campo("Aplicar descuento a este cliente");aplicar.type="checkbox";aplicar.checked=!!(guardado.inicial||guardado.mensual);aplicar.disabled=aceptada;
+  const descInicial=campo("Descuento sobre pago inicial (%)"),descMensual=campo("Descuento sobre mensualidad (%)"),motivo=campo("Motivo del descuento (interno)");
+  for(const [v,max,n] of [[descInicial,100,guardado.inicial],[descMensual,99.99,guardado.mensual]]){v.type="number";v.min="0";v.max=String(max);v.step="0.01";v.value=((n||0)/100).toFixed(2);}
+  motivo.maxLength=240;motivo.value=guardado.motivo||"";
+  const descuentoActual=()=>({inicial:aplicar.checked?centavosEconomicos(descInicial.value):0,mensual:aplicar.checked?centavosEconomicos(descMensual.value):0,motivo:aplicar.checked?motivo.value:""});
+  form.append(elem("p","metadatos","Descuento antes de IVA, exclusivo de esta propuesta. Si se descuenta la mensualidad, la tarifa neta será la acordada para los periodos futuros. No modifica otros clientes."));
   const resumen=elem("p","economica-total");
   function actualizar(){
     const fisico=paquete.value==="solo_fisico";
     for(const k of ["implementacion","mensualidad"]){if(fisico&&!aceptada)importes[k].value="0.00";importes[k].disabled=fisico||aceptada;}
-    try{const n=Object.fromEntries(Object.entries(importes).map(([k,v])=>[k,centavosEconomicos(v.value)]));const subtotal=n.implementacion+n.fabricacion+n.extras,iva=Math.floor((subtotal*16+50)/100),m=n.mensualidad+Math.floor((n.mensualidad*16+50)/100);resumen.textContent="Subtotal inicial: "+dineroEconomico(subtotal)+" · IVA 16%: "+dineroEconomico(iva)+" · Total inicial: "+dineroEconomico(subtotal+iva)+" · Mensualidad con IVA: "+dineroEconomico(m);}catch{resumen.textContent="Completa los importes para calcular el total.";}
+    for(const v of [descInicial,descMensual,motivo]){v.parentElement.hidden=!aplicar.checked;v.disabled=!aplicar.checked||aceptada;}
+    if(fisico&&!aceptada)descMensual.value="0.00";descMensual.disabled=fisico||!aplicar.checked||aceptada;
+    motivo.required=aplicar.checked;
+    try{const bruto=Object.fromEntries(Object.entries(importes).map(([k,v])=>[k,centavosEconomicos(v.value)])),d=calcularDescuentoPropuesta({...bruto,descuento:descuentoActual()}),n=d.neto;const inicial=n.implementacion+n.fabricacion+n.extras,iva=Math.floor((inicial*16+50)/100),m=n.mensualidad+Math.floor((n.mensualidad*16+50)/100);resumen.textContent="Subtotal inicial antes de descuento: "+dineroEconomico(bruto.implementacion+bruto.fabricacion+bruto.extras)+" · Descuento inicial: −"+dineroEconomico(d.rebajaInicial)+" · Subtotal neto: "+dineroEconomico(inicial)+" · IVA 16%: "+dineroEconomico(iva)+" · Total inicial: "+dineroEconomico(inicial+iva)+" · Descuento mensual: −"+dineroEconomico(d.rebajaMensual)+" · Mensualidad con IVA: "+dineroEconomico(m);}catch(e){resumen.textContent=e.message;}
+
   }
   form.append(resumen,elem("p","metadatos","Sin cobro automático. La mensualidad se informa por separado; los pagos registrados aquí corresponden únicamente al total inicial. IVA general del 16%."));
   const msg=elem("p","metadatos","");msg.setAttribute("role","status");
   if(!aceptada){
     const guardar=elem("button",null,"Guardar borrador");guardar.type="submit";form.append(guardar,msg);
-    form.addEventListener("submit",async e=>{e.preventDefault();guardar.disabled=true;try{const payload={paquete:paquete.value,alcance:alcance.value,version:q?.version||0,...Object.fromEntries(Object.entries(importes).map(([k,v])=>[k,centavosEconomicos(v.value)]))};await req(ruta,{method:"PUT",body:JSON.stringify(payload)});await cargar();}catch(e){msg.textContent=e.message;guardar.disabled=false;}});
+    form.addEventListener("submit",async e=>{e.preventDefault();guardar.disabled=true;try{const payload={paquete:paquete.value,alcance:alcance.value,version:q?.version||0,descuento:descuentoActual(),...Object.fromEntries(Object.entries(importes).map(([k,v])=>[k,centavosEconomicos(v.value)]))};calcularDescuentoPropuesta(payload);await req(ruta,{method:"PUT",body:JSON.stringify(payload)});await cargar();}catch(e){msg.textContent=e.message;guardar.disabled=false;}});
     paquete.addEventListener("change",actualizar);form.addEventListener("input",actualizar);
   }else{paquete.disabled=alcance.readOnly=true;for(const v of Object.values(importes))v.readOnly=true;}
   actualizar();panel.append(form);
