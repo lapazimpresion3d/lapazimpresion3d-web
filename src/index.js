@@ -305,7 +305,7 @@ function datosIndicaciones(valor){
 }
 
 // Seguimiento publicado: separado del estado general y de las decisiones de entrega.
-const ETAPAS_SEGUIMIENTO={fisica:6,web:7};
+const ETAPAS_SEGUIMIENTO={fisica:6,web:7,combinada:9};
 function modalidadSeguimiento(p){
  let f={};try{f=JSON.parse(p.ficha_json||"{}");}catch{}
  return ["llaveros","soporte_qr","fdm_medida","resina"].includes(f.servicio)||

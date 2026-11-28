@@ -7,10 +7,10 @@
 <meta name="referrer" content="no-referrer">
 <title>Mi proyecto · Lapazimpresion3d</title>
 <link rel="icon" href="/favicon.ico">
-<link rel="stylesheet" href="/css/cliente-materiales.css?v=8">
-<script src="/js/seguimiento.js?v=1" defer></script>
-<script src="/js/cliente-seguimiento.js?v=2" defer></script>
-<script src="/js/cliente-materiales.js?v=7" defer></script>
+<link rel="stylesheet" href="/css/cliente-materiales.css?v=9">
+<script src="/js/seguimiento.js?v=2" defer></script>
+<script src="/js/cliente-seguimiento.js?v=3" defer></script>
+<script src="/js/cliente-materiales.js?v=8" defer></script>
 </head>
 <body>
 <header><div class="contenedor barra"><strong>Lapazimpresion3d · Área privada</strong><button type="button" id="salir" class="secundario" hidden>Cerrar sesión</button><a href="/">Volver al sitio</a></div></header>
@@ -29,14 +29,16 @@
       <div><dt>Estado del proyecto</dt><dd><span id="estado-proyecto"></span></dd></div>
     </dl>
   </section>
+  <nav class="portal-nav" aria-label="Secciones de Mi proyecto"><a href="#seguimiento-proyecto">Seguimiento</a><a href="#revision-entrega">Revisión y entrega</a><a href="#materiales-cliente">Mis materiales</a></nav>
   <section class="bloque seguimiento-proyecto" id="seguimiento-proyecto" hidden aria-label="Seguimiento del proyecto"></section>
+  <details id="revision-entrega" class="bloque portal-detalle" open><summary>Revisión y entrega</summary><section class="entrega-proyecto" id="entrega-proyecto" hidden></section><p id="sin-entrega" class="mensaje">Aún no hay una revisión disponible.</p></details>
+  <details id="materiales-cliente" class="portal-detalle" open><summary>Mis materiales e indicaciones</summary>
   <p class="ayuda">Completa los apartados que correspondan a tu proyecto. Puedes guardar cada uno y volver después. Para referencias visuales, también puedes adjuntar imágenes.</p>
   <section class="bloque indicaciones-revision" id="indicaciones-revision" hidden aria-labelledby="titulo-indicaciones"><h2 id="titulo-indicaciones">Indicaciones de Lapazimpresion3d</h2><p class="aviso-indicaciones">Consulta los mensajes sobre tus materiales y el avance de tu proyecto.</p><div id="texto-indicaciones"></div></section>
   <section class="bloque avance-materiales" aria-labelledby="titulo-avance"><h2 id="titulo-avance">Avance de tus materiales</h2>
     <div class="avance-grid"><div><strong id="avance-textos">0</strong><span>Apartados con texto guardado</span></div><div><strong id="avance-opcionales">0</strong><span>Aclaraciones opcionales</span></div><div class="avance-verde"><strong id="avance-aprobados">0</strong><span>Apartados aprobados</span></div><div><strong id="avance-imagenes">0</strong><span>Imágenes guardadas</span></div></div>
     <p class="mensaje" id="avance-pendientes" role="status"></p>
     <p class="mensaje">Guardar información no equivale a aprobarla. Lapazimpresion3d revisará tus materiales y te avisará si necesitas corregir algo.</p></section>
-  <section class="bloque entrega-proyecto" id="entrega-proyecto" hidden></section>
   <h2 class="titulo-materiales">Información de tu proyecto</h2><div id="secciones"></div>
   <section class="bloque material-imagenes" aria-labelledby="titulo-imagenes">
     <h2 id="titulo-imagenes">Fotografías, logotipos y referencias</h2>
@@ -48,6 +50,7 @@
     <ul id="lista-archivos" class="lista-archivos"></ul>
   </section>
   <section class="bloque confirmacion-materiales" aria-labelledby="titulo-confirmacion"><h2 id="titulo-confirmacion">Confirmar materiales</h2><p class="mensaje">Guarda todos los cambios pendientes y las imágenes seleccionadas para que podamos revisar tu información. Podrás regresar más adelante.</p><button type="button" id="confirmar-materiales">Enviar y confirmar materiales</button><p id="estado-confirmacion" class="mensaje" role="status"></p></section>
+</details>
 </section>
 </main>
 </body>

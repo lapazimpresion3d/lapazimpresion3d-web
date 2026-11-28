@@ -32,11 +32,25 @@ async function gestionarFotos(caja,s,p){
 function agregar(art,p){
  const detalle=el("details",undefined,"seguimiento-admin"),caja=el("section",undefined,"economica-panel");detalle.append(el("summary","Seguimiento de Mi proyecto"),caja);art.append(detalle);
  const ruta="/api/admin/proyectos/"+encodeURIComponent(p.id)+"/seguimiento";
- let ocupado=false;
+ let ocupado=false,controlEntrega=new AbortController();
  async function cargar(){if(ocupado)return;ocupado=true;caja.replaceChildren(el("p","Cargando…"));try{pintar(await api(ruta));}catch(e){caja.replaceChildren(el("p",e.message));}finally{ocupado=false;}}
  function pintar(s){
+  controlEntrega.abort();controlEntrega=new AbortController();
   caja.replaceChildren(el("p","Publica solo avances confirmados. Esto no aprueba materiales, revisiones ni entregas."));
-  const f=el("form",undefined,"economica-form"),modalidad=campo(f,"Modalidad","select");opcion(modalidad,"fisica","Fabricación física");opcion(modalidad,"web","Servicio digital");modalidad.value=s.modalidad;modalidad.disabled=!!s.version;
+  const evidencia=el("div",undefined,"resumen-entrega-seguimiento");caja.append(evidencia);
+  async function consultarEntrega(){
+   evidencia.replaceChildren(el("p","Consultando revisión y entrega…"));
+   try{const r=await fetch("/api/admin/proyectos/"+encodeURIComponent(p.id)+"/entrega",{credentials:"same-origin",cache:"no-store"}),d=await r.json();if(!r.ok)throw Error(d.error);const q=d.entrega,z=LP_SEGUIMIENTO.resumenEntrega(q);evidencia.dataset.estado=z.estado;evidencia.replaceChildren(el("strong",z.titulo),el("p",z.detalle));
+    if(q?.fecha_decision)evidencia.append(el("p","Decisión: "+q.fecha_decision));
+    if(q?.fecha_publicacion)evidencia.append(el("p","Publicación: "+q.fecha_publicacion));
+    if(q?.fecha_entrega)evidencia.append(el("p","Entrega: "+q.fecha_entrega));
+    if(q?.garantia_hasta)evidencia.append(el("p","Garantía hasta: "+q.garantia_hasta));
+    if(q&&q.modalidad!==s.modalidad)evidencia.append(el("p","La modalidad de revisión difiere del seguimiento. Revisa los registros antes de publicar."));
+   }catch{evidencia.replaceChildren(el("p","No se pudo consultar la revisión y entrega."));}
+   const b=el("button","Consultar revisión y entrega","secundario");b.type="button";b.addEventListener("click",()=>art.dispatchEvent(new Event("lp:abrir-entrega")));evidencia.append(b);
+  }
+  consultarEntrega();art.addEventListener("lp:entrega-actualizada",()=>{if(evidencia.isConnected)consultarEntrega();},{signal:controlEntrega.signal});
+  const f=el("form",undefined,"economica-form"),modalidad=campo(f,"Modalidad","select");opcion(modalidad,"fisica","Fabricación física");opcion(modalidad,"web","Servicio digital");opcion(modalidad,"combinada","Proyecto combinado");modalidad.value=s.modalidad;modalidad.disabled=!!s.version;
   const actual=campo(f,"Etapa actual","select"),lista=el("fieldset");lista.append(el("legend","Etapas completadas (confirmar individualmente)"));f.append(lista);
   const fecha=campo(f,"Fecha estimada de entrega (opcional)","input");fecha.type="date";fecha.value=s.fecha_estimada;
   const mensaje=campo(f,"Mensaje de actualización para el cliente (opcional)","textarea");mensaje.maxLength=2000;mensaje.rows=4;

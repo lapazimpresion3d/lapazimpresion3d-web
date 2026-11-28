@@ -1,0 +1,4 @@
+const test=require("node:test"),assert=require("node:assert/strict");
+const {etapas,resumenEntrega,estadoEtapa}=require("../public/js/seguimiento.js");
+test("Modalidad combinada conserva etapas físicas y web",()=>{assert.equal(etapas.combinada.length,9);assert.ok(etapas.combinada.includes("Fabricación"));assert.ok(etapas.combinada.includes("Publicación"));});
+test("La aprobación proviene de la revisión vigente, no de las etapas",()=>{const q={version:2,revision:"Diseño",decision:"requiere_cambios"};assert.equal(resumenEntrega(q).estado,"cambios");assert.equal(resumenEntrega({...q,decision:"aprobado"}).estado,"aprobado");assert.equal(resumenEntrega({...q,decision:"aprobado",fecha_entrega:"2026-11-28"}).estado,"entregado");assert.equal(resumenEntrega(null).estado,"sin_revision");assert.equal(estadoEtapa({actual:3,completadas:[0]},1),"Pendiente");});

@@ -15,7 +15,7 @@ function agregar(art,p){
   const q=d.entrega,cerrado=["finalizado","cancelado"].includes(p.estado);
   caja.replaceChildren(el("h3","Entrega y publicación · "+p.folio));
   const msg=el("p","","metadatos");msg.setAttribute("role","status");caja.append(msg);
-  async function guardar(b,path,metodo,payload){b.disabled=true;msg.textContent="Guardando…";try{await api(path,metodo,payload);await cargar();}catch(e){msg.textContent=e.message;b.disabled=false;}}
+  async function guardar(b,path,metodo,payload){b.disabled=true;msg.textContent="Guardando…";try{await api(path,metodo,payload);await cargar();art.dispatchEvent(new Event("lp:entrega-actualizada"));}catch(e){msg.textContent=e.message;b.disabled=false;}}
   if(!q?.fecha_entrega&&!cerrado){
    const f=el("form",undefined,"economica-form"),mod=select(f,"Modalidad",{web:"Página web / sistema digital",fisica:"Fabricación física",combinada:"Proyecto combinado"});mod.value=q?.modalidad||"web";
    const rev=campo(f,"Nombre de la revisión (ej. Diseño v1)");rev.required=true;rev.maxLength=120;rev.value=q?.revision||"";
@@ -54,7 +54,7 @@ function agregar(art,p){
    if(!d.cambios.length)caja.append(el("p","No hay modificaciones registradas."));
   }
  }
- abrir.addEventListener("click",()=>{if(!caja.hidden){caja.hidden=true;return;}cargar();});art.append(abrir,caja);
+ abrir.addEventListener("click",()=>{if(!caja.hidden){caja.hidden=true;return;}cargar();});art.addEventListener("lp:abrir-entrega",()=>{if(caja.hidden)cargar();abrir.scrollIntoView({block:"nearest"});});art.append(abrir,caja);
 }
 globalThis.LP_ADMIN_ENTREGA=Object.freeze({agregar});
 })();

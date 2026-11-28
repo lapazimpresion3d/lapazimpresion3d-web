@@ -120,13 +120,15 @@ function pintarArchivos(){
 async function cargarEntrega(){
  const caja=document.querySelector("#entrega-proyecto");
  try{
-  const d=await api("/api/cliente/entrega"),q=d.entrega;if(!q){caja.hidden=true;return;}
+  const d=await api("/api/cliente/entrega"),q=d.entrega;globalThis.LP_CLIENTE_SEGUIMIENTO?.mostrarEntrega(q);document.querySelector("#sin-entrega").hidden=!!q;if(!q){caja.hidden=true;return;}
   const e=(tag,v)=>{const n=document.createElement(tag);n.textContent=v;return n;};
   caja.replaceChildren(e("h2","Revisión y entrega del proyecto"),e("p",q.revision+" · Revisión "+q.version),e("p",q.notas_revision));
   const link=(u,t)=>{const a=e("a",t);a.href=u;a.target="_blank";a.rel="noopener noreferrer";return a;};
   if(q.vista_previa)caja.append(link(q.vista_previa,"Abrir vista previa"));
   caja.append(e("p",({pendiente:"Pendiente de tu aprobación",aprobado:"Revisión aprobada",requiere_cambios:"Solicitaste cambios"})[q.decision]||"En revisión"));
+  if(q.fecha_decision)caja.append(e("p","Fecha de decisión: "+q.fecha_decision));
   if(q.comentario)caja.append(e("p",q.comentario));
+  if(q.fecha_publicacion)caja.append(e("p","Fecha de publicación: "+q.fecha_publicacion));
   if(q.fecha_entrega){caja.append(e("p","Fecha de entrega: "+q.fecha_entrega));if(q.url_final)caja.append(link(q.url_final,"Abrir tu sitio publicado"),e("p","Garantía de desarrollo hasta "+q.garantia_hasta));}
   if(q.decision==="pendiente"&&!q.fecha_entrega&&!["finalizado","cancelado"].includes(estadoProyecto)){
    const f=document.createElement("form"),l=e("label","Comentario (obligatorio para solicitar cambios)"),t=document.createElement("textarea");t.maxLength=1000;l.append(t);
@@ -135,7 +137,7 @@ async function cargarEntrega(){
    aprobar.addEventListener("click",()=>decidir("aprobado"));cambiar.addEventListener("click",()=>decidir("requiere_cambios"));f.addEventListener("submit",e=>e.preventDefault());const controles=document.createElement("div");controles.className="controles";controles.append(aprobar,cambiar);f.append(l,controles,msg);caja.append(f);
   }
   caja.hidden=false;
- }catch(e){caja.hidden=true;/* No bloquea materiales si 0007 no está aplicada. */}
+ }catch(e){caja.hidden=true;const aviso=document.querySelector("#sin-entrega");aviso.hidden=false;aviso.textContent="No se pudo consultar la revisión y entrega.";globalThis.LP_CLIENTE_SEGUIMIENTO?.mostrarEntrega(null,false);/* No bloquea materiales si 0007 no está aplicada. */}
 }
 async function iniciar(){
  try{
