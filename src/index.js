@@ -1180,7 +1180,7 @@ async function api(request,env,ctx) {
       const hoy=hoyMensualidad();
       return json({hoy,limitado:rows.results.length>200,entregas_disponibles:conEntrega,items:rows.results.slice(0,200).map(q=>({...q,...estadoMensualidad(q,q.ultimo_fin?{fin:q.ultimo_fin}:null,hoy)}))});
     }
-    const soporte=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/soporte(?:\/([0-9a-f-]{36})(?:\/(intervenciones))?)?$/i);
+    const soporte=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/soporte(?:\/([0-9a-f-]{36})(?:\/(intervenciones|mensajes))?)?$/i);
     if(soporte){
       const db=env.QUIZ_DB,[,pid,tid,accion]=soporte,hoy=hoyMensualidad(),ahora=new Date().toISOString();
       const e=await db.prepare("SELECT paquete,fecha_aceptacion FROM propuestas_economicas WHERE propuesta_id=?1 AND fecha_aceptacion IS NOT NULL AND mensualidad>0 AND paquete<>'solo_fisico'").bind(pid).first();
@@ -1203,6 +1203,24 @@ async function api(request,env,ctx) {
       if(!tid)return error("Método no permitido",405);
       const t=await db.prepare("SELECT * FROM servicio_soporte WHERE id=?1 AND propuesta_id=?2").bind(tid,pid).first();
       if(!t)return error("Solicitud no encontrada",404);
+      if(accion==="mensajes"){
+        const existe=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='servicio_soporte_mensajes'").first();
+        if(!existe)return error("Conversación pendiente de habilitar (migración 0012)",503);
+        if(request.method==="GET"){
+          const r=await db.prepare("SELECT id,autor,texto,fecha_registro FROM servicio_soporte_mensajes WHERE soporte_id=?1 ORDER BY fecha_registro DESC,id DESC LIMIT 201").bind(tid).all();
+          return json({mensajes:r.results.slice(0,200).reverse(),limitado:r.results.length>200});
+        }
+        if(request.method==="POST"){
+          if(!sameOrigin(request))return error("Origen no autorizado",403);
+          const d=await leerJson(request,20000);
+          if(!d||typeof d.id!=="string"||!ID_UUID.test(d.id)||!textoEntrega(d.texto,1,3000))return error("Mensaje inválido",400);
+          const previo=await db.prepare("SELECT soporte_id,autor,texto FROM servicio_soporte_mensajes WHERE id=?1").bind(d.id).first();
+          if(previo)return previo.soporte_id===tid&&previo.autor==="lapazimpresion3d"&&previo.texto===d.texto.trim()?json({ok:true,repetido:true}):error("Identificador ya utilizado",409);
+          const r=await db.prepare("INSERT INTO servicio_soporte_mensajes(id,soporte_id,autor,texto,fecha_registro) SELECT ?1,id,'lapazimpresion3d',?2,?3 FROM servicio_soporte WHERE id=?4 AND propuesta_id=?5 AND estado<>'cancelado' ON CONFLICT(id) DO NOTHING").bind(d.id,d.texto.trim(),ahora,tid,pid).run();
+          return r.meta.changes?json({ok:true},201):error("Solicitud cancelada o mensaje duplicado. Actualiza.",409);
+        }
+        return error("Método no permitido",405);
+      }
       if(!accion&&request.method==="GET"){
         const r=await db.prepare("SELECT * FROM servicio_intervenciones WHERE soporte_id=?1 ORDER BY fecha_trabajo DESC,fecha_registro DESC LIMIT 201").bind(tid).all();
         return json({solicitud:t,intervenciones:r.results.slice(0,200),limitado:r.results.length>200,hoy});
@@ -1360,7 +1378,7 @@ async function api(request,env,ctx) {
       if((claves.length||tieneFotos)&&!env.COTIZACIONES_R2)return error("Almacenamiento de imágenes no disponible.",503);
       const stmts=[];
       const borrar=(tabla,filtro)=>{if(tablas.has(tabla))stmts.push(db.prepare("DELETE FROM "+tabla+" WHERE "+filtro+" AND "+guardia).bind(id));};
-      if(tablas.has("servicio_soporte"))borrar("servicio_intervenciones","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");
+      if(tablas.has("servicio_soporte")){borrar("servicio_soporte_mensajes","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");borrar("servicio_intervenciones","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");}
       borrar("servicio_soporte","propuesta_id=?1");
       borrar("pagos_mensualidad","propuesta_id=?1");
       borrar("suscripciones_cliente","propuesta_id=?1");
