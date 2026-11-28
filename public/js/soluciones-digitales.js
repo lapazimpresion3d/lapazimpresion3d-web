@@ -27,7 +27,7 @@ function actualizar(){
  $('demo-resumen-foto').src='images/demos/'+f.asset+'-portada.webp';
  $('demo-resumen-logo').src='images/demos/'+f.asset+'-logo.svg'+(n==='torque-automotriz'?'?v=torque1':'');
  const activa=accesoPractica||c.verificada(n,p);
- enlace($('demo-seleccionada'),c.url(n,p),activa,true);
+ enlace($('demo-seleccionada'),c.url(n,p),activa,false);
  enlace($('demo-panel'),c.url(n,p,'panel'),activa,true);
  enlace($('demo-cotizar'),c.cotizacion(p,n),true);
  enlace($('demo-comparar'),c.comparar(n,p),true,true);
