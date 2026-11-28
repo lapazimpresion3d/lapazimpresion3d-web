@@ -50,6 +50,7 @@ function agregar(art,p){
    const b=el("button","Registrar entrega realizada");b.type="submit";f.append(b);f.addEventListener("submit",e=>{e.preventDefault();if(confirm("¿Confirmas que ya realizaste la entrega"+(fisica?"":" y publicación")+"? No despliega ni inicia cobros."))guardar(b,ruta+"/finalizar","POST",{tipo_dominio:dom.value,url_final:fisica?"":url.value,fecha_publicacion:fisica?"":pub.value,fecha_entrega:fecha.value,version:q.version});});caja.append(f);
   }
   if(q.fecha_entrega){
+   globalThis.LP_POSVENTA?.agregar(caja,p,q);
    caja.append(el("p","Entregado: "+q.fecha_entrega));
    if(q.url_final)caja.append(enlace(q.url_final,"Abrir sitio definitivo"),el("p","Publicado: "+q.fecha_publicacion+" · "+q.tipo_dominio+" · Garantía de desarrollo hasta "+q.garantia_hasta));
    caja.append(el("p","Inicia la mensualidad por separado en Mensualidades y renovaciones, con la fecha acordada. Cambia el estado general del proyecto manualmente.","metadatos"),el("h4","Modificaciones posteriores (registro interno)"));

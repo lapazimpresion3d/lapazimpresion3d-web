@@ -1,3 +1,4 @@
+import {situacionGarantia,decisionPosventaValida} from "./posventa.mjs";
 import {calcularRentabilidad} from "./rentabilidad.mjs";
 import {respaldosHabilitados,ejecutarRespaldos} from "./respaldos-programados.mjs";
 import {sitioPermitido,ejecutarMonitoreo} from "./monitoreo-programado.mjs";
@@ -1231,6 +1232,48 @@ async function api(request,env,ctx) {
       const hoy=hoyMensualidad();
       return json({hoy,limitado:rows.results.length>200,entregas_disponibles:conEntrega,items:rows.results.slice(0,200).map(q=>({...q,...estadoMensualidad(q,q.ultimo_fin?{fin:q.ultimo_fin}:null,hoy)}))});
     }
+    const posventa=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/posventa(?:\/([0-9a-f-]{36}))?$/i);
+    if(posventa){
+      const [,pid,cid]=posventa,db=env.QUIZ_DB,hoy=hoyMensualidad(),ahora=new Date().toISOString();
+      if(!ID_UUID.test(pid)||(cid&&!ID_UUID.test(cid)))return error("Identificador inválido",400);
+      const tablas=await db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('proyecto_posventa','proyecto_posventa_historial','proyecto_entregas','proyectos_cliente')").first();
+      if(tablas.n!==4)return error("Posventa pendiente de habilitar (0024 y 0007)",503);
+      const p=await db.prepare("SELECT p.estado,e.fecha_entrega,e.garantia_hasta FROM proyectos_cliente p JOIN proyecto_entregas e ON e.proyecto_id=p.id WHERE p.id=?1 AND e.fecha_entrega IS NOT NULL").bind(pid).first();
+      if(!p)return error("Proyecto entregado no encontrado",404);
+      if(!cid&&request.method==="GET"){
+        const r=await db.prepare("SELECT * FROM proyecto_posventa WHERE proyecto_id=?1 ORDER BY CASE WHEN estado IN ('resuelto','cancelado') THEN 1 ELSE 0 END,fecha_reporte DESC,fecha_registro DESC LIMIT 101").bind(pid).all();
+        const resumen=await db.prepare("SELECT COUNT(*) AS total,COALESCE(SUM(estado NOT IN ('resuelto','cancelado')),0) AS pendientes FROM proyecto_posventa WHERE proyecto_id=?1").bind(pid).first();
+        return json({hoy,entrega:p,resumen,items:r.results.slice(0,100).map(x=>({...x,plazo:situacionGarantia(p.fecha_entrega,x.garantia_hasta_registrada,x.fecha_reporte)})),limitado:r.results.length>100});
+      }
+      if(!cid&&request.method==="POST"){
+        if(p.estado==="cancelado")return error("Proyecto cancelado",409);
+        const d=await leerJson(request,12000);
+        if(!d||typeof d.id!=="string"||!ID_UUID.test(d.id)||!fechaMensualidad(d.fecha_reporte)||d.fecha_reporte<p.fecha_entrega||d.fecha_reporte>hoy||!["whatsapp","correo","telefono","presencial","interno","otro"].includes(d.origen)||!textoEntrega(d.titulo,3,120)||!textoEntrega(d.descripcion,3,2000))return error("Revisa fecha, origen y descripción",400);
+        const r=await db.prepare("INSERT INTO proyecto_posventa(id,proyecto_id,fecha_reporte,origen,titulo,descripcion,garantia_hasta_registrada,fecha_registro,fecha_actualizacion) SELECT ?1,p.id,?2,?3,?4,?5,e.garantia_hasta,?6,?6 FROM proyectos_cliente p JOIN proyecto_entregas e ON e.proyecto_id=p.id WHERE p.id=?7 AND p.estado<>'cancelado' AND e.fecha_entrega IS NOT NULL AND e.fecha_entrega<=?2 ON CONFLICT(id) DO NOTHING").bind(d.id,d.fecha_reporte,d.origen,d.titulo.trim(),d.descripcion.trim(),ahora,pid).run();
+        if(r.meta.changes)return json({ok:true},201);
+        const previo=await db.prepare("SELECT * FROM proyecto_posventa WHERE id=?1 AND proyecto_id=?2").bind(d.id,pid).first();
+        return previo&&previo.fecha_reporte===d.fecha_reporte&&previo.origen===d.origen&&previo.titulo===d.titulo.trim()&&previo.descripcion===d.descripcion.trim()?json({ok:true,repetido:true}):error("Conflicto de registro",409);
+      }
+      if(!cid)return error("Método no permitido",405);
+      const q=await db.prepare("SELECT * FROM proyecto_posventa WHERE id=?1 AND proyecto_id=?2").bind(cid,pid).first();
+      if(!q)return error("Caso no encontrado",404);
+      if(request.method==="GET"){
+        const r=await db.prepare("SELECT * FROM proyecto_posventa_historial WHERE caso_id=?1 ORDER BY version DESC LIMIT 101").bind(cid).all();
+        return json({caso:q,historial:r.results.slice(0,100),limitado:r.results.length>100});
+      }
+      if(request.method==="PATCH"){
+        if(p.estado==="cancelado")return error("Proyecto cancelado",409);
+        const d=await leerJson(request,16000);
+        if(!decisionPosventaValida(d))return error("Revisa cobertura, motivo, autorización y solución",400);
+        const vals=[d.cobertura,d.motivo.trim(),d.cobertura==="adicional"?d.autorizacion.trim():"",d.estado,d.solucion.trim(),d.minutos];
+        const r=await db.batch([
+          db.prepare("INSERT INTO proyecto_posventa_historial(caso_id,version,cobertura,motivo,autorizacion,estado,solucion,minutos,fecha_registro) SELECT id,version,cobertura,motivo,autorizacion,estado,solucion,minutos,fecha_actualizacion FROM proyecto_posventa WHERE id=?1 AND proyecto_id=?2 AND version=?3 AND EXISTS(SELECT 1 FROM proyectos_cliente WHERE id=?2 AND estado<>'cancelado')").bind(cid,pid,d.version),
+          db.prepare("UPDATE proyecto_posventa SET cobertura=?1,motivo=?2,autorizacion=?3,estado=?4,solucion=?5,minutos=?6,fecha_actualizacion=?7,version=version+1 WHERE id=?8 AND proyecto_id=?9 AND version=?10 AND EXISTS(SELECT 1 FROM proyecto_posventa_historial WHERE caso_id=?8 AND version=?10)").bind(...vals,ahora,cid,pid,d.version)
+        ]);
+        return r[0].meta.changes===1&&r[1].meta.changes===1?json({ok:true}):error("El caso cambió. Actualiza.",409);
+      }
+      return error("Método no permitido",405);
+    }
     const rentabilidad=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/rentabilidad(?:\/(costos|configuracion))?$/i);
     if(rentabilidad){
       const [,pid,accion]=rentabilidad,db=env.QUIZ_DB,hoy=hoyMensualidad(),ahora=new Date().toISOString(),mes=url.searchParams.get("mes")||hoy.slice(0,7);
@@ -1722,6 +1765,8 @@ async function api(request,env,ctx) {
       borrar("propuestas_economicas","propuesta_id=?1");
       let indiceFotos=-1;
       if(tieneProyecto){
+        if(tablas.has("proyecto_posventa"))borrar("proyecto_posventa_historial","caso_id IN (SELECT id FROM proyecto_posventa WHERE proyecto_id IN ("+proyecto+"))");
+        borrar("proyecto_posventa","proyecto_id IN ("+proyecto+")");
         if(tieneFotos){indiceFotos=stmts.length;stmts.push(db.prepare("DELETE FROM proyecto_avances_fotos WHERE proyecto_id IN ("+proyecto+") AND "+guardia+" RETURNING proyecto_id,id").bind(id));}
         for(const tabla of ["proyecto_cambios","proyecto_revisiones","proyecto_entregas","proyecto_archivos","proyecto_secciones"])borrar(tabla,"proyecto_id IN ("+proyecto+")");
         borrar("proyectos_cliente","propuesta_id=?1");
