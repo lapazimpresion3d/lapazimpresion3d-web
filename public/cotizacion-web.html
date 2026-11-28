@@ -8,7 +8,7 @@
   <link rel="icon" href="favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="css/cabecera-fotografica.css">
   <link rel="stylesheet" href="css/inicio.css">
-  <link rel="stylesheet" href="css/cotizacion-web.css">
+  <link rel="stylesheet" href="css/cotizacion-web.css?v=2">
   <link rel="stylesheet" href="css/soluciones-digitales.css?v=9">
   <script src="js/orientacion-web.js?v=3" defer></script>
   <script src="js/cotizacion-web.js?v=20261127-12" defer></script>
@@ -37,12 +37,12 @@
       <table class="tabla-precios-cotizacion">
         <thead><tr><th scope="col">Paquete</th><th scope="col">Implementación</th><th scope="col">Mensualidad</th></tr></thead>
         <tbody>
-          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="presencia-digital" required aria-describedby="precio-presencia-digital mensual-presencia-digital"><span>Presencia digital</span></label></th><td id="precio-presencia-digital"><span class="precio-desde">Desde</span> <strong>$750</strong></td><td id="mensual-presencia-digital"><strong>$149</strong><span class="precio-periodo"> / mes</span></td></tr>
-          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="negocio-interactivo" required aria-describedby="precio-negocio-interactivo mensual-negocio-interactivo"><span>Negocio interactivo</span></label></th><td id="precio-negocio-interactivo"><span class="precio-desde">Desde</span> <strong>$1,500</strong></td><td id="mensual-negocio-interactivo"><strong>$249</strong><span class="precio-periodo"> / mes</span></td></tr>
+          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="presencia-digital" required aria-describedby="precio-presencia-digital mensual-presencia-digital"><span>Presencia digital</span></label></th><td id="precio-presencia-digital" data-etiqueta="Implementación"><span class="precio-desde">Desde</span> <strong>$750</strong></td><td id="mensual-presencia-digital" data-etiqueta="Mensualidad"><strong>$149</strong><span class="precio-periodo"> / mes</span></td></tr>
+          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="negocio-interactivo" required aria-describedby="precio-negocio-interactivo mensual-negocio-interactivo"><span>Negocio interactivo</span></label></th><td id="precio-negocio-interactivo" data-etiqueta="Implementación"><span class="precio-desde">Desde</span> <strong>$1,500</strong></td><td id="mensual-negocio-interactivo" data-etiqueta="Mensualidad"><strong>$249</strong><span class="precio-periodo"> / mes</span></td></tr>
           
           
-          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="gestion-comercial" required aria-describedby="precio-gestion-comercial mensual-gestion-comercial"><span>Gestión comercial</span></label></th><td id="precio-gestion-comercial"><span class="precio-desde">Desde</span> <strong>$2,500</strong></td><td id="mensual-gestion-comercial"><strong>$349</strong><span class="precio-periodo"> / mes</span></td></tr>
-          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="gestion-profesional" required aria-describedby="precio-gestion-profesional mensual-gestion-profesional"><span>Gestión profesional</span></label></th><td id="precio-gestion-profesional"><span class="precio-desde">Desde</span> <strong>$3,500</strong></td><td id="mensual-gestion-profesional"><strong>$499</strong><span class="precio-periodo"> / mes</span></td></tr>
+          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="gestion-comercial" required aria-describedby="precio-gestion-comercial mensual-gestion-comercial"><span>Gestión comercial</span></label></th><td id="precio-gestion-comercial" data-etiqueta="Implementación"><span class="precio-desde">Desde</span> <strong>$2,500</strong></td><td id="mensual-gestion-comercial" data-etiqueta="Mensualidad"><strong>$349</strong><span class="precio-periodo"> / mes</span></td></tr>
+          <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="gestion-profesional" required aria-describedby="precio-gestion-profesional mensual-gestion-profesional"><span>Gestión profesional</span></label></th><td id="precio-gestion-profesional" data-etiqueta="Implementación"><span class="precio-desde">Desde</span> <strong>$3,500</strong></td><td id="mensual-gestion-profesional" data-etiqueta="Mensualidad"><strong>$499</strong><span class="precio-periodo"> / mes</span></td></tr>
           <tr data-opcion-paquete><th scope="row"><label class="selector-paquete"><input type="radio" name="paquete" form="form-web" value="a-medida" required checked><span>Proyecto a medida</span></label></th><td colspan="2">Bajo cotización</td></tr>
         </tbody>
       </table>
@@ -234,7 +234,7 @@
       <label class="privacidad-web"><input type="checkbox" name="privacidad" required> Leí y acepto el <a href="aviso-privacidad.html" target="_blank" rel="noopener noreferrer">aviso de privacidad</a> para el tratamiento de mis datos y atención de esta solicitud.</label>
       <button type="submit" class="accion accion-cotizar">Revisar solicitud <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#flecha"/></svg></button>
     </form>
-    <noscript><p>Para preparar tu solicitud, activa JavaScript o <a href="https://wa.me/526121999963">escríbenos por WhatsApp</a>.</p></noscript>
+    <noscript><p>Para preparar tu solicitud, activa JavaScript o <a href="https://wa.me/526121992396">escríbenos por WhatsApp</a>.</p></noscript>
 
     <div id="revision-web" class="caja web" hidden>
       <h2 id="titulo-revision" tabindex="-1">Revisa tu solicitud</h2>
@@ -242,7 +242,7 @@
       <p class="nota">Tu información se guardará en nuestro panel privado para preparar una propuesta. No se generará una cotización automática.</p>
       <p id="error-web" role="alert" hidden></p>
       <div class="acciones">
-        <button type="button" class="accion" id="enviar-solicitud-web">Enviar solicitud <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#flecha"/></svg></button>
+        <button type="button" class="accion accion-cotizar" id="enviar-solicitud-web">Enviar solicitud <svg class="icono" aria-hidden="true" focusable="false"><use href="images/iconos.svg#flecha"/></svg></button>
         <button type="button" class="accion secundaria" id="editar-cotizacion">Volver al formulario</button>
       </div>
     </div>
