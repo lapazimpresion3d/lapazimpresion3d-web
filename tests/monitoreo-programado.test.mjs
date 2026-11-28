@@ -1,0 +1,10 @@
+import assert from "node:assert/strict";
+import {sitioPermitido,clasificarRespuesta,ejecutarMonitoreo} from "../src/monitoreo-programado.mjs";
+const env={MONITOREO_SITIOS_AUTORIZADOS:JSON.stringify(["https://cliente.example.com/","https://127.0.0.1/","https://a.internal/","https://cliente.example.com/?x=1"])};
+assert.equal(sitioPermitido("https://cliente.example.com/",env),true);
+for(const s of ["https://127.0.0.1/","https://a.internal/","https://cliente.example.com/?x=1","https://otro.example.com/","https://user@cliente.example.com/"])assert.equal(sitioPermitido(s,env),false);
+assert.equal(clasificarRespuesta(200,3000,2000),"degradado");
+assert.equal(clasificarRespuesta(302,100,2000),"degradado");
+assert.equal(clasificarRespuesta(503,100,2000),"no_disponible");
+assert.equal((await ejecutarMonitoreo({})).habilitado,false);
+assert.equal((await ejecutarMonitoreo({MONITOREO_AUTOMATICO_HABILITADO:"si",QUIZ_DB:{}})).habilitado,false);

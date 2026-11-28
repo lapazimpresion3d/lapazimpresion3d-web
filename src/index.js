@@ -1,3 +1,4 @@
+import {sitioPermitido,ejecutarMonitoreo} from "./monitoreo-programado.mjs";
 import {guardarEvidencia,tablaEvidencias,uuidEvidencia,proyectarEvidencia,valoresEvidencia} from "./evidencias-soporte.mjs";
 // Lapazimpresion3d: sitio estático + recepción de diagnósticos + panel privado.
 // Requiere D1 (QUIZ_DB) y secreto ADMIN_PASSWORD; no publica listas sin autenticación.
@@ -1271,6 +1272,27 @@ async function api(request,env,ctx) {
       const r=await db.prepare(sql+"SELECT * FROM pendientes WHERE "+filtros[filtro]+" ORDER BY CASE prioridad WHEN 'critica' THEN 0 WHEN 'alta' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,CASE WHEN ultimo_autor='cliente' THEN 0 ELSE 1 END,fecha_actualizacion ASC,ticket_id LIMIT 101").all();
       return json({resumen,items:r.results.slice(0,100),limitado:r.results.length>100,mensajes_disponibles:mensajes,origen_disponible:cliente,consultado:new Date().toISOString()});
     }
+    const programado=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/monitoreo-programado$/i);
+    if(programado){
+      const pid=programado[1],db=env.QUIZ_DB,ahora=new Date().toISOString();
+      if(!ID_UUID.test(pid))return error("Identificador inválido",400);
+      const e=await db.prepare("SELECT propuesta_id FROM propuestas_economicas WHERE propuesta_id=?1 AND fecha_aceptacion IS NOT NULL AND mensualidad>0 AND paquete<>'solo_fisico'").bind(pid).first();
+      if(!e)return error("Servicio no encontrado",404);
+      if(!await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='servicio_monitoreo_programado'").first())return error("Monitoreo programado pendiente (0021)",503);
+      const entrega=await db.prepare("SELECT d.url_final FROM proyecto_entregas d JOIN proyectos_cliente p ON p.id=d.proyecto_id WHERE p.propuesta_id=?1 AND p.estado<>'cancelado' AND d.fecha_entrega IS NOT NULL LIMIT 1").bind(pid).first();
+      const sitio=normalizarSitioMonitoreo(entrega?.url_final),autorizado=!!sitio&&sitioPermitido(sitio,env);
+      const q=await db.prepare("SELECT * FROM servicio_monitoreo_programado WHERE propuesta_id=?1").bind(pid).first();
+      if(request.method==="GET")return json({configuracion:q,sitio,autorizado,ejecutor_habilitado:env.MONITOREO_AUTOMATICO_HABILITADO==="si"&&!!env.MONITOREO_EGRESO});
+      if(request.method==="PUT"){
+        const d=await leerJson(request,2000);
+        if(!d||typeof d.habilitado!=="boolean"||![15,30,60,360,1440].includes(d.intervalo_min)||!Number.isSafeInteger(d.umbral_ms)||d.umbral_ms<100||d.umbral_ms>10000||!Number.isSafeInteger(d.version)||d.version<0)return error("Configuración inválida",400);
+        if(d.habilitado&&!autorizado)return error("El sitio debe estar autorizado en la configuración del servidor",409);
+        const destino=sitio||q?.sitio;if(!destino)return error("No hay sitio entregado",409);
+        const r=d.version===0?await db.prepare("INSERT INTO servicio_monitoreo_programado(propuesta_id,sitio,intervalo_min,umbral_ms,habilitado,proxima,fecha_actualizacion) VALUES(?1,?2,?3,?4,?5,?6,?6) ON CONFLICT(propuesta_id) DO NOTHING").bind(pid,destino,d.intervalo_min,d.umbral_ms,Number(d.habilitado),ahora).run():await db.prepare("UPDATE servicio_monitoreo_programado SET sitio=?2,intervalo_min=?3,umbral_ms=?4,habilitado=?5,proxima=?6,fecha_actualizacion=?6,version=version+1 WHERE propuesta_id=?1 AND version=?7").bind(pid,destino,d.intervalo_min,d.umbral_ms,Number(d.habilitado),ahora,d.version).run();
+        return r.meta.changes?json({ok:true}):error("La configuración cambió. Actualiza.",409);
+      }
+      return error("Método no permitido",405);
+    }
     const monitoreo=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/monitoreo$/i);
     if(monitoreo){
       const pid=monitoreo[1],db=env.QUIZ_DB,ahora=new Date().toISOString();
@@ -1644,6 +1666,7 @@ async function api(request,env,ctx) {
       borrar("servicio_politicas_respaldos","propuesta_id=?1");
       borrar("servicio_actualizaciones","propuesta_id=?1");
       borrar("servicio_monitoreo","propuesta_id=?1");
+      borrar("servicio_monitoreo_programado","propuesta_id=?1");
       borrar("servicio_vinculos","propuesta_id=?1");
       borrar("pagos_mensualidad","propuesta_id=?1");
       borrar("suscripciones_cliente","propuesta_id=?1");
@@ -1689,7 +1712,7 @@ async function api(request,env,ctx) {
   }
   return error("Ruta no encontrada",404);
 }
-export default { async fetch(request,env,ctx) {
+export default { async scheduled(controller,env,ctx) { try{await ejecutarMonitoreo(env);}catch(e){console.error("Monitoreo programado no disponible",e?.name||"Error");} }, async fetch(request,env,ctx) {
   const path=new URL(request.url).pathname;
   try {
     if(path.startsWith("/api/")) {

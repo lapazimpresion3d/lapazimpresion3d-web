@@ -14,7 +14,8 @@ function agregar(art,x){
  const met=el("div",undefined,"soporte-resumen"),s=d.resumen;
  for(const [k,v] of [["Última comprobación",fecha(d.ultimo?.fecha_comprobacion)],["Último resultado",d.ultimo?estados[d.ultimo.estado]:"Sin registro"],["HTTP / tiempo",d.ultimo?(d.ultimo.codigo_http??"—")+" / "+(d.ultimo.tiempo_ms===null?"—":d.ultimo.tiempo_ms+" ms"):"—"],["Muestras últimos 30 días",s?String(s.muestras):"—"],["Muestras disponibles",s?s.disponibles+" de "+s.muestras:"—"],["Promedio de tiempos registrados",s?.promedio_ms==null?"—":s.promedio_ms+" ms"],["Última incidencia observada",fecha(d.ultimo_fallo)],["Primera recuperación posterior observada",fecha(d.recuperacion)]]){const z=el("div");z.append(el("strong",v),el("span",k,"metadatos"));met.append(z);}
  const refresh=boton("Actualizar registros");refresh.addEventListener("click",()=>{if(confirm("¿Actualizar? Se perderán borradores no guardados."))cargar();});
- c.replaceChildren(el("p","Comprobaciones registradas manualmente. No son mediciones en vivo ni porcentaje de uptime. No se ejecutan solicitudes automáticas desde el servidor.","metadatos"),met,refresh);
+ c.replaceChildren(el("p","Historial de comprobaciones manuales y programadas cuando se habiliten. No mide disponibilidad continua ni verifica funciones internas.","metadatos"),met,refresh);
+ configuracion(c,x,vigente);
  if(d.sitio){
   const link=el("a","Abrir sitio entregado","boton-enlace");link.href=d.sitio;link.target="_blank";link.rel="noopener noreferrer";c.append(el("p",d.sitio),link);
   const nuevo=el("details",undefined,"proyecto-bloque"),f=el("form",undefined,"economica-form");nuevo.append(el("summary","+ Registrar comprobación realizada"),f);c.append(nuevo);
@@ -25,6 +26,14 @@ function agregar(art,x){
  c.append(el("h4","Historial de comprobaciones"));if(!d.items.length)c.append(el("p","Sin comprobaciones registradas."));for(const q of d.items){const a=el("article",undefined,"soporte-intervencion");a.append(el("strong",estados[q.estado]+" · "+fecha(q.fecha_comprobacion)),el("p",q.sitio,"metadatos"),el("p","HTTP "+(q.codigo_http??"Sin medición")+" · "+(q.tiempo_ms===null?"Tiempo sin medición":q.tiempo_ms+" ms")),el("p",q.observaciones));c.append(a);}if(d.limitado)c.append(el("p","Últimas 100 comprobaciones.","metadatos"));
  }
  p.addEventListener("toggle",()=>{if(p.open&&!cargado)cargar();});
+}
+function configuracion(c,x,vigente){
+ const ruta="/api/admin/servicios/"+encodeURIComponent(x.propuesta_id)+"/monitoreo-programado",p=el("details",undefined,"proyecto-bloque"),body=el("div",undefined,"economica-panel");p.append(el("summary","Comprobaciones programadas"),body);c.append(p);let listo=false,ocupado=false;
+ async function cargar(){if(ocupado)return;ocupado=true;try{const d=await api(ruta);if(!vigente()||!p.isConnected)return;listo=true;const q=d.configuracion;body.replaceChildren(el("p","Ejecutor: "+(d.ejecutor_habilitado?"configurado (requiere cron)":"deshabilitado o sin conexión de egreso")+" · Sitio "+(d.autorizado?"autorizado":"no autorizado"),"metadatos"),el("p","Próxima comprobación prevista: "+fecha(q?.proxima),"metadatos"));
+ const f=el("form",undefined,"economica-form"),i=campo(f,"Intervalo","select"),u=campo(f,"Umbral de lentitud (ms)"),a=campo(f,"Habilitar comprobaciones para este sitio"),b=el("button","Guardar configuración"),msg=el("p",undefined,"metadatos");for(const [v,t] of [[15,"15 minutos"],[30,"30 minutos"],[60,"1 hora"],[360,"6 horas"],[1440,"24 horas"]]){const o=el("option",t);o.value=v;i.append(o);}i.value=String(q?.intervalo_min??60);u.type="number";u.min=100;u.max=10000;u.step=1;u.value=q?.umbral_ms??2000;u.required=true;a.type="checkbox";a.checked=!!q?.habilitado&&d.autorizado;b.type="submit";f.append(b,msg);body.append(f);
+ f.addEventListener("submit",async e=>{e.preventDefault();if(!confirm("¿Guardar configuración de monitoreo? Requiere autorización y ejecutor habilitado."))return;b.disabled=true;try{const r=await fetch(ruta,{method:"PUT",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({intervalo_min:Number(i.value),umbral_ms:Number(u.value),habilitado:a.checked,version:q?.version||0})});const z=await r.json();if(!r.ok)throw Error(z.error||"Error "+r.status);await cargar();}catch(e){msg.textContent=e.message;b.disabled=false;}});
+ }catch(e){if(vigente()&&p.isConnected){const b=boton("Reintentar");b.addEventListener("click",cargar);body.replaceChildren(el("p",e.message),b);}}finally{ocupado=false;}}
+ p.addEventListener("toggle",()=>{if(p.open&&!listo)cargar();});
 }
 globalThis.LP_MONITOREO={agregar};
 })();
