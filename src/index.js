@@ -314,6 +314,14 @@ const ETAPAS_SEGUIMIENTO={fisica:6,web:7,combinada:9};
 const ORIGEN_MATERIALES=new Set(["portal","whatsapp","correo","personal","cotizacion","mixto","ninguno"]);
 function formatoSeguimiento(d){return d.formato||"detallado";}
 function recepcionValida(r){return !!r&&ORIGEN_MATERIALES.has(r.origen)&&typeof r.observaciones==="string"&&r.observaciones.trim().length>0&&r.observaciones.length<=1000;}
+function corregirMensajeAvance(s,d,ahora){
+ const i=s.version-d.avance,h=s.historial[i];
+ if(!h||h.fecha!==d.fecha_original||(h.revision_mensaje||0)!==d.revision_mensaje)return null;
+ const mensaje=d.mensaje.trim();
+ if(mensaje===h.mensaje)return s;
+ const historial=s.historial.slice();historial[i]={...h,mensaje,fecha_edicion_mensaje:ahora,revision_mensaje:(h.revision_mensaje||0)+1};
+ return {...s,historial};
+}
 function corregirRecepcion(s,r,ahora){
  const recepcion={...s.recepcion,origen:r.origen,observaciones:r.observaciones.trim(),fecha_edicion:ahora,revision_edicion:(s.recepcion.revision_edicion||0)+1};
  return {...s,recepcion,historial:s.historial.map(h=>h.recepcion?{...h,recepcion}:h)};
@@ -853,6 +861,23 @@ async function api(request,env,ctx) {
         return json({ok:true});
       }
       return error("Método no permitido",405);
+    }
+    const editarAvanceAdmin=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/seguimiento\/avances\/([1-9][0-9]{0,5})$/i);
+    if(editarAvanceAdmin&&request.method==="PATCH"){
+      const db=env.QUIZ_DB,id=editarAvanceAdmin[1],avance=Number(editarAvanceAdmin[2]);
+      const p=await db.prepare("SELECT p.id,q.ficha_json FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id WHERE p.id=?1").bind(id).first();
+      if(!p)return error("Proyecto no encontrado",404);
+      const s=await leerSeguimiento(db,p);
+      if(!s)return error("Seguimiento pendiente de habilitar (0008)",503);
+      if(s.estado==="cancelado")return error("Proyecto cancelado",409);
+      const d=await leerJson(request,10000);
+      if(!d||typeof d.mensaje!=="string"||d.mensaje.length>2000||typeof d.fecha_original!=="string"||d.fecha_original.length>40||!Number.isSafeInteger(d.revision_mensaje)||d.revision_mensaje<0||!Number.isSafeInteger(d.version))return error("Datos de corrección inválidos",400);
+      if(d.version!==s.data.version)return error("El seguimiento cambió. Actualiza antes de editar.",409);
+      const nuevo=corregirMensajeAvance(s.data,{...d,avance},new Date().toISOString());
+      if(!nuevo)return error("El avance cambió o no existe. Actualiza el seguimiento.",409);
+      if(nuevo===s.data)return json({seguimiento:nuevo,sin_cambios:true});
+      const r=await db.prepare("UPDATE proyectos_cliente SET seguimiento_json=?1 WHERE id=?2 AND seguimiento_json=?3 AND estado<>'cancelado'").bind(JSON.stringify(nuevo),id,s.raw).run();
+      return r.meta.changes?json({seguimiento:nuevo}):error("El proyecto cambió. Actualiza antes de editar.",409);
     }
     const seguimientoAdmin=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/seguimiento$/i);
     if(seguimientoAdmin){

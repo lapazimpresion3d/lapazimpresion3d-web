@@ -123,7 +123,30 @@ function agregar(art,p){
   const fotos=el("section",undefined,"avance-fotos-admin");fotografias.body.append(fotos);
   let fotosCargadas=false;function abrirFotos(){if(!fotosCargadas&&fotografias.d.open){fotosCargadas=true;gestionarFotos(fotos,s,p);}}fotografias.d.addEventListener("toggle",abrirFotos);abrirFotos();
   if(!s.historial.length)historial.body.append(el("p","Sin avances publicados."));
-  for(const h of s.historial){const item=el("article",undefined,"seguimiento-historial-item");item.append(el("time",new Date(h.fecha).toLocaleString("es-MX",{timeZone:"America/Mazatlan"})),el("strong",h.actual===null?"Sin etapa":nombres[h.actual]),el("p",h.mensaje||"Actualización de etapas/fecha"));if(h.recepcion)item.append(el("p","Materiales: "+LP_SEGUIMIENTO.origenes[h.recepcion.origen]+" · "+h.recepcion.observaciones));historial.body.append(item);}
+  // Editar en el propio registro conserva los borradores de los otros formularios.
+  for(const [i,h] of s.historial.entries()){
+   const item=el("article",undefined,"seguimiento-historial-item"),numero=s.version-i;
+   item.append(el("time","Avance "+numero+" · "+new Date(h.fecha).toLocaleString("es-MX",{timeZone:"America/Mazatlan"})),el("strong",h.actual===null?"Sin etapa":nombres[h.actual]));
+   const texto=el("p",h.mensaje||"Actualización de etapas/fecha"),edicion=el("p",undefined,"metadatos");
+   function actualizarTexto(){texto.textContent=h.mensaje||"Actualización de etapas/fecha";edicion.textContent=h.fecha_edicion_mensaje?"Mensaje corregido: "+new Date(h.fecha_edicion_mensaje).toLocaleString("es-MX",{timeZone:"America/Mazatlan"}):"";edicion.hidden=!h.fecha_edicion_mensaje;}
+   actualizarTexto();item.append(texto,edicion);
+   if(h.recepcion)item.append(el("p","Materiales: "+LP_SEGUIMIENTO.origenes[h.recepcion.origen]+" · "+h.recepcion.observaciones));
+   if(p.estado!=="cancelado"){
+    const editar=el("button","Editar mensaje","secundario");editar.type="button";
+    const form=el("form",undefined,"economica-form avance-edicion");form.hidden=true;
+    const nota=campo(form,"Mensaje visible al cliente","textarea");nota.maxLength=2000;nota.rows=4;
+    const guardar=el("button","Guardar corrección"),cancelar=el("button","Cancelar","secundario"),aviso=el("p",undefined,"metadatos");guardar.type="submit";cancelar.type="button";aviso.setAttribute("role","status");
+    form.append(el("p","Solo se corrige el mensaje. Se mantienen la fecha, las etapas y las fotografías.","metadatos"),guardar,cancelar,aviso);
+    editar.addEventListener("click",()=>{nota.value=h.mensaje||"";aviso.textContent="";form.hidden=false;editar.hidden=true;nota.focus();});
+    cancelar.addEventListener("click",()=>{form.hidden=true;editar.hidden=false;editar.focus();});
+    form.addEventListener("submit",async ev=>{ev.preventDefault();if(ocupado)return;ocupado=true;guardar.disabled=cancelar.disabled=true;
+     try{const r=await fetch(ruta+"/avances/"+numero,{method:"PATCH",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({mensaje:nota.value,version:s.version,fecha_original:h.fecha,revision_mensaje:h.revision_mensaje||0})}),d=await r.json();if(!r.ok)throw Error(d.error||"No se pudo guardar");
+      Object.assign(h,d.seguimiento.historial[i]);actualizarTexto();form.hidden=true;editar.hidden=false;editar.focus();const ok=el("p",d.sin_cambios?"Sin cambios.":"Corrección guardada.","metadatos");ok.setAttribute("role","status");item.querySelector(".avance-edicion-ok")?.remove();ok.classList.add("avance-edicion-ok");item.append(ok);
+     }catch(e){aviso.textContent=e.message;}finally{ocupado=false;guardar.disabled=cancelar.disabled=false;}
+    });item.append(editar,form);
+   }
+   historial.body.append(item);
+  }
  }
  detalle.addEventListener("toggle",()=>{if(detalle.open&&!cargado)cargar();});
 }

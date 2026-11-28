@@ -1,0 +1,2 @@
+# Edición de mensajes publicados
+En Historial publicado, Editar mensaje permite corregir o vaciar el texto. Conserva fecha original, versión del avance, etapas, fecha estimada y asociación de fotos. Registra fecha de edición y contador de revisión, protege contra escrituras concurrentes. El cliente ve el texto corregido y la fecha de edición; no se conserva un historial de textos anteriores. No modifica recopilación de materiales, no crea avances ni requiere migración. Proyectos cancelados no admiten edición. Pruebas funcionales en producción pendientes.
