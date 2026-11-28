@@ -175,6 +175,9 @@ function finMensualidad(inicio,ancla){
 const SOPORTE_TIPOS=["incidencia","mantenimiento","cambio_menor","adicional"],SOPORTE_PRIORIDADES=["baja","normal","alta","critica"],SOPORTE_ESTADOS=["abierto","en_proceso","espera_cliente","resuelto","cancelado"],SOPORTE_ORIGENES=["whatsapp","correo","telefono","presencial","interno","otro"],SOPORTE_CLASES=["soporte","mantenimiento","bolsa","adicional","sin_cargo"];
 function soporteNuevoValido(d){return !!d&&ID_UUID.test(d.id||"")&&textoEntrega(d.titulo,3,120)&&textoEntrega(d.descripcion,3,2000)&&SOPORTE_TIPOS.includes(d.tipo)&&SOPORTE_PRIORIDADES.includes(d.prioridad)&&SOPORTE_ORIGENES.includes(d.origen);}
 function intervencionValida(d,hoy){return !!d&&ID_UUID.test(d.id||"")&&textoEntrega(d.descripcion,3,2000)&&Number.isInteger(d.minutos)&&d.minutos>=0&&d.minutos<=1440&&fechaMensualidad(d.fecha_trabajo)&&d.fecha_trabajo<=hoy&&SOPORTE_CLASES.includes(d.clasificacion)&&textoEntrega(d.autorizacion,d.clasificacion==="adicional"?3:0,500);}
+function vinculoNegocioValido(d){
+ return !!d&&typeof d.id==="string"&&ID_UUID.test(d.id)&&typeof d.plataforma==="string"&&/^[a-z0-9][a-z0-9_-]{0,79}$/.test(d.plataforma)&&typeof d.negocio_externo==="string"&&/^[a-z0-9][a-z0-9._:-]{0,127}$/.test(d.negocio_externo)&&d.confirmar===true;
+}
 function estadoMensualidad(q,ultimo,hoy){
  if(!q.inicio)return {situacion:"sin_iniciar",proxima:null,dia_ancla:null};
  const proxima=ultimo?.fin||q.inicio,ancla=ultimo?.dia_ancla||Number(q.inicio.slice(-2));
@@ -1180,6 +1183,33 @@ async function api(request,env,ctx) {
       const hoy=hoyMensualidad();
       return json({hoy,limitado:rows.results.length>200,entregas_disponibles:conEntrega,items:rows.results.slice(0,200).map(q=>({...q,...estadoMensualidad(q,q.ultimo_fin?{fin:q.ultimo_fin}:null,hoy)}))});
     }
+    const vinculo=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/vinculos(?:\/([0-9a-f-]{36}))?$/i);
+    if(vinculo){
+      const db=env.QUIZ_DB,[,pid,vid]=vinculo,ahora=new Date().toISOString();
+      if(!ID_UUID.test(pid)||(vid&&!ID_UUID.test(vid)))return error("Identificador inválido",400);
+      const e=await db.prepare("SELECT propuesta_id FROM propuestas_economicas WHERE propuesta_id=?1 AND fecha_aceptacion IS NOT NULL AND mensualidad>0 AND paquete<>'solo_fisico'").bind(pid).first();
+      if(!e)return error("Servicio contratado no encontrado",404);
+      if(!await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='servicio_vinculos'").first())return error("Vinculación pendiente de habilitar (migración 0013)",503);
+      if(!vid&&request.method==="GET"){
+        const r=await db.prepare("SELECT id,plataforma,negocio_externo,estado,fecha_registro,fecha_revocacion,motivo_revocacion FROM servicio_vinculos WHERE propuesta_id=?1 ORDER BY CASE estado WHEN 'registrado' THEN 0 ELSE 1 END,fecha_registro DESC LIMIT 101").bind(pid).all();
+        return json({items:r.results.slice(0,100),limitado:r.results.length>100,acceso_externo:false});
+      }
+      if(!vid&&request.method==="POST"){
+        const d=await leerJson(request,2000);
+        if(!vinculoNegocioValido(d))return error("Identificador de plataforma o negocio inválido",400);
+        const previo=await db.prepare("SELECT propuesta_id,plataforma,negocio_externo,estado FROM servicio_vinculos WHERE id=?1").bind(d.id).first();
+        if(previo)return previo.propuesta_id===pid&&previo.plataforma===d.plataforma&&previo.negocio_externo===d.negocio_externo&&previo.estado==="registrado"?json({ok:true,repetido:true}):error("Identificador ya utilizado",409);
+        const r=await db.prepare("INSERT INTO servicio_vinculos(id,propuesta_id,plataforma,negocio_externo,fecha_registro) VALUES(?1,?2,?3,?4,?5) ON CONFLICT DO NOTHING").bind(d.id,pid,d.plataforma,d.negocio_externo,ahora).run();
+        return r.meta.changes?json({ok:true},201):error("Ya existe una vinculación registrada para este negocio o servicio. Revísala antes de continuar.",409);
+      }
+      if(vid&&request.method==="PATCH"){
+        const d=await leerJson(request,3000);
+        if(!d||d.confirmar!=="REVOCAR"||!textoEntrega(d.motivo,3,500))return error("Confirma la revocación e indica el motivo",400);
+        const r=await db.prepare("UPDATE servicio_vinculos SET estado='revocado',fecha_revocacion=?1,motivo_revocacion=?2 WHERE id=?3 AND propuesta_id=?4 AND estado='registrado'").bind(ahora,d.motivo.trim(),vid,pid).run();
+        return r.meta.changes?json({ok:true}):error("Vinculación inexistente o ya revocada",409);
+      }
+      return error("Método no permitido",405);
+    }
     const soporte=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/soporte(?:\/([0-9a-f-]{36})(?:\/(intervenciones|mensajes))?)?$/i);
     if(soporte){
       const db=env.QUIZ_DB,[,pid,tid,accion]=soporte,hoy=hoyMensualidad(),ahora=new Date().toISOString();
@@ -1380,6 +1410,7 @@ async function api(request,env,ctx) {
       const borrar=(tabla,filtro)=>{if(tablas.has(tabla))stmts.push(db.prepare("DELETE FROM "+tabla+" WHERE "+filtro+" AND "+guardia).bind(id));};
       if(tablas.has("servicio_soporte")){borrar("servicio_soporte_mensajes","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");borrar("servicio_intervenciones","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");}
       borrar("servicio_soporte","propuesta_id=?1");
+      borrar("servicio_vinculos","propuesta_id=?1");
       borrar("pagos_mensualidad","propuesta_id=?1");
       borrar("suscripciones_cliente","propuesta_id=?1");
       borrar("pagos_propuesta","propuesta_id=?1");
