@@ -16,20 +16,27 @@ function agregar(art,p){
   const actualizar=btn("Actualizar revisión y entrega");actualizar.addEventListener("click",()=>{if(confirm("¿Actualizar? Se descartarán los cambios no guardados."))cargar();});caja.replaceChildren(el("h3","Entrega y publicación · "+p.folio),actualizar);
   const msg=el("p","","metadatos");msg.setAttribute("role","status");caja.append(msg);
   async function guardar(b,path,metodo,payload){b.disabled=true;msg.textContent="Guardando…";try{await api(path,metodo,payload);await cargar();art.dispatchEvent(new Event("lp:entrega-actualizada"));art.dispatchEvent(new Event("lp:tablero-actualizar",{bubbles:true}));}catch(e){msg.textContent=e.message;b.disabled=false;}}
-  if(!q?.fecha_entrega&&!cerrado){
+  if(!d.historial_disponible)caja.append(el("p","Historial de versiones pendiente de habilitar (migración 0010). No se permite reemplazar una revisión existente hasta habilitarlo.","metadatos"));
+  if(!q?.fecha_entrega&&!cerrado&&(!q||d.historial_disponible)){
    const f=el("form",undefined,"economica-form"),mod=select(f,"Modalidad",{web:"Página web / sistema digital",fisica:"Fabricación física",combinada:"Proyecto combinado"});mod.value=q?.modalidad||"web";
    const rev=campo(f,"Nombre de la revisión (ej. Diseño v1)");rev.required=true;rev.maxLength=120;rev.value=q?.revision||"";
    const url=campo(f,"URL HTTPS de vista previa (sin parámetros ni claves)");url.type="url";url.maxLength=500;url.value=q?.vista_previa||"";
    const notas=campo(f,"Descripción de la revisión, visible al cliente","textarea");notas.rows=4;notas.maxLength=2000;notas.required=true;notas.value=q?.notas_revision||"";
    const ajustar=()=>{url.disabled=mod.value==="fisica";url.required=!url.disabled;if(url.disabled)url.value="";};mod.addEventListener("change",ajustar);ajustar();
    const b=el("button",q?"Guardar nueva revisión":"Guardar revisión");b.type="submit";f.append(b);
-   f.addEventListener("submit",e=>{e.preventDefault();if(q&&!confirm("Una nueva revisión invalida la decisión anterior. ¿Continuar?"))return;guardar(b,ruta,"PUT",{modalidad:mod.value,revision:rev.value,vista_previa:url.value,notas_revision:notas.value,version:q?.version||0});});
+   f.addEventListener("submit",e=>{e.preventDefault();if(q&&!confirm("La revisión anterior y su decisión quedarán archivadas. La nueva versión requerirá aprobación. ¿Continuar?"))return;guardar(b,ruta,"PUT",{modalidad:mod.value,revision:rev.value,vista_previa:url.value,notas_revision:notas.value,version:q?.version||0});});
    caja.append(f,el("p","La vista previa debe estar alojada previamente. No guardes enlaces con contraseñas o tokens. Para fabricación, describe el diseño presentado al cliente.","metadatos"));
   }
   if(!q)return;
+  const actual=el("div",undefined,"revision-vigente");actual.append(el("strong","Versión vigente · "+(q.decision==="aprobado"?"Aprobada":estados[q.decision])));caja.append(actual);
   caja.append(el("p","Revisión "+q.version+" · "+q.revision+" · "+estados[q.decision]),el("p",q.notas_revision,"metadatos"));
   if(q.vista_previa)caja.append(enlace(q.vista_previa,"Abrir vista previa"));
   if(q.fecha_decision)caja.append(el("p","Decisión del "+q.fecha_decision+" · "+(q.origen_decision==="cliente"?"Portal del cliente":"Confirmación externa registrada por administrador")+(q.comentario?" · "+q.comentario:""),"metadatos"));
+  if(d.historial_disponible){
+   const hist=el("details",undefined,"seguimiento-bloque"),body=el("div",undefined,"seguimiento-bloque-cuerpo");hist.append(el("summary","Versiones anteriores · "+d.revisiones.length),body);caja.append(hist);
+   if(!d.revisiones.length)body.append(el("p","Todavía no hay versiones anteriores."));
+   for(const v of d.revisiones){const item=el("article",undefined,"revision-archivada");item.append(el("strong","Versión "+v.version+" · "+v.revision),el("p",estados[v.decision]||v.decision,"metadatos"),el("p",v.notas_revision));if(v.comentario)item.append(el("p","Comentario del cliente: "+v.comentario));if(v.fecha_decision)item.append(el("p","Decisión: "+v.fecha_decision+" · "+(v.origen_decision==="cliente"?"Portal":"Registro administrativo"),"metadatos"));if(v.vista_previa)item.append(enlace(v.vista_previa,"Abrir enlace histórico (puede haber cambiado)"));item.append(el("p","Archivada: "+new Date(v.fecha_archivo).toLocaleString("es-MX",{timeZone:"America/Mazatlan"}),"metadatos"));body.append(item);}
+  }
   if(!cerrado&&q.decision==="pendiente"){
    const f=el("form",undefined,"economica-form"),dec=select(f,"Decisión comunicada por el cliente",{aprobado:"Aprobó",requiere_cambios:"Solicitó cambios"}),coment=campo(f,"Comentario o referencia de confirmación","textarea");coment.maxLength=1000;coment.rows=3;
    const b=el("button","Registrar decisión externa");b.type="submit";f.append(b);

@@ -130,6 +130,11 @@ async function cargarEntrega(){
   if(q.comentario)caja.append(e("p",q.comentario));
   if(q.fecha_publicacion)caja.append(e("p","Fecha de publicación: "+q.fecha_publicacion));
   if(q.fecha_entrega){caja.append(e("p","Fecha de entrega: "+q.fecha_entrega));if(q.url_final)caja.append(link(q.url_final,"Abrir tu sitio publicado"),e("p","Garantía de desarrollo hasta "+q.garantia_hasta));}
+  if(d.historial_disponible&&d.revisiones.length){
+   const hist=e("details","");hist.className="portal-detalle";hist.append(e("summary","Versiones anteriores ("+d.revisiones.length+")"));
+   for(const v of d.revisiones){const item=e("article","");item.className="revision-archivada";item.append(e("h3","Versión "+v.version+" · "+v.revision),e("p",({pendiente:"Sustituida sin decisión",aprobado:"Aprobada en su momento",requiere_cambios:"Cambios solicitados"})[v.decision]),e("p",v.notas_revision));if(v.comentario)item.append(e("p","Comentario: "+v.comentario));if(v.fecha_decision)item.append(e("p","Fecha de decisión: "+v.fecha_decision));if(v.vista_previa)item.append(link(v.vista_previa,"Enlace histórico (puede haber cambiado)"));hist.append(item);}
+   caja.append(hist);
+  }
   if(q.decision==="pendiente"&&!q.fecha_entrega&&!["finalizado","cancelado"].includes(estadoProyecto)){
    const f=document.createElement("form"),l=e("label","Comentario (obligatorio para solicitar cambios)"),t=document.createElement("textarea");t.maxLength=1000;l.append(t);
    const aprobar=e("button","Aprobar esta revisión"),cambiar=e("button","Solicitar cambios"),msg=e("p","");msg.setAttribute("role","status");aprobar.type=cambiar.type="button";cambiar.className="secundario";

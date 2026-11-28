@@ -197,6 +197,12 @@ function urlEntrega(v){
  try{const u=new URL(v);return u.protocol==="https:"&&!u.username&&!u.password&&!u.search&&!u.hash&&!u.hostname.endsWith(".local");}catch{return false;}
 }
 function textoEntrega(v,min,max){return typeof v==="string"&&v.trim().length>=min&&v.length<=max;}
+async function historialRevisiones(db,id){
+ const existe=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='proyecto_revisiones'").first();
+ if(!existe)return {historial_disponible:false,revisiones:[]};
+ const r=await db.prepare("SELECT version,modalidad,revision,vista_previa,notas_revision,decision,comentario,fecha_decision,origen_decision,fecha_archivo FROM proyecto_revisiones WHERE proyecto_id=?1 ORDER BY version DESC LIMIT 200").bind(id).all();
+ return {historial_disponible:true,revisiones:r.results};
+}
 function revisionEntregaValida(d){return !!d&&["web","fisica","combinada"].includes(d.modalidad)&&textoEntrega(d.revision,1,120)&&textoEntrega(d.notas_revision,3,2000)&&Number.isSafeInteger(d.version)&&d.version>=0&&(d.modalidad==="fisica"?d.vista_previa==="":urlEntrega(d.vista_previa));}
 function decisionEntregaValida(d){return !!d&&["aprobado","requiere_cambios"].includes(d.decision)&&textoEntrega(d.comentario,d.decision==="requiere_cambios"?3:0,1000)&&Number.isSafeInteger(d.version)&&d.version>0;}
 function entregaFinalValida(d,q,hoy){
@@ -739,7 +745,7 @@ async function api(request,env,ctx) {
     }
     if(path==="/api/cliente/entrega"&&request.method==="GET"){
       const entrega=await env.QUIZ_DB.prepare("SELECT modalidad,revision,vista_previa,notas_revision,version,decision,comentario,fecha_decision,tipo_dominio,url_final,fecha_entrega,fecha_publicacion,garantia_hasta FROM proyecto_entregas WHERE proyecto_id=?1").bind(p.id).first();
-      return json({entrega});
+      return json({entrega,...await historialRevisiones(env.QUIZ_DB,p.id)});
     }
     if(path==="/api/cliente/entrega"&&request.method==="POST"){
       if(!sameOrigin(request))return error("Origen no autorizado",403);
@@ -925,13 +931,19 @@ async function api(request,env,ctx) {
       const q=await db.prepare("SELECT * FROM proyecto_entregas WHERE proyecto_id=?1").bind(id).first();
       if(!accion&&request.method==="GET"){
         const cambios=await db.prepare("SELECT id,descripcion,fecha_registro FROM proyecto_cambios WHERE proyecto_id=?1 ORDER BY fecha_registro DESC LIMIT 100").bind(id).all();
-        return json({entrega:q,cambios:cambios.results,hoy});
+        return json({entrega:q,cambios:cambios.results,hoy,...await historialRevisiones(db,id)});
       }
       if(p.estado==="cancelado")return error("Proyecto cancelado",409);
       if(!accion&&request.method==="PUT"){
         const d=await leerJson(request,16000);
         if(!revisionEntregaValida(d))return error("Revisa modalidad, revisión, descripción y URL HTTPS sin parámetros ni credenciales.",400);
         if(p.estado==="finalizado")return error("Proyecto finalizado",409);
+        if(d.version>0){
+          if(!q||q.version!==d.version)return error("La revisión cambió. Actualiza.",409);
+          const hist=await historialRevisiones(db,id);
+          if(!hist.historial_disponible)return error("Aplica la migración 0010 antes de sustituir una revisión, para conservar su historial.",503);
+          if(hist.revisiones.length>=200)return error("Límite de 200 revisiones anteriores alcanzado.",409);
+        }
         const args=[id,d.modalidad,d.revision.trim(),d.vista_previa,d.notas_revision.trim(),ahora];
         const res=d.version===0
           ?await db.prepare("INSERT INTO proyecto_entregas(proyecto_id,modalidad,revision,vista_previa,notas_revision,fecha_actualizacion) SELECT ?1,?2,?3,?4,?5,?6 FROM proyectos_cliente WHERE id=?1 AND estado NOT IN ('finalizado','cancelado') ON CONFLICT(proyecto_id) DO NOTHING").bind(...args).run()
@@ -1310,7 +1322,7 @@ async function api(request,env,ctx) {
       let indiceFotos=-1;
       if(tieneProyecto){
         if(tieneFotos){indiceFotos=stmts.length;stmts.push(db.prepare("DELETE FROM proyecto_avances_fotos WHERE proyecto_id IN ("+proyecto+") AND "+guardia+" RETURNING proyecto_id,id").bind(id));}
-        for(const tabla of ["proyecto_cambios","proyecto_entregas","proyecto_archivos","proyecto_secciones"])borrar(tabla,"proyecto_id IN ("+proyecto+")");
+        for(const tabla of ["proyecto_cambios","proyecto_revisiones","proyecto_entregas","proyecto_archivos","proyecto_secciones"])borrar(tabla,"proyecto_id IN ("+proyecto+")");
         borrar("proyectos_cliente","propuesta_id=?1");
       }
       stmts.push(db.prepare("DELETE FROM quiz_propuestas WHERE id=?1 AND "+desbloqueada).bind(id));
