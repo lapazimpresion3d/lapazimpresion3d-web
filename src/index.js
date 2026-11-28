@@ -1227,6 +1227,47 @@ async function api(request,env,ctx) {
       const r=await db.prepare(sql+"SELECT * FROM pendientes WHERE "+filtros[filtro]+" ORDER BY CASE prioridad WHEN 'critica' THEN 0 WHEN 'alta' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,CASE WHEN ultimo_autor='cliente' THEN 0 ELSE 1 END,fecha_actualizacion ASC,ticket_id LIMIT 101").all();
       return json({resumen,items:r.results.slice(0,100),limitado:r.results.length>100,mensajes_disponibles:mensajes,origen_disponible:cliente,consultado:new Date().toISOString()});
     }
+    const respaldo=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/respaldos(?:\/([0-9a-f-]{36})\/pruebas)?$/i);
+    if(respaldo){
+      const [,pid,rid]=respaldo,db=env.QUIZ_DB,hoy=hoyMensualidad(),ahora=new Date().toISOString();
+      if(!ID_UUID.test(pid)||(rid&&!ID_UUID.test(rid)))return error("Identificador inválido",400);
+      const e=await db.prepare("SELECT propuesta_id FROM propuestas_economicas WHERE propuesta_id=?1 AND fecha_aceptacion IS NOT NULL AND mensualidad>0 AND paquete<>'solo_fisico'").bind(pid).first();
+      if(!e)return error("Servicio contratado no encontrado",404);
+      const tablas=await db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('servicio_respaldos','servicio_pruebas_restauracion')").first();
+      if(tablas.n!==2)return error("Control de respaldos pendiente de habilitar (0017)",503);
+      if(!rid&&request.method==="GET"){
+        const resumen=await db.prepare("SELECT COUNT(*) AS total,MAX(CASE WHEN resultado='correcto' AND alcance='completo' THEN fecha_respaldo END) AS ultimo_completo,MAX(CASE WHEN resultado='correcto' THEN fecha_respaldo END) AS ultimo_correcto,MAX(fecha_respaldo) AS ultimo_intento FROM servicio_respaldos WHERE propuesta_id=?1").bind(pid).first();
+        const prueba=await db.prepare("SELECT p.fecha_prueba,p.resultado,r.alcance FROM servicio_pruebas_restauracion p JOIN servicio_respaldos r ON r.id=p.respaldo_id WHERE r.propuesta_id=?1 ORDER BY p.fecha_prueba DESC,p.fecha_registro DESC,p.id DESC LIMIT 1").bind(pid).first();
+        const r=await db.prepare("SELECT r.*,(SELECT COUNT(*) FROM servicio_pruebas_restauracion p WHERE p.respaldo_id=r.id) AS pruebas FROM servicio_respaldos r WHERE propuesta_id=?1 ORDER BY fecha_respaldo DESC,fecha_registro DESC,id DESC LIMIT 101").bind(pid).all();
+        return json({hoy,resumen,ultima_prueba:prueba,items:r.results.slice(0,100),limitado:r.results.length>100});
+      }
+      if(!rid&&request.method==="POST"){
+        const d=await leerJson(request,10000);
+        if(!d||typeof d.id!=="string"||!ID_UUID.test(d.id)||!fechaMensualidad(d.fecha_respaldo)||d.fecha_respaldo>hoy||!["datos","archivos","completo","configuracion"].includes(d.alcance)||!["correcto","parcial","fallido"].includes(d.resultado)||!["manual","automatizado","proveedor"].includes(d.metodo)||!textoEntrega(d.referencia,0,200)||!textoEntrega(d.observaciones,0,2000)||(d.resultado!=="correcto"&&!textoEntrega(d.observaciones,3,2000)))return error("Revisa los datos del respaldo",400);
+        const vals=[d.fecha_respaldo,d.alcance,d.resultado,d.metodo,d.referencia.trim(),d.observaciones.trim()];
+        const r=await db.prepare("INSERT INTO servicio_respaldos(id,propuesta_id,fecha_respaldo,alcance,resultado,metodo,referencia,observaciones,fecha_registro) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9) ON CONFLICT(id) DO NOTHING").bind(d.id,pid,...vals,ahora).run();
+        if(r.meta.changes)return json({ok:true},201);
+        const p=await db.prepare("SELECT * FROM servicio_respaldos WHERE id=?1 AND propuesta_id=?2").bind(d.id,pid).first();
+        return p&&[p.fecha_respaldo,p.alcance,p.resultado,p.metodo,p.referencia,p.observaciones].every((v,i)=>v===vals[i])?json({ok:true,repetido:true}):error("Identificador en conflicto",409);
+      }
+      if(!rid)return error("Método no permitido",405);
+      const b=await db.prepare("SELECT id,fecha_respaldo,resultado FROM servicio_respaldos WHERE id=?1 AND propuesta_id=?2").bind(rid,pid).first();
+      if(!b)return error("Respaldo no encontrado",404);
+      if(request.method==="GET"){
+        const r=await db.prepare("SELECT id,fecha_prueba,resultado,minutos,observaciones,fecha_registro FROM servicio_pruebas_restauracion WHERE respaldo_id=?1 ORDER BY fecha_prueba DESC,fecha_registro DESC,id DESC LIMIT 101").bind(rid).all();
+        return json({items:r.results.slice(0,100),limitado:r.results.length>100});
+      }
+      if(request.method==="POST"){
+        const d=await leerJson(request,10000);
+        if(!d||typeof d.id!=="string"||!ID_UUID.test(d.id)||!fechaMensualidad(d.fecha_prueba)||d.fecha_prueba<b.fecha_respaldo||d.fecha_prueba>hoy||!["correcto","parcial","fallido"].includes(d.resultado)||!Number.isSafeInteger(d.minutos)||d.minutos<0||d.minutos>10080||!textoEntrega(d.observaciones,3,2000))return error("Revisa los datos de la prueba",400);
+        if(b.resultado==="fallido")return error("No se puede registrar una restauración de un respaldo fallido",409);
+        const r=await db.prepare("INSERT INTO servicio_pruebas_restauracion(id,respaldo_id,fecha_prueba,resultado,minutos,observaciones,fecha_registro) SELECT ?1,id,?2,?3,?4,?5,?6 FROM servicio_respaldos WHERE id=?7 AND propuesta_id=?8 AND resultado<>'fallido' ON CONFLICT(id) DO NOTHING").bind(d.id,d.fecha_prueba,d.resultado,d.minutos,d.observaciones.trim(),ahora,rid,pid).run();
+        if(r.meta.changes)return json({ok:true},201);
+        const p=await db.prepare("SELECT * FROM servicio_pruebas_restauracion WHERE id=?1 AND respaldo_id=?2").bind(d.id,rid).first();
+        return p&&p.fecha_prueba===d.fecha_prueba&&p.resultado===d.resultado&&p.minutos===d.minutos&&p.observaciones===d.observaciones.trim()?json({ok:true,repetido:true}):error("Identificador en conflicto",409);
+      }
+      return error("Método no permitido",405);
+    }
     const evidencia=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/soporte\/([0-9a-f-]{36})\/evidencias(?:\/([0-9a-f-]{36}))?$/i);
     if(evidencia){
       const [,pid,tid,aid]=evidencia,db=env.QUIZ_DB;
@@ -1480,6 +1521,8 @@ async function api(request,env,ctx) {
       if(tablas.has("servicio_soporte"))borrar("servicio_soporte_cliente","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");
       if(tablas.has("servicio_soporte"))borrar("servicio_soporte_resoluciones","soporte_id IN (SELECT id FROM servicio_soporte WHERE propuesta_id=?1)");
       borrar("servicio_soporte","propuesta_id=?1");
+      if(tablas.has("servicio_respaldos"))borrar("servicio_pruebas_restauracion","respaldo_id IN (SELECT id FROM servicio_respaldos WHERE propuesta_id=?1)");
+      borrar("servicio_respaldos","propuesta_id=?1");
       borrar("servicio_vinculos","propuesta_id=?1");
       borrar("pagos_mensualidad","propuesta_id=?1");
       borrar("suscripciones_cliente","propuesta_id=?1");
