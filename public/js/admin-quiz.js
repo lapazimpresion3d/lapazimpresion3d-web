@@ -49,6 +49,24 @@ const etiquetas={
 };
 async function req(path,options={}){const r=await fetch(path,{...options,credentials:"same-origin",headers:{...(options.body?{"Content-Type":"application/json"}:{}),...options.headers}});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||`Error ${r.status}`);return d;}
 function elem(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;}
+const seccionesPanel=()=>Array.from(panel.querySelectorAll(".admin-seccion"));
+function abrirSeccion(id,desplazar=true){const titulo=document.getElementById(id),detalle=titulo?.closest(".admin-seccion");if(!detalle)return;detalle.open=true;if(desplazar)titulo.scrollIntoView({block:"start"});}
+globalThis.LP_ADMIN_NAVEGACION=Object.freeze({abrirSeccion});
+panel.querySelectorAll(".admin-nav a").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();const id=a.hash.slice(1);history.replaceState(null,"",a.hash);abrirSeccion(id);}));
+document.querySelector("#expandir-secciones").addEventListener("click",()=>seccionesPanel().forEach(d=>d.open=true));
+document.querySelector("#colapsar-secciones").addEventListener("click",()=>seccionesPanel().forEach(d=>d.open=false));
+panel.querySelectorAll("[data-expandir-registros],[data-colapsar-registros]").forEach(b=>b.addEventListener("click",()=>{const id=b.dataset.expandirRegistros||b.dataset.colapsarRegistros;document.getElementById(id)?.querySelectorAll(".registro-desplegable").forEach(d=>d.open=!!b.dataset.expandirRegistros);}));
+function abiertosRegistros(lista){return new Set(Array.from(lista.querySelectorAll(".registro-desplegable[open]"),d=>d.dataset.registro));}
+function plegarRegistro(art,id,titulo,subtitulo,estado,abierto,controles=[]){
+ const detalle=elem("details","registro-desplegable");detalle.dataset.registro=id;detalle.open=abierto;
+ const resumen=elem("summary","registro-resumen"),identidad=elem("span","registro-identidad");
+ identidad.append(elem("strong",null,titulo),elem("span","registro-subtitulo",subtitulo));
+ resumen.append(identidad,elem("span","registro-estado",estado));
+ const cuerpo=elem("div","registro-cuerpo");
+ for(const nodo of Array.from(art.childNodes))if(!controles.includes(nodo))cuerpo.append(nodo);
+ detalle.append(resumen,cuerpo);art.prepend(detalle);
+ if(controles.length){const barra=elem("div","registro-controles");barra.append(...controles);art.append(barra);}
+}
 function descargar(ficha){const blob=new Blob([JSON.stringify(ficha,null,2)+"\n"],{type:"application/json"}),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=`ficha-quiz-${ficha.id_diagnostico}.json`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);}
 const descripciones={
   R1:"Recuerdos, regalos o piezas promocionales personalizados en impresión 3D.",
@@ -145,7 +163,7 @@ async function cargarProyectos(){
  estadoProyectos.textContent="Cargando proyectos…";
  try {
   const d=await req("/api/admin/proyectos");
-  listaProyectos.replaceChildren();
+  const abiertos=abiertosRegistros(listaProyectos);listaProyectos.replaceChildren();
   estadoProyectos.textContent=`${d.items.length} proyecto(s) registrado(s). Los enlaces privados se generan individualmente.`;
   if(!d.items.length){listaProyectos.append(elem("p",null,"Todavía no hay proyectos aceptados."));return;}
   for(const p of d.items){
@@ -249,7 +267,7 @@ async function cargarProyectos(){
        art.append(caja);
      }catch(e){estadoProyectos.textContent=e.message;}finally{revisar.disabled=false;}
    });
-   acciones.append(revisar);art.append(acciones);globalThis.LP_ADMIN_ENTREGA?.agregar(art,p);listaProyectos.append(art);
+   acciones.append(revisar);art.append(acciones);globalThis.LP_ADMIN_ENTREGA?.agregar(art,p);plegarRegistro(art,p.id,p.proyecto||p.nombre,p.folio+" · "+p.nombre,estadosProyecto[p.estado]||p.estado,abiertos.has(p.id));listaProyectos.append(art);
   }
  }catch(e){estadoProyectos.textContent="Proyectos no disponibles: "+e.message+". Comprueba que la migración 0004 esté aplicada a D1.";}
 }
@@ -407,7 +425,7 @@ async function cargarPropuestas(){
  estadoPropuestas.textContent="Cargando solicitudes…";
  try {
   const params=new URLSearchParams(); if(filtroPropuestas.value)params.set("estado",filtroPropuestas.value); if(buscarPropuestas.value.trim())params.set("buscar",buscarPropuestas.value.trim());
-  const d=await req(`/api/admin/propuestas?${params}`);listaPropuestas.replaceChildren();
+  const d=await req(`/api/admin/propuestas?${params}`);const abiertos=abiertosRegistros(listaPropuestas);listaPropuestas.replaceChildren();
   propuestasVisibles=d.items;actualizarSeleccion();
   const conteo=d.items.reduce((acc,x)=>(acc[x.estado]=(acc[x.estado]||0)+1,acc),{});
   const resumen=Object.entries(conteo).map(([clave,n])=>`${estadosPropuestas[clave]||clave}: ${n}`).join(" · ");
@@ -478,7 +496,7 @@ async function cargarPropuestas(){
    }
    const jsonBoton=elem("button","secundario","Descargar JSON");jsonBoton.addEventListener("click",()=>descargar({...x.ficha,contacto:{nombre:x.nombre,proyecto:x.proyecto,telefono:x.telefono,comentario:x.comentario},folio:x.folio,estado_solicitud:x.estado}));actions.append(jsonBoton);
    const borrar=elem("button","secundario","Eliminar");borrar.addEventListener("click",async()=>{if(borrando)return;if(protegida){estadoPropuestas.textContent="Desbloquea el candado antes de eliminar.";return;}if(!confirm(`¿Eliminar definitivamente ${x.folio}, incluidos sus proyectos, cotizaciones, pagos y archivos asociados?`))return;if(prompt("Para confirmar, escribe ELIMINAR")!=="ELIMINAR")return;try{const d=await req(`/api/admin/propuestas/${encodeURIComponent(x.id)}`,{method:"DELETE"});await cargarPropuestas(); (estadoBorrado||estadoPropuestas).textContent=d.imagenes_pendientes?"Solicitud eliminada; imágenes pendientes de limpieza: "+d.imagenes_pendientes+".":"Solicitud eliminada.";await globalThis.LP_ADMIN_ALERTAS?.cargar();}catch(e){estadoPropuestas.textContent=e.message;}});actions.append(borrar);
-   art.append(actions);listaPropuestas.append(art);
+   art.append(actions);const servicio=esFisica?(x.ficha.titulo_servicio||nombresServicio[x.ficha.servicio]||"Impresión 3D"):esWeb?(x.ficha.paquete||x.ficha.tipo_pagina||"Proyecto web a medida"):(x.ficha?.recomendacion?.titulo||"Cuestionario de orientación");plegarRegistro(art,x.id,x.nombre+" · "+x.folio,servicio+" · "+new Date(x.fecha).toLocaleDateString("es-MX"),estadosPropuestas[x.estado]||x.estado,abiertos.has(x.id)||buscarPropuestas.value.trim().toUpperCase()===x.folio.toUpperCase(),[seleccion,candado]);listaPropuestas.append(art);
   }
   actualizarSeleccion();
  }catch(e){estadoPropuestas.textContent=e.message;}
