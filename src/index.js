@@ -1480,3 +1480,6 @@ export default { async fetch(request,env,ctx) {
     return resp;
   } catch(e) { console.error("Error de solicitud",e); return error("Error del servidor",500); }
 } };
+
+// Named private RPC entrypoint; no HTTP route to this service.
+export { IntegracionComercial } from "./integracion-comercial.mjs";
