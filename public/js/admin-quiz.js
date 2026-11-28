@@ -124,7 +124,7 @@ acceso.addEventListener("submit",async(e)=>{
   const headers={};
   if(config.turnstile){error.textContent="Comprobando seguridad…";headers["X-Turnstile-Token"]=await globalThis.LP_Turnstile.token("admin_login",boton);}
   await req("/api/admin/login",{method:"POST",headers,body:JSON.stringify({password:document.querySelector("#password").value})});
-  document.querySelector("#password").value="";error.textContent="";acceso.hidden=true;panel.hidden=false;
+  document.querySelector("#password").value="";error.textContent="";acceso.hidden=true;panel.hidden=false;abrirSeccion(location.hash.slice(1),false);
   await Promise.all([cargar(),cargarPropuestas(),cargarProyectos(),globalThis.LP_ADMIN_ALERTAS?.cargar()]);
  }catch(e){error.textContent=e.message;}finally{boton.disabled=false;}
 });
@@ -135,7 +135,7 @@ busqueda.addEventListener("input",()=>{
   if(esReferencia || (ultimaConsulta && !esReferencia)) { ultimaConsulta=esReferencia?texto:""; cargar(); }
   else filtrarBusqueda();
 });document.querySelector("#salir").addEventListener("click",async()=>{await req("/api/admin/salir",{method:"POST",body:"{}"}).catch(()=>{});panel.hidden=true;acceso.hidden=false;lista.replaceChildren();listaPropuestas.replaceChildren();listaProyectos.replaceChildren();propuestasVisibles=[];actualizarSeleccion();});
-req("/api/admin/sesion").then(()=>{acceso.hidden=true;panel.hidden=false;return Promise.all([cargar(),cargarPropuestas(),cargarProyectos(),globalThis.LP_ADMIN_ALERTAS?.cargar()]);}).catch(()=>{});
+req("/api/admin/sesion").then(()=>{acceso.hidden=true;panel.hidden=false;abrirSeccion(location.hash.slice(1),false);return Promise.all([cargar(),cargarPropuestas(),cargarProyectos(),globalThis.LP_ADMIN_ALERTAS?.cargar()]);}).catch(()=>{});
 
 const listaProyectos=document.querySelector("#lista-proyectos"),estadoProyectos=document.querySelector("#estado-proyectos");
 const estadosProyecto={preparacion:"Preparación",recabando_materiales:"Recabando materiales",en_desarrollo:"En desarrollo",en_revision:"En revisión",finalizado:"Finalizado",cancelado:"Cancelado"};
@@ -237,8 +237,8 @@ async function cargarProyectos(){
      revisar.disabled=true;
      try{
        const d=await req("/api/admin/proyectos/"+encodeURIComponent(p.id)+"/materiales");
-       art.querySelector(".materiales-administracion")?.remove();
-       const caja=elem("section","materiales-administracion");
+       art.querySelector(".materiales-recibidos")?.remove();
+       const caja=elem("section","materiales-administracion materiales-recibidos");
        caja.append(elem("h4",null,"Materiales del proyecto"));
        const secciones={datos_negocio:"Datos, descripción o diseño",servicios_productos:"Productos, servicios, cantidad o medidas",horarios_contacto:"Contacto, uso o entrega",indicaciones:"Indicaciones adicionales"};
        const nota=elem("div","apartado-recibido"),labelNota=elem("label",null,"Indicaciones para el cliente (visibles en su portal)"),txt=elem("textarea");
@@ -264,7 +264,7 @@ async function cargarProyectos(){
          link.href="/api/admin/proyectos/"+encodeURIComponent(p.id)+"/archivos/"+encodeURIComponent(a.id);
          link.target="_blank";link.rel="noopener noreferrer";const bloque=elem("div","apartado-recibido");bloque.append(link,controlRevisionMaterial(p,a,"archivos"));caja.append(bloque);
        }
-       art.append(caja);
+       (art.querySelector(".registro-cuerpo")||art).append(caja);
      }catch(e){estadoProyectos.textContent=e.message;}finally{revisar.disabled=false;}
    });
    acciones.append(revisar);art.append(acciones);globalThis.LP_ADMIN_ENTREGA?.agregar(art,p);plegarRegistro(art,p.id,p.proyecto||p.nombre,p.folio+" · "+p.nombre,estadosProyecto[p.estado]||p.estado,abiertos.has(p.id));listaProyectos.append(art);
