@@ -1,3 +1,4 @@
+import {mesInformeValido,informeValido,datosInforme} from "./informes-mantenimiento.mjs";
 import {novedadValida} from "./novedades.mjs";
 import {correccionCostoValida} from "./correcciones-costos.mjs";
 import {situacionGarantia,decisionPosventaValida} from "./posventa.mjs";
@@ -1291,6 +1292,36 @@ async function api(request,env,ctx) {
       const items=r.results.slice(0,1000).map(x=>({propuesta_id:x.propuesta_id,folio:x.folio,nombre:x.nombre,proyecto:x.proyecto,paquete:x.paquete,mensualidad:x.mensualidad,pagos:x.pagos,registros_costos:x.registros_costos,resultado:calcularRentabilidad(x.cobrado,x.costos,x.minutos,x.version===null?null:{tarifa_hora:x.tarifa_hora,minutos_extra:x.minutos_extra})}));
       return json({hoy,mes,items,resumen:resumirRentabilidad(items),limitado:r.results.length>1000});
     }
+    const informe=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/informes-mensuales(?:\/([0-9a-f-]{36}))?$/i);
+    if(informe){
+      const [,pid,iid]=informe,db=env.QUIZ_DB,hoy=hoyMensualidad(),ahora=new Date().toISOString(),mes=url.searchParams.get("mes")||hoy.slice(0,7);
+      if(!ID_UUID.test(pid)||(iid&&!ID_UUID.test(iid))||!mesInformeValido(mes,hoy))return error("Identificador o mes inválido",400);
+      const e=await db.prepare("SELECT propuesta_id FROM propuestas_economicas WHERE propuesta_id=?1 AND fecha_aceptacion IS NOT NULL AND mensualidad>0 AND paquete<>'solo_fisico'").bind(pid).first();
+      if(!e)return error("Servicio no encontrado",404);
+      const tablas=await db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('servicio_informes_mensuales','servicio_vinculos')").first(),publicacionDisponible=tablas.n===2;
+      const v=publicacionDisponible?await db.prepare("SELECT id,negocio_externo FROM servicio_vinculos WHERE propuesta_id=?1 AND plataforma='lapaz-comercios' AND estado='registrado'").bind(pid).first():null;
+      if(!iid&&request.method==="GET"){
+        const r=publicacionDisponible?await db.prepare("SELECT i.*,v.estado AS estado_vinculo,v.negocio_externo FROM servicio_informes_mensuales i JOIN servicio_vinculos v ON v.id=i.vinculo_id WHERE v.propuesta_id=?1 AND i.mes=?2 ORDER BY CASE WHEN i.fecha_retiro IS NULL THEN 0 ELSE 1 END,i.fecha_publicacion DESC,i.id DESC LIMIT 101").bind(pid,mes).all():{results:[]};
+        return json({datos:await datosInforme(db,pid,mes,hoy),publicacion_disponible:publicacionDisponible,vinculo:v,items:r.results.slice(0,100),limitado:r.results.length>100,integracion_habilitada:env.INTEGRACION_COMERCIAL_HABILITADA==="si"});
+      }
+      if(!publicacionDisponible)return error("Publicación pendiente de habilitar (0027 y 0013)",503);
+      if(!iid&&request.method==="POST"){
+        const d=await leerJson(request,18000);
+        if(!informeValido(d)||typeof d.id!=="string"||!ID_UUID.test(d.id)||typeof d.vinculo_id!=="string"||!ID_UUID.test(d.vinculo_id))return error("Revisa título, resumen y confirmación",400);
+        if(!v||v.id!==d.vinculo_id)return error("Se requiere vínculo vigente",409);
+        const previo=await db.prepare("SELECT * FROM servicio_informes_mensuales WHERE id=?1 AND vinculo_id=?2").bind(d.id,v.id).first();
+        if(previo)return previo.mes===mes&&previo.titulo===d.titulo.trim()&&previo.resumen===d.resumen.trim()&&!previo.fecha_retiro?json({ok:true,repetido:true}):error("Identificador en conflicto",409);
+        const r=await db.prepare("INSERT INTO servicio_informes_mensuales(id,vinculo_id,mes,titulo,resumen,fecha_publicacion) SELECT ?1,v.id,?2,?3,?4,?5 FROM servicio_vinculos v JOIN propuestas_economicas e ON e.propuesta_id=v.propuesta_id WHERE v.id=?6 AND v.propuesta_id=?7 AND v.plataforma='lapaz-comercios' AND v.estado='registrado' AND e.fecha_aceptacion IS NOT NULL AND e.mensualidad>0 AND e.paquete<>'solo_fisico' ON CONFLICT DO NOTHING").bind(d.id,mes,d.titulo.trim(),d.resumen.trim(),ahora,v.id,pid).run();
+        return r.meta.changes?json({ok:true},201):error("Ya existe un informe publicado para este mes o el vínculo cambió",409);
+      }
+      if(iid&&request.method==="PATCH"){
+        const d=await leerJson(request,5000);
+        if(!d||d.confirmar!=="RETIRAR"||!textoEntrega(d.motivo,3,1000))return error("Confirma el retiro e indica el motivo",400);
+        const r=await db.prepare("UPDATE servicio_informes_mensuales SET fecha_retiro=?1,motivo_retiro=?2 WHERE id=?3 AND mes=?4 AND fecha_retiro IS NULL AND EXISTS(SELECT 1 FROM servicio_vinculos v WHERE v.id=servicio_informes_mensuales.vinculo_id AND v.propuesta_id=?5)").bind(ahora,d.motivo.trim(),iid,mes,pid).run();
+        return r.meta.changes?json({ok:true}):error("Informe inexistente o retirado",409);
+      }
+      return error("Método no permitido",405);
+    }
     const novedad=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/actualizaciones\/([0-9a-f-]{36})\/novedades(?:\/([0-9a-f-]{36}))?$/i);
     if(novedad){
       const [,pid,aid,nid]=novedad,db=env.QUIZ_DB,ahora=new Date().toISOString();
@@ -1836,6 +1867,7 @@ async function api(request,env,ctx) {
       if(tablas.has("servicio_costos"))borrar("servicio_costos_correcciones","costo_id IN (SELECT id FROM servicio_costos WHERE propuesta_id=?1)");
       borrar("servicio_costos","propuesta_id=?1");
       borrar("servicio_costeo_mensual","propuesta_id=?1");
+      if(tablas.has("servicio_vinculos"))borrar("servicio_informes_mensuales","vinculo_id IN (SELECT id FROM servicio_vinculos WHERE propuesta_id=?1)");
       borrar("servicio_vinculos","propuesta_id=?1");
       borrar("pagos_mensualidad","propuesta_id=?1");
       borrar("suscripciones_cliente","propuesta_id=?1");

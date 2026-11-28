@@ -1,3 +1,4 @@
+import {proyectarInforme} from "./informes-mantenimiento.mjs";
 import {proyectarNovedad} from "./novedades.mjs";
 import {WorkerEntrypoint} from "cloudflare:workers";
 import {guardarEvidencia,tablaEvidencias,proyectarEvidencia,valoresEvidencia} from "./evidencias-soporte.mjs";
@@ -187,7 +188,16 @@ export async function listarNovedadesPrivadas(env,empresa){
  if(!await sigueVinculado(db,v,empresa))return {ok:false,error:"no_autorizado"};
  return {ok:true,version:1,novedades:r.results.slice(0,100).map(proyectarNovedad),limitado:r.results.length>100};
 }
+export async function listarInformesPrivados(env,empresa){
+ const ctx=await contextoSoporte(env,empresa);if(ctx.error)return {ok:false,error:ctx.error};
+ const {db,v}=ctx;
+ if(!await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='servicio_informes_mensuales'").first())return {ok:false,error:"no_disponible"};
+ const r=await db.prepare("SELECT i.id,i.mes,i.titulo,i.resumen,i.fecha_publicacion FROM servicio_informes_mensuales i JOIN servicio_vinculos v ON v.id=i.vinculo_id WHERE i.vinculo_id=?1 AND v.propuesta_id=?2 AND v.estado='registrado' AND i.fecha_retiro IS NULL ORDER BY i.mes DESC,i.fecha_publicacion DESC LIMIT 101").bind(v.id,v.propuesta_id).all();
+ if(!await sigueVinculado(db,v,empresa))return {ok:false,error:"no_autorizado"};
+ return {ok:true,version:1,informes:r.results.slice(0,100).map(proyectarInforme),limitado:r.results.length>100};
+}
 export class IntegracionComercial extends WorkerEntrypoint {
+ async listarInformes(empresa){try{return await listarInformesPrivados(this.env,empresa);}catch{return {ok:false,error:"no_disponible"};}}
  async listarNovedades(empresa){try{return await listarNovedadesPrivadas(this.env,empresa);}catch{return {ok:false,error:"no_disponible"};}}
  async decidirSolucion(empresa,ticket,datos){try{return await decidirSolucionPrivada(this.env,empresa,ticket,datos);}catch{return {ok:false,error:'no_disponible'};}}
  async listarEvidencias(empresa,ticket){try{return await listarEvidenciasPrivadas(this.env,empresa,ticket);}catch{return {ok:false,error:"no_disponible"};}}
