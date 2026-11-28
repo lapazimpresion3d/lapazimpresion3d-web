@@ -1211,6 +1211,22 @@ async function api(request,env,ctx) {
       }
       return error("Método no permitido",405);
     }
+    if(path==="/api/admin/soporte/pendientes"&&request.method==="GET"){
+      const db=env.QUIZ_DB;
+      const tablas=new Set((await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('servicio_soporte','servicio_soporte_mensajes','servicio_soporte_cliente')").all()).results.map(x=>x.name));
+      if(!tablas.has("servicio_soporte"))return error("Soporte pendiente de habilitar (migración 0011)",503);
+      const mensajes=tablas.has("servicio_soporte_mensajes"),cliente=tablas.has("servicio_soporte_cliente");
+      const ultimo=mensajes?"(SELECT m.autor FROM servicio_soporte_mensajes m WHERE m.soporte_id=t.id ORDER BY m.fecha_registro DESC,m.id DESC LIMIT 1)":"NULL";
+      const ultimaFecha=mensajes?"(SELECT MAX(m.fecha_registro) FROM servicio_soporte_mensajes m WHERE m.soporte_id=t.id)":"NULL";
+      const base="SELECT t.id AS ticket_id,t.propuesta_id,q.folio,q.nombre,q.proyecto,e.paquete,t.titulo,t.estado,t.prioridad,t.fecha_registro,t.fecha_actualizacion,"+ultimo+" AS ultimo_autor,"+ultimaFecha+" AS ultimo_mensaje,"+(cliente?"EXISTS(SELECT 1 FROM servicio_soporte_cliente c WHERE c.soporte_id=t.id)":"0")+" AS desde_panel FROM servicio_soporte t JOIN quiz_propuestas q ON q.id=t.propuesta_id JOIN propuestas_economicas e ON e.propuesta_id=t.propuesta_id WHERE t.estado NOT IN ('resuelto','cancelado') AND e.fecha_aceptacion IS NOT NULL AND e.mensualidad>0 AND e.paquete<>'solo_fisico'";
+      const sql="WITH pendientes AS ("+base+") ";
+      const resumen=await db.prepare(sql+"SELECT COUNT(*) AS total,COALESCE(SUM(prioridad='critica'),0) AS criticas,COALESCE(SUM(estado='abierto'),0) AS abiertas,COALESCE(SUM(ultimo_autor='cliente'),0) AS por_responder,COALESCE(SUM(estado='espera_cliente'),0) AS espera_cliente FROM pendientes").first();
+      const filtro=url.searchParams.get("filtro")||"todos";
+      const filtros={todos:"1=1",criticas:"prioridad='critica'",abiertas:"estado='abierto'",por_responder:"ultimo_autor='cliente'",espera_cliente:"estado='espera_cliente'"};
+      if(!Object.hasOwn(filtros,filtro))return error("Filtro inválido",400);
+      const r=await db.prepare(sql+"SELECT * FROM pendientes WHERE "+filtros[filtro]+" ORDER BY CASE prioridad WHEN 'critica' THEN 0 WHEN 'alta' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,CASE WHEN ultimo_autor='cliente' THEN 0 ELSE 1 END,fecha_actualizacion ASC,ticket_id LIMIT 101").all();
+      return json({resumen,items:r.results.slice(0,100),limitado:r.results.length>100,mensajes_disponibles:mensajes,origen_disponible:cliente,consultado:new Date().toISOString()});
+    }
     const evidencia=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/soporte\/([0-9a-f-]{36})\/evidencias(?:\/([0-9a-f-]{36}))?$/i);
     if(evidencia){
       const [,pid,tid,aid]=evidencia,db=env.QUIZ_DB;
@@ -1251,7 +1267,8 @@ async function api(request,env,ctx) {
       if(tabla.n!==2)return error("Soporte pendiente de habilitar (migración 0011)",503);
       const clienteSoporte=!!await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='servicio_soporte_cliente'").first();
       if(!tid&&request.method==="GET"){
-        const r=await db.prepare("SELECT t.*,"+(clienteSoporte?"EXISTS(SELECT 1 FROM servicio_soporte_cliente c WHERE c.soporte_id=t.id)":"0")+" AS desde_panel,(SELECT COALESCE(SUM(i.minutos),0) FROM servicio_intervenciones i WHERE i.soporte_id=t.id) AS minutos FROM servicio_soporte t WHERE propuesta_id=?1 ORDER BY CASE WHEN estado IN ('resuelto','cancelado') THEN 1 ELSE 0 END,CASE prioridad WHEN 'critica' THEN 0 WHEN 'alta' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,fecha_actualizacion DESC LIMIT 101").bind(pid).all();
+        const objetivo=url.searchParams.get("ticket");if(objetivo&&!ID_UUID.test(objetivo))return error("Identificador inválido",400);
+        const r=await db.prepare("SELECT t.*,"+(clienteSoporte?"EXISTS(SELECT 1 FROM servicio_soporte_cliente c WHERE c.soporte_id=t.id)":"0")+" AS desde_panel,(SELECT COALESCE(SUM(i.minutos),0) FROM servicio_intervenciones i WHERE i.soporte_id=t.id) AS minutos FROM servicio_soporte t WHERE propuesta_id=?1 AND (?2 IS NULL OR id=?2) ORDER BY CASE WHEN estado IN ('resuelto','cancelado') THEN 1 ELSE 0 END,CASE prioridad WHEN 'critica' THEN 0 WHEN 'alta' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,fecha_actualizacion DESC LIMIT 101").bind(pid,objetivo||null).all();
         const resumen=await db.prepare("SELECT COUNT(*) AS total,COALESCE(SUM(CASE WHEN estado NOT IN ('resuelto','cancelado') THEN 1 ELSE 0 END),0) AS pendientes FROM servicio_soporte WHERE propuesta_id=?1").bind(pid).first();
         const mes=await db.prepare("SELECT i.clasificacion,COALESCE(SUM(i.minutos),0) AS minutos FROM servicio_intervenciones i JOIN servicio_soporte t ON t.id=i.soporte_id WHERE t.propuesta_id=?1 AND substr(i.fecha_trabajo,1,7)=?2 GROUP BY i.clasificacion").bind(pid,hoy.slice(0,7)).all();
         return json({items:r.results.slice(0,100),limitado:r.results.length>100,resumen,mes:mes.results,hoy});

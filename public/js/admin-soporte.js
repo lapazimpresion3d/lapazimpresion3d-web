@@ -34,18 +34,18 @@ function evidencias(body,ruta,q,cliente,vigente){
  }catch(e){if(vigente()&&p.isConnected){const retry=boton("Reintentar");retry.addEventListener("click",cargar);c.replaceChildren(el("p",e.message),retry);}}finally{ocupado=false;}}
  p.addEventListener("toggle",()=>{if(p.open&&!cargado)cargar();});
 }
-function agregar(art,x){
+function agregar(art,x,objetivo=null){
  const ruta="/api/admin/servicios/"+encodeURIComponent(x.propuesta_id)+"/soporte",detalle=el("details",undefined,"proyecto-bloque soporte-servicio"),sum=el("summary","Soporte técnico y mantenimiento"),caja=el("section",undefined,"economica-panel");detalle.append(sum,caja);art.append(detalle);
  let cargado=false,ocupado=false;
  const vigente=()=>art.isConnected&&!document.getElementById("panel").hidden;
- async function cargar(){if(ocupado)return;ocupado=true;caja.replaceChildren(el("p","Consultando soporte…"));try{const d=await api(ruta);if(vigente()){pintar(d);cargado=true;}}catch(e){if(vigente()){const b=boton("Reintentar");b.addEventListener("click",cargar);caja.replaceChildren(el("p",e.message),b);}}finally{ocupado=false;}}
+ async function cargar(){if(ocupado)return;ocupado=true;caja.replaceChildren(el("p","Consultando soporte…"));try{const d=await api(ruta+(objetivo?"?ticket="+encodeURIComponent(objetivo):""));if(vigente()){pintar(d);cargado=true;}}catch(e){if(vigente()){const b=boton("Reintentar");b.addEventListener("click",cargar);caja.replaceChildren(el("p",e.message),b);}}finally{ocupado=false;}}
  function pintar(d){
   sum.textContent="Soporte técnico y mantenimiento · "+d.resumen.pendientes+" pendientes";
   const cab=el("div",undefined,"soporte-resumen"),total=d.mes.reduce((n,i)=>n+i.minutos,0),bolsa=d.mes.find(i=>i.clasificacion==="bolsa")?.minutos||0,referencia={"presencia-digital":15,"negocio-interactivo":30,"gestion-comercial":45,"gestion-profesional":60}[x.paquete];
   for(const [t,v] of [["Pendientes",d.resumen.pendientes],["Registros",d.resumen.total],["Minutos trabajados este mes",total],["Cambios menores este mes",bolsa]]){const item=el("div");item.append(el("strong",String(v)),el("span",t,"metadatos"));cab.append(item);}
   const refresh=boton("Actualizar soporte");refresh.addEventListener("click",()=>{if(confirm("¿Actualizar? Se perderán borradores no guardados."))cargar();});
   caja.replaceChildren(cab,el("p","Mes calendario "+d.hoy.slice(0,7)+" · "+(referencia?"Bolsa comercial de referencia: "+referencia+" min. ":"")+"Los minutos no generan cobros ni modifican contratos. Verifica el alcance acordado.","metadatos"),refresh);
-  const nuevo=el("details",undefined,"proyecto-bloque"),f=el("form",undefined,"economica-form");nuevo.append(el("summary","+ Registrar solicitud o mantenimiento"),f);caja.append(nuevo);
+  const nuevo=el("details",undefined,"proyecto-bloque"),f=el("form",undefined,"economica-form");nuevo.append(el("summary","+ Registrar solicitud o mantenimiento"),f);if(!objetivo)caja.append(nuevo);
   const titulo=campo(f,"Asunto"),descripcion=campo(f,"Descripción","textarea"),tipo=select(f,"Tipo","tipo"),prioridad=select(f,"Prioridad","prioridad"),origen=select(f,"Origen","origen");titulo.required=descripcion.required=true;titulo.maxLength=120;descripcion.maxLength=2000;descripcion.rows=3;prioridad.value="normal";
   const guardar=el("button","Registrar solicitud"),msg=el("p",undefined,"metadatos");guardar.type="submit";msg.setAttribute("role","status");f.append(guardar,msg);let intento=null;
   f.addEventListener("input",()=>{if(!guardar.disabled)intento=null;});
@@ -53,7 +53,7 @@ function agregar(art,x){
   if(d.limitado)caja.append(el("p","Se muestran hasta 100 solicitudes, priorizando pendientes.","metadatos"));
   if(!d.items.length)caja.append(el("p","Sin solicitudes registradas."));
   for(const t of d.items){const panel=el("details",undefined,"proyecto-bloque soporte-ticket"),head=el("summary",(t.desde_panel?"[Panel del negocio] ":"")+t.titulo+" · "+opciones.estado[t.estado]+" · "+opciones.prioridad[t.prioridad]),body=el("div",undefined,"economica-panel");panel.dataset.prioridad=t.prioridad;panel.append(head,body);caja.append(panel);let cargadoTicket=false;
-   panel.addEventListener("toggle",()=>{if(panel.open&&!cargadoTicket)ver();});
+   panel.addEventListener("toggle",()=>{if(panel.open&&!cargadoTicket)ver();});if(objetivo===t.id)panel.open=true;
    async function ver(){body.replaceChildren(el("p","Cargando…"));try{const v=await api(ruta+"/"+t.id);if(!vigente()||!panel.isConnected)return;cargadoTicket=true;const q=v.solicitud;
     body.replaceChildren(el("p",q.descripcion),el("p",opciones.tipo[q.tipo]+" · "+opciones.origen[q.origen]+" · "+new Date(q.fecha_registro).toLocaleString("es-MX",{timeZone:"America/Mazatlan"}),"metadatos"),el("p",t.minutos+" minutos registrados","metadatos"));
     if(v.cliente){const categorias={funcionamiento:"Problema de funcionamiento",ayuda:"Ayuda de uso",modificacion:"Modificación",suscripcion:"Suscripción",nueva_funcion:"Nueva funcionalidad",mejora:"Propuesta de mejora",otro:"Otro"},impactos={bajo:"Bajo",parcial:"Parcial",bloqueante:"Bloqueante"};body.append(el("p","Origen: panel del negocio · "+(categorias[v.cliente.categoria]||v.cliente.categoria),"metadatos"),el("p","Módulo: "+(v.cliente.modulo||"No indicado")+" · Impacto indicado por el cliente: "+(impactos[v.cliente.impacto]||v.cliente.impacto),"metadatos"));}
@@ -66,7 +66,7 @@ function agregar(art,x){
    }catch(e){const b=boton("Reintentar");b.addEventListener("click",ver);body.replaceChildren(el("p",e.message),b);}}
   }
  }
- detalle.addEventListener("toggle",()=>{if(detalle.open&&!cargado)cargar();});
+ detalle.addEventListener("toggle",()=>{if(detalle.open&&!cargado)cargar();});if(objetivo)detalle.open=true;
 }
 globalThis.LP_SOPORTE={agregar};
 })();
