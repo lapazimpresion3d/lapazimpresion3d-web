@@ -15,3 +15,26 @@
 .economica-panel>p{overflow-wrap:anywhere;white-space:pre-wrap}.economica-panel>form{margin:12px 0}.economica-panel>.boton-enlace{margin:5px 0}
 
 .alertas-panel{border-bottom:1px solid var(--borde);padding-bottom:24px;margin-bottom:24px;scroll-margin-top:16px}.alerta-registro{padding:14px 16px;border-left:4px solid #8b97ab}.alerta-registro[data-prioridad=alta]{border-left-color:#b75d19}.alerta-registro h3{font-size:1.05rem;margin:0 0 6px}.alerta-registro p{margin:4px 0;overflow-wrap:anywhere}#avisos-alertas p{color:#87501b}#titulo-solicitudes,#titulo-proyectos,#titulo-mensualidades{scroll-margin-top:16px}
+
+/* Navegación y jerarquía del panel administrativo */
+.contenedor{width:min(100% - 32px,1240px)}
+.admin-nav{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px;background:var(--marino);border-radius:12px;margin:0 0 16px;box-shadow:0 4px 12px #0f23472b}
+.admin-nav a{display:flex;align-items:center;min-height:40px;padding:8px 12px;color:#fff;text-decoration:none;font-weight:700;border-radius:7px;background:#ffffff12}
+.admin-nav a:hover,.admin-nav a:focus-visible{background:#ffffff30}.admin-nav #salir{margin-left:auto;min-height:40px}
+.panel-vista,.vista-registros{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0}.panel-vista .intro{margin:0 auto 0 0}
+.admin-seccion{border:1px solid #cbd6e5;background:white;border-radius:13px;margin:16px 0;padding:0;box-shadow:0 3px 12px #0f23470b}
+.admin-seccion>summary{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0;padding:16px 20px;background:var(--marino);color:white;border-radius:12px;list-style:none;border-left:6px solid var(--amarillo)}
+.admin-seccion[open]>summary{border-radius:12px 12px 0 0}.admin-seccion>summary::-webkit-details-marker,.registro-resumen::-webkit-details-marker{display:none}
+.admin-seccion>summary::after,.registro-resumen::after{content:"+";font-size:1.4rem;font-weight:700;flex:none}.admin-seccion[open]>summary::after,.registro-desplegable[open]>.registro-resumen::after{content:"−"}
+.admin-seccion>summary h2{margin:0;font-size:clamp(1.05rem,2.3vw,1.35rem);scroll-margin-top:90px;display:flex;align-items:center;gap:10px}
+.seccion-numero{color:var(--amarillo);font-size:.9em;letter-spacing:.04em}
+.seccion-contenido{padding:20px;min-width:0}.seccion-contenido>.intro{margin-top:0}
+.zona-eliminacion{border:1px solid #edb9b9;background:#fff5f5;border-radius:9px;padding:0 14px;margin:14px 0}.zona-eliminacion>summary{color:#991b1b}.zona-eliminacion .intro{margin-bottom:12px}
+#lista-propuestas>.registro,#lista-proyectos>.registro{padding:0;min-width:0;overflow-wrap:anywhere}
+.registro-resumen{display:flex;align-items:center;gap:12px;margin:0;padding:16px;background:#f1f5fc;border-radius:13px;list-style:none;color:var(--marino)}
+.registro-desplegable[open]>.registro-resumen{border-radius:13px 13px 0 0;border-bottom:1px solid var(--borde)}
+.registro-identidad{display:grid;gap:3px;flex:1;min-width:0}.registro-identidad strong{font-size:1.05rem}.registro-subtitulo{font-size:.86rem;font-weight:500;color:#435578}
+.registro-estado{flex:none;max-width:42%;background:#e1e9fb;color:#17418e;padding:4px 10px;border-radius:6px;font-size:.83rem}
+.registro-cuerpo{padding:18px;min-width:0}.registro-controles{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 16px;border-top:1px solid var(--borde)}.registro-controles button{min-height:36px;padding:6px 10px}.registro-controles label{display:flex;align-items:center;gap:5px}.registro-controles input{margin:0}
+summary:focus-visible{outline:3px solid #e4ac00;outline-offset:2px}
+@media(max-width:700px){.admin-nav{position:static;gap:5px}.admin-nav a{padding:6px 8px;font-size:.88rem}.admin-nav #salir{margin-left:0}.admin-seccion>summary{padding:13px}.admin-seccion>summary h2{scroll-margin-top:12px}.seccion-contenido,.registro-cuerpo{padding:12px}.registro-resumen{gap:8px;padding:12px}.registro-estado{max-width:36%;padding:4px 6px}.panel-vista .intro{width:100%}}
