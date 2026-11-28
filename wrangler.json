@@ -18,6 +18,7 @@
   ],
   "vars": {
     "EMAIL_FROM": "Lapazimpresion3d <notificaciones@lapazimpresion3d.com>",
-    "NOTIFY_EMAIL": "lapazimpresion3d@gmail.com"
+    "NOTIFY_EMAIL": "lapazimpresion3d@gmail.com",
+    "ADMIN_TURNSTILE": "true"
   }
 }
