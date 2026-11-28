@@ -105,7 +105,7 @@ busqueda.addEventListener("input",()=>{
   const esReferencia=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(texto);
   if(esReferencia || (ultimaConsulta && !esReferencia)) { ultimaConsulta=esReferencia?texto:""; cargar(); }
   else filtrarBusqueda();
-});document.querySelector("#salir").addEventListener("click",async()=>{await req("/api/admin/salir",{method:"POST",body:"{}"}).catch(()=>{});panel.hidden=true;acceso.hidden=false;lista.replaceChildren();listaPropuestas.replaceChildren();listaProyectos.replaceChildren();propuestasVisibles=[];});
+});document.querySelector("#salir").addEventListener("click",async()=>{await req("/api/admin/salir",{method:"POST",body:"{}"}).catch(()=>{});panel.hidden=true;acceso.hidden=false;lista.replaceChildren();listaPropuestas.replaceChildren();listaProyectos.replaceChildren();propuestasVisibles=[];actualizarSeleccion();});
 req("/api/admin/sesion").then(()=>{acceso.hidden=true;panel.hidden=false;return Promise.all([cargar(),cargarPropuestas(),cargarProyectos(),globalThis.LP_ADMIN_ALERTAS?.cargar()]);}).catch(()=>{});
 
 const listaProyectos=document.querySelector("#lista-proyectos"),estadoProyectos=document.querySelector("#estado-proyectos");
@@ -327,18 +327,54 @@ function agregarEconomica(art,x){
  abrir.addEventListener("click",()=>{if(!panel.hidden){panel.hidden=true;return;}cargar();});
  art.append(abrir,panel);
 }
+const seleccionarVisibles=document.querySelector("#seleccionar-propuestas"),borrarSeleccion=document.querySelector("#borrar-seleccion"),borrarTodas=document.querySelector("#borrar-todas"),estadoBorrado=document.querySelector("#estado-borrado");
+let borrando=false;
+function casillasPropuestas(){return Array.from(listaPropuestas.querySelectorAll("input[data-propuesta-id]"));}
+function actualizarSeleccion(){
+ const cajas=casillasPropuestas(),n=cajas.filter(c=>c.checked).length;
+ seleccionarVisibles.checked=cajas.length>0&&n===cajas.length;
+ seleccionarVisibles.indeterminate=n>0&&n<cajas.length;
+ seleccionarVisibles.disabled=borrando||!cajas.length;
+ borrarSeleccion.disabled=borrando||!n;
+ borrarSeleccion.textContent="Eliminar seleccionadas ("+n+")";
+ borrarTodas.disabled=borrando;
+}
+seleccionarVisibles.addEventListener("change",()=>{for(const c of casillasPropuestas())c.checked=seleccionarVisibles.checked;actualizarSeleccion();});
+async function borrarGrupo(todas){
+ if(borrando)return;
+ borrando=true;actualizarSeleccion();estadoBorrado.textContent="";
+ let eliminadas=0,omitidas=0,pendientes=0;
+ try{
+  const inventario= todas?await req("/api/admin/propuestas/eliminables"):null;
+  const ids=todas?inventario.ids:casillasPropuestas().filter(c=>c.checked).map(c=>c.dataset.propuestaId);
+  if(!ids.length){estadoBorrado.textContent="No hay solicitudes eliminables."+ (todas?" Protegidas: "+inventario.protegidas+".":"");return;}
+  const mensaje=todas?"Eliminar "+ids.length+" solicitudes de toda la base, sin importar filtros. Se conservarán "+inventario.protegidas+" protegidas.":"Eliminar "+ids.length+" solicitudes seleccionadas. Las vinculadas a proyectos o registros económicos se conservarán.";
+  if(!confirm(mensaje+" Esta acción es definitiva. ¿Continuar?"))return;
+  if(todas&&prompt("Para confirmar, escribe ELIMINAR")!=="ELIMINAR")return;
+  for(const id of ids){
+   estadoBorrado.textContent="Procesando "+(eliminadas+omitidas+1)+" de "+ids.length+"…";
+   try{const d=await req("/api/admin/propuestas/"+encodeURIComponent(id),{method:"DELETE"});if(d.ok){eliminadas++;pendientes+=d.imagenes_pendientes||0;}else omitidas++;}catch(e){omitidas++;}
+  }
+  estadoBorrado.textContent="Eliminadas: "+eliminadas+". No eliminadas: "+omitidas+"."+(todas?" Protegidas inicialmente: "+inventario.protegidas+".":"")+(pendientes?" Imágenes pendientes de limpieza: "+pendientes+".":"");
+  await cargarPropuestas();await globalThis.LP_ADMIN_ALERTAS?.cargar();
+ }catch(e){estadoBorrado.textContent=e.message;}finally{borrando=false;actualizarSeleccion();}
+}
+borrarSeleccion.addEventListener("click",()=>borrarGrupo(false));
+borrarTodas.addEventListener("click",()=>borrarGrupo(true));
+actualizarSeleccion();
 async function cargarPropuestas(){
  estadoPropuestas.textContent="Cargando solicitudes…";
  try {
   const params=new URLSearchParams(); if(filtroPropuestas.value)params.set("estado",filtroPropuestas.value); if(buscarPropuestas.value.trim())params.set("buscar",buscarPropuestas.value.trim());
   const d=await req(`/api/admin/propuestas?${params}`);listaPropuestas.replaceChildren();
-  propuestasVisibles=d.items;
+  propuestasVisibles=d.items;actualizarSeleccion();
   const conteo=d.items.reduce((acc,x)=>(acc[x.estado]=(acc[x.estado]||0)+1,acc),{});
   const resumen=Object.entries(conteo).map(([clave,n])=>`${estadosPropuestas[clave]||clave}: ${n}`).join(" · ");
   estadoPropuestas.textContent=`${d.items.length} solicitudes mostradas (máximo 100 por búsqueda). ${resumen}`;
   if(!d.items.length){listaPropuestas.append(elem("p",null,"No hay solicitudes con este filtro."));return;}
   for(const x of d.items){
    const art=elem("article","registro");
+   const seleccion=elem("label","seleccion-solicitud"),casilla=elem("input");casilla.type="checkbox";casilla.dataset.propuestaId=x.id;casilla.disabled=borrando;casilla.addEventListener("change",actualizarSeleccion);seleccion.append(casilla,document.createTextNode(" Seleccionar "+x.folio));art.append(seleccion);
    art.append(elem("h2",null,`${x.nombre} · ${x.folio}`),elem("p","metadatos",`${new Date(x.fecha).toLocaleString("es-MX")} · ${estadosPropuestas[x.estado]||x.estado}`));
    const datos=elem("dl");
    for(const [t,v] of [["Proyecto",x.proyecto||"Sin indicar"],["WhatsApp",x.telefono],["Comentario",x.comentario||"Sin comentarios"]]){datos.append(elem("dt",null,t),elem("dd",null,v));}
@@ -395,9 +431,10 @@ async function cargarPropuestas(){
      actions.append(crearProyecto);
    }
    const jsonBoton=elem("button","secundario","Descargar JSON");jsonBoton.addEventListener("click",()=>descargar({...x.ficha,contacto:{nombre:x.nombre,proyecto:x.proyecto,telefono:x.telefono,comentario:x.comentario},folio:x.folio,estado_solicitud:x.estado}));actions.append(jsonBoton);
-   const borrar=elem("button","secundario","Eliminar");borrar.addEventListener("click",async()=>{if(!confirm(`¿Eliminar definitivamente ${x.folio}?`))return;try{await req(`/api/admin/propuestas/${encodeURIComponent(x.id)}`,{method:"DELETE"});await cargarPropuestas();}catch(e){estadoPropuestas.textContent=e.message;}});actions.append(borrar);
+   const borrar=elem("button","secundario","Eliminar");borrar.addEventListener("click",async()=>{if(borrando||!confirm(`¿Eliminar definitivamente ${x.folio}?`))return;try{const d=await req(`/api/admin/propuestas/${encodeURIComponent(x.id)}`,{method:"DELETE"});await cargarPropuestas();estadoBorrado.textContent=d.imagenes_pendientes?"Solicitud eliminada; imágenes pendientes de limpieza: "+d.imagenes_pendientes+".":"Solicitud eliminada.";await globalThis.LP_ADMIN_ALERTAS?.cargar();}catch(e){estadoPropuestas.textContent=e.message;}});actions.append(borrar);
    art.append(actions);listaPropuestas.append(art);
   }
+  actualizarSeleccion();
  }catch(e){estadoPropuestas.textContent=e.message;}
 }
 document.querySelector("#exportar-propuestas").addEventListener("click",exportarPropuestasCSV);
