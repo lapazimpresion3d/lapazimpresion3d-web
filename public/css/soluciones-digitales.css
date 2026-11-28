@@ -246,3 +246,7 @@
 #paginas-web .demo-botones .accion-cotizar{min-height:44px}
 #paginas-web .demos-generales{display:flex;flex-wrap:wrap;gap:10px}
 #paginas-web .demos-generales .accion{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:center}
+
+/* Identidad del taller, sin alterar la jerarquía visual de P3. */
+#paginas-web [data-negocio="auto-servicio-bahia"] .demo-logo{background:#25292f;outline:1px solid #ed8b36}
+#paginas-web [data-negocio="auto-servicio-bahia"] .demo-lema{font-size:.8rem;font-weight:600;color:var(--texto);line-height:1.35}
