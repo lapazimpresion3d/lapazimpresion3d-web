@@ -130,3 +130,13 @@ html:has(.whatsapp-flotante){scroll-padding-bottom:calc(84px + env(safe-area-ins
 .inicio-catalogo .ventajas-resumen .servicio-indicador{flex:none}
 .inicio-catalogo .ventajas-suscripcion[open]>.ventajas-resumen .servicio-indicador::after{transform:rotate(225deg);margin-top:4px}
 @media(max-width:650px){.inicio-catalogo .comparativa-aviso{display:block;margin:0 0 8px;font-size:.82rem;color:var(--suave)}}
+
+/* Comparativa opcional: lectura vertical, sin columnas estrechas ni desplazamiento lateral. */
+.inicio-catalogo .comparativa-publica.ventajas-suscripcion{margin:20px 0 24px}
+.inicio-catalogo .comparativa-lectura{margin-top:16px;min-width:0}
+.inicio-catalogo .comparativa-precios-lista{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 18px}
+.inicio-catalogo .comparativa-precios-lista>div{background:#fff;border:1px solid #c6d4ee;border-radius:10px;padding:12px;min-width:0}
+.inicio-catalogo .comparativa-precios-lista dt{font-weight:800;color:#174ab8;font-size:1rem;line-height:1.4}
+.inicio-catalogo .comparativa-precios-lista dd{margin:5px 0 0;color:#16203a;font-size:1rem;line-height:1.5;overflow-wrap:break-word}
+.inicio-catalogo .comparativa-lectura .nota{color:#46536d;line-height:1.5}
+@media(max-width:700px){.inicio-catalogo .comparativa-precios-lista{grid-template-columns:minmax(0,1fr)}}
