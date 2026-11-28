@@ -144,6 +144,11 @@ function totalesEconomicos(d){
  const iva=n=>Math.floor((n*16+50)/100);
  return {subtotal_inicial:inicial,iva_inicial:iva(inicial),total_inicial:inicial+iva(inicial),iva_mensual:iva(d.mensualidad),total_mensual:d.mensualidad+iva(d.mensualidad)};
 }
+const ORIGEN_SOLICITUD_MANUAL=new Set(["whatsapp","presencial","instagram","facebook","telefono","correo","otro"]);
+const SERVICIO_MANUAL={llaveros:"LLA",soporte_qr:"QR",fdm_medida:"FDM",resina:"RES",web:"WEB",combinado:"COM",otro:"OTR"};
+function solicitudManualValida(d){
+ return !!d&&typeof d.id==="string"&&ID_UUID.test(d.id)&&ORIGEN_SOLICITUD_MANUAL.has(d.origen)&&Object.hasOwn(SERVICIO_MANUAL,d.servicio)&&textoWeb(d.nombre,2,100)&&textoWeb(d.proyecto,2,120)&&typeof d.telefono==="string"&&/^\d{10}$/.test(d.telefono)&&textoWeb(d.detalles,3,1200)&&typeof d.privacidad==="boolean"&&typeof d.aceptada==="boolean"&&(!d.aceptada||(propuestaEconomicaValida(d.economica)&&d.economica.version===0&&fechaEconomicaValida(d.fecha_aceptacion)&&d.fecha_aceptacion<=hoyMensualidad()&&(!Object.hasOwn(TIPOS_FISICOS,d.servicio)||d.economica.paquete==="solo_fisico")&&(!["web","combinado"].includes(d.servicio)||d.economica.paquete!=="solo_fisico")));
+}
 function propuestaEconomicaValida(d){
  return !!d&&PAQUETES_ECONOMICOS.has(d.paquete)&&typeof d.alcance==="string"&&d.alcance.trim().length>=3&&d.alcance.length<=4000&&CAMPOS_IMPORTE.every(k=>importeValido(d[k]))&&Number.isSafeInteger(d.version)&&d.version>=0&&d.version<=1000000&&(d.paquete!=="solo_fisico"||(!d.implementacion&&!d.mensualidad))&&CAMPOS_IMPORTE.some(k=>d[k]>0);
 }
@@ -320,6 +325,7 @@ function aplicarRecepcion(s,r,ahora){
 }
 function modalidadSeguimiento(p){
  let f={};try{f=JSON.parse(p.ficha_json||"{}");}catch{}
+ if(f.servicio==="combinado")return "combinada";
  return ["llaveros","soporte_qr","fdm_medida","resina"].includes(f.servicio)||
  (f.tipo_documento==="ficha_quiz"&&["R1","R2","R6","R7"].includes(f.recomendacion?.id))?"fisica":"web";
 }
@@ -1042,6 +1048,28 @@ async function api(request,env,ctx) {
       const result=await env.QUIZ_DB.prepare("UPDATE proyectos_cliente SET estado=?1,fecha_actualizacion=?2 WHERE id=?3")
         .bind(data.estado,new Date().toISOString(),proyectoEstado[1]).run();
       return result.meta.changes?json({ok:true}):error("Proyecto no encontrado",404);
+    }
+    if(path==="/api/admin/propuestas/manual"&&request.method==="POST"){
+      if(!sameOrigin(request))return error("Origen no autorizado",403);
+      const largo=Number(request.headers.get("content-length")||0);
+      if(largo>13*1024*1024)return error("Archivos demasiado grandes",413);
+      if(!request.headers.get("content-type")?.toLowerCase().startsWith("multipart/form-data"))return error("Formato inválido",415);
+      let form,d;try{form=await request.formData();const raw=form.get("solicitud");if(typeof raw!=="string"||raw.length>12000)return error("Datos inválidos",400);d=JSON.parse(raw);}catch{return error("Formulario inválido",400);}
+      if(!solicitudManualValida(d))return error("Revisa los datos, importes y fecha de aceptación",400);
+      const db=env.QUIZ_DB,id=d.id,fecha=new Date().toISOString(),prefijo=SERVICIO_MANUAL[d.servicio],folio=prefijo+"-"+id.replace(/-/g,"").slice(0,10).toUpperCase();
+      const previo=await db.prepare("SELECT id,folio FROM quiz_propuestas WHERE id=?1").bind(id).first();
+      if(previo)return error("Esta solicitud ya fue registrada. Busca el folio "+previo.folio+" antes de volver a intentar.",409);
+      const fotos=form.getAll("imagenes");
+      if(fotos.length>3||fotos.some(a=>!(a instanceof File)||!Object.hasOwn(IMG_MIME,a.type)||a.size===0||a.size>IMG_MAX))return error("Máximo 3 JPG, PNG o WebP de hasta 4 MB",400);
+      if(fotos.length&&!env.COTIZACIONES_R2)return error("Almacenamiento no disponible",503);
+      const imagenes=[];
+      try{for(const a of fotos){const bytes=new Uint8Array(await a.arrayBuffer());if(!imagenReal(bytes,a.type))throw Error("Imagen inválida");const clave="solicitudes/"+id+"/"+crypto.randomUUID()+"."+IMG_MIME[a.type];await env.COTIZACIONES_R2.put(clave,bytes,{httpMetadata:{contentType:a.type}});imagenes.push({clave,nombre:a.name.slice(0,120),tipo:a.type,tamano:a.size});}}catch(e){await limpiarImagenes(env,imagenes);return error(e.message||"No se pudieron guardar las imágenes",400);}
+      const fisica=Object.hasOwn(TIPOS_FISICOS,d.servicio),ficha={tipo_documento:fisica?"solicitud_servicio":"solicitud_web",version_esquema:"1.0",id_solicitud:id,origen:"registro_manual",canal_contacto:d.origen,fecha_generacion:fecha,servicio:d.servicio,titulo_servicio:fisica?TIPOS_FISICOS[d.servicio]:d.servicio==="combinado"?"Proyecto combinado":d.servicio==="otro"?"Otro servicio":"Servicio digital",detalles:d.detalles.trim(),campos:{},funciones:[],complementos:[],imagenes,privacidad_registrada:d.privacidad};
+      const stmts=[db.prepare("INSERT INTO quiz_propuestas(id,folio,fecha,nombre,proyecto,telefono,comentario,servicio_id,ficha_json,estado,privacidad_aceptada) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)").bind(id,folio,fecha,d.nombre.trim(),d.proyecto.trim(),d.telefono,d.detalles.trim(),prefijo,JSON.stringify(ficha),d.aceptada?"cotizado":"nueva",d.privacidad?1:0)];
+      let proyectoId=null;
+      if(d.aceptada){const e=d.economica,t=totalesEconomicos(e);proyectoId=crypto.randomUUID();stmts.push(db.prepare("INSERT INTO propuestas_economicas(propuesta_id,paquete,alcance,implementacion,fabricacion,extras,mensualidad,total_inicial,total_mensual,fecha_actualizacion,fecha_aceptacion) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)").bind(id,e.paquete,e.alcance.trim(),e.implementacion,e.fabricacion,e.extras,e.mensualidad,t.total_inicial,t.total_mensual,fecha,d.fecha_aceptacion),db.prepare("INSERT INTO proyectos_cliente(id,propuesta_id,fecha_creacion,fecha_actualizacion,estado) VALUES (?1,?2,?3,?3,'preparacion')").bind(proyectoId,id,fecha));}
+      try{await db.batch(stmts);}catch(e){await limpiarImagenes(env,imagenes);throw e;}
+      return json({ok:true,folio,id,proyecto_id:proyectoId},201);
     }
     if(path==="/api/admin/propuestas" && request.method==="GET") {
       const st=url.searchParams.get("estado");

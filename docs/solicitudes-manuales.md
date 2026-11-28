@@ -1,0 +1,2 @@
+# Solicitudes manuales
+Alta privada administrativa desde solicitudes. Canal de contacto, datos, referencias opcionales privadas, aceptación de privacidad solo si consta. Pedido ya aceptado: inserción atómica D1 de solicitud, propuesta económica y proyecto, importes sin IVA y cálculo existente de 16%, fecha real de aceptación, sin pagos ni enlace automático. Referencias se conservan como imágenes de solicitud; no se copian al portal. Sin migraciones nuevas; requiere 0004 y 0005 para pedido aceptado. Verificar en entorno de pruebas y navegador.

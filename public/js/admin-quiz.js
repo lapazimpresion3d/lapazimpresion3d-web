@@ -471,6 +471,39 @@ async function borrarGrupo(todas){
 borrarSeleccion?.addEventListener("click",()=>borrarGrupo(false));
 borrarTodas?.addEventListener("click",()=>borrarGrupo(true));
 actualizarSeleccion();
+const canalesManual={whatsapp:"WhatsApp",presencial:"Visita presencial",instagram:"Instagram",facebook:"Facebook",telefono:"Teléfono",correo:"Correo electrónico",otro:"Otro"};
+function iniciarRegistroManual(){
+ const host=document.querySelector("#registro-manual"),det=elem("details","manual-solicitud"),sum=elem("summary",null,"+ Nueva solicitud manual"),f=elem("form","economica-form");det.append(sum,f);host.append(det);
+ const campo=(t,tag="input")=>{const l=elem("label",null,t),n=elem(tag);l.append(n);f.append(l);return n;};
+ const opciones=(n,o)=>{for(const [k,v] of Object.entries(o)){const a=elem("option",null,v);a.value=k;n.append(a);}};
+ const canal=campo("Origen del contacto","select");opciones(canal,canalesManual);
+ const nombre=campo("Nombre del cliente");nombre.required=true;nombre.maxLength=100;
+ const telefono=campo("Teléfono (10 dígitos)");telefono.type="tel";telefono.required=true;telefono.pattern="[0-9]{10}";telefono.maxLength=10;
+ const proyecto=campo("Nombre del proyecto");proyecto.required=true;proyecto.maxLength=120;
+ const servicio=campo("Servicio","select");opciones(servicio,{llaveros:"Llaveros personalizados",soporte_qr:"Soportes QR / NFC",fdm_medida:"Impresión FDM",resina:"Resina",web:"Servicios web",combinado:"Proyecto combinado",otro:"Otro"});
+ const descripcion=campo("Descripción del pedido","textarea");descripcion.required=true;descripcion.maxLength=1200;descripcion.rows=4;
+ const fotos=campo("Referencias opcionales (máx. 3 imágenes de 4 MB)");fotos.type="file";fotos.accept="image/jpeg,image/png,image/webp";fotos.multiple=true;
+ const privacidad=campo("El cliente aceptó el aviso de privacidad (solo si consta)");privacidad.type="checkbox";
+ const aceptada=campo("La cotización ya fue aceptada por el cliente");aceptada.type="checkbox";
+ const econ=elem("fieldset","manual-economica");econ.hidden=true;econ.append(elem("legend",null,"Importes acordados sin IVA · MXN"));f.append(econ);
+ const ec=(t,tag="input")=>{const l=elem("label",null,t),n=elem(tag);l.append(n);econ.append(l);return n;};
+ const paquete=ec("Paquete","select");opciones(paquete,{"solo_fisico":"Fabricación física","presencia-digital":"Presencia digital","negocio-interactivo":"Negocio interactivo","gestion-comercial":"Gestión comercial","gestion-profesional":"Gestión profesional","a-medida":"A medida"});
+ const importes={};for(const [k,t] of Object.entries({implementacion:"Implementación web",fabricacion:"Fabricación",extras:"Extras",mensualidad:"Mensualidad"})){const n=ec(t);n.type="number";n.min="0";n.max="1000000";n.step="0.01";n.value="0";importes[k]=n;}
+ const fecha=ec("Fecha real de aceptación");fecha.type="date";const total=elem("p","metadatos");econ.append(total);
+ const aviso=elem("p","metadatos","El registro rápido crea solicitud, cotización aceptada y proyecto. No registra pagos ni genera acceso privado.");f.append(aviso);
+ const boton=elem("button",null,"Registrar solicitud"),msg=elem("p","metadatos");boton.type="submit";msg.setAttribute("role","status");f.append(boton,msg);
+ let id=null;
+ function ajustar(){econ.hidden=!aceptada.checked;fecha.required=aceptada.checked;const fisica=["llaveros","soporte_qr","fdm_medida","resina"].includes(servicio.value);if(fisica)paquete.value="solo_fisico";else if(paquete.value==="solo_fisico")paquete.value="a-medida";paquete.disabled=fisica;for(const k of ["implementacion","mensualidad"]){if(paquete.value==="solo_fisico")importes[k].value="0";importes[k].disabled=paquete.value==="solo_fisico";}const n=k=>Math.round(Number(importes[k].value||0)*100),a=n("implementacion")+n("fabricacion")+n("extras"),m=n("mensualidad");total.textContent="Total inicial con IVA: "+((a+Math.floor((a*16+50)/100))/100).toFixed(2)+" MXN · Mensualidad con IVA: "+((m+Math.floor((m*16+50)/100))/100).toFixed(2)+" MXN";boton.textContent=aceptada.checked?"Registrar pedido aceptado y crear proyecto":"Registrar solicitud";}
+ aceptada.addEventListener("change",ajustar);servicio.addEventListener("change",ajustar);paquete.addEventListener("change",ajustar);econ.addEventListener("input",ajustar);ajustar();
+ f.addEventListener("submit",async e=>{e.preventDefault();if(boton.disabled)return;const archivos=[...fotos.files];if(archivos.length>3||archivos.some(a=>a.size>4*1024*1024)){msg.textContent="Máximo 3 imágenes de 4 MB.";return;}if(aceptada.checked&&!confirm("¿Confirmas que el cliente aceptó los importes indicados en esa fecha?"))return;
+  id=id||crypto.randomUUID();const d={id,origen:canal.value,nombre:nombre.value,telefono:telefono.value,proyecto:proyecto.value,servicio:servicio.value,detalles:descripcion.value,privacidad:privacidad.checked,aceptada:aceptada.checked};
+  if(d.aceptada){d.fecha_aceptacion=fecha.value;d.economica={version:0,paquete:paquete.value,alcance:descripcion.value,...Object.fromEntries(Object.entries(importes).map(([k,n])=>[k,Math.round(Number(n.value||0)*100)]))};}
+  const body=new FormData();body.append("solicitud",JSON.stringify(d));for(const a of archivos)body.append("imagenes",a);boton.disabled=true;msg.textContent="Guardando…";
+  try{const r=await fetch("/api/admin/propuestas/manual",{method:"POST",credentials:"same-origin",body}),v=await r.json();if(!r.ok)throw Error(v.error||"No se pudo registrar");id=null;f.reset();ajustar();filtroPropuestas.value="";buscarPropuestas.value=v.folio;await cargarPropuestas();if(v.proyecto_id)await cargarProyectos();msg.textContent="Registrado: "+v.folio+(v.proyecto_id?" · Proyecto creado. Registra los pagos por separado.":" · Prepara la cotización.");}
+  catch(e){msg.textContent=e.message;}finally{boton.disabled=false;}
+ });
+}
+iniciarRegistroManual();
 async function cargarPropuestas(){
  estadoPropuestas.textContent="Cargando solicitudes…";
  try {
@@ -491,7 +524,7 @@ async function cargarPropuestas(){
    art.append(candado);
    art.append(elem("h2",null,`${x.nombre} · ${x.folio}`),elem("p","metadatos",`${new Date(x.fecha).toLocaleString("es-MX")} · ${estadosPropuestas[x.estado]||x.estado}`));
    const datos=elem("dl");
-   for(const [t,v] of [["Proyecto",x.proyecto||"Sin indicar"],["WhatsApp",x.telefono],["Comentario",x.comentario||"Sin comentarios"]]){datos.append(elem("dt",null,t),elem("dd",null,v));}
+   for(const [t,v] of [["Proyecto",x.proyecto||"Sin indicar"],["WhatsApp",x.telefono],["Comentario",x.comentario||"Sin comentarios"],...(x.ficha?.origen==="registro_manual"?[["Origen",canalesManual[x.ficha.canal_contacto]||"Manual"],["Aviso de privacidad",x.ficha.privacidad_registrada?"Aceptación registrada":"Sin aceptación registrada"]]:[])]){datos.append(elem("dt",null,t),elem("dd",null,v));}
    art.append(datos);
    const esWeb=x.ficha?.tipo_documento==="solicitud_web";
    const esFisica=x.ficha?.tipo_documento==="solicitud_servicio";
@@ -546,7 +579,7 @@ async function cargarPropuestas(){
    }
    const jsonBoton=elem("button","secundario","Descargar JSON");jsonBoton.addEventListener("click",()=>descargar({...x.ficha,contacto:{nombre:x.nombre,proyecto:x.proyecto,telefono:x.telefono,comentario:x.comentario},folio:x.folio,estado_solicitud:x.estado}));actions.append(jsonBoton);
    const borrar=elem("button","secundario","Eliminar");borrar.addEventListener("click",async()=>{if(borrando)return;if(protegida){estadoPropuestas.textContent="Desbloquea el candado antes de eliminar.";return;}if(!confirm(`¿Eliminar definitivamente ${x.folio}, incluidos sus proyectos, cotizaciones, pagos y archivos asociados?`))return;if(prompt("Para confirmar, escribe ELIMINAR")!=="ELIMINAR")return;try{const d=await req(`/api/admin/propuestas/${encodeURIComponent(x.id)}`,{method:"DELETE"});await cargarPropuestas(); (estadoBorrado||estadoPropuestas).textContent=d.imagenes_pendientes?"Solicitud eliminada; imágenes pendientes de limpieza: "+d.imagenes_pendientes+".":"Solicitud eliminada.";await globalThis.LP_ADMIN_ALERTAS?.cargar();}catch(e){estadoPropuestas.textContent=e.message;}});actions.append(borrar);
-   art.append(actions);const servicio=esFisica?(x.ficha.titulo_servicio||nombresServicio[x.ficha.servicio]||"Impresión 3D"):esWeb?(x.ficha.paquete||x.ficha.tipo_pagina||"Proyecto web a medida"):(x.ficha?.recomendacion?.titulo||"Cuestionario de orientación");plegarRegistro(art,x.id,x.nombre+" · "+x.folio,servicio+" · "+new Date(x.fecha).toLocaleDateString("es-MX"),estadosPropuestas[x.estado]||x.estado,abiertos.has(x.id)||buscarPropuestas.value.trim().toUpperCase()===x.folio.toUpperCase(),[seleccion,candado]);listaPropuestas.append(art);
+   art.append(actions);const servicio=x.ficha?.origen==="registro_manual"?(x.ficha.titulo_servicio+" · "+(canalesManual[x.ficha.canal_contacto]||"Manual")):esFisica?(x.ficha.titulo_servicio||nombresServicio[x.ficha.servicio]||"Impresión 3D"):esWeb?(x.ficha.paquete||x.ficha.tipo_pagina||"Proyecto web a medida"):(x.ficha?.recomendacion?.titulo||"Cuestionario de orientación");plegarRegistro(art,x.id,x.nombre+" · "+x.folio,servicio+" · "+new Date(x.fecha).toLocaleDateString("es-MX"),estadosPropuestas[x.estado]||x.estado,abiertos.has(x.id)||buscarPropuestas.value.trim().toUpperCase()===x.folio.toUpperCase(),[seleccion,candado]);listaPropuestas.append(art);
   }
   actualizarSeleccion();
  }catch(e){estadoPropuestas.textContent=e.message;}
