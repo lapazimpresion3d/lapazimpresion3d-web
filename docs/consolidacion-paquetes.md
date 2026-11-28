@@ -5,3 +5,6 @@ Consultar catálogo-comercial-paquetes.json y orientacion-web.js: categorías, g
 
 ## Configuraciones híbridas
 Se muestran las 53 funciones sin filtro por giro por defecto. El giro solo orienta la precarga y las etiquetas de adaptación. Los paquetes son referencias; las funciones añadidas y retiradas quedan identificadas en la revisión, y el paquete inicial se conserva en la ficha de solicitud (campo opcional compatible). La recomendación incluye módulos estándar de otros giros. No hay tarifas individuales aprobadas: el importe final de implementación y mensualidad se determina en propuesta, sin aplicar descuentos o cargos arbitrarios. El panel desde el cotizador abre en la misma pestaña.
+
+## Funciones reutilizables
+Página bilingüe es una única opción P1, seleccionable para cualquier giro y premarcada en turismo. Se retiran las dos opciones duplicadas de la interfaz; el servidor conserva los nombres históricos para solicitudes anteriores. La disponibilidad de traducciones y adaptación se confirma en propuesta.

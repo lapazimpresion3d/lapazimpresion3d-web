@@ -1,5 +1,5 @@
 {
-  "version": "2026-11-28-catalogo3",
+  "version": "2026-11-28-catalogo4",
   "moneda": "MXN",
   "iva_incluido": false,
   "precios": "comerciales confirmados",
@@ -296,16 +296,20 @@
     },
     {
       "id": "historico-14",
-      "nombre": "Página turística bilingüe",
+      "nombre": "Página bilingüe",
       "categoria": 0,
-      "descripcion": "Alcance según ficha y propuesta.",
+      "descripcion": "Presentación del negocio, productos, servicios o experiencias en español e inglés. Alcance de traducciones y contenidos según propuesta.",
       "minimo": 1,
       "giros": [
         "turismo"
       ],
       "estado": "demo",
-      "condiciones": "Validación de demostración local; producción según propuesta.",
-      "referencia": "https://demos.lapazimpresion3d.com/bahia-tours?plan=p1"
+      "condiciones": "Demostrada en turismo; seleccionable para cualquier giro. Adaptación y traducciones según propuesta.",
+      "referencia": "https://demos.lapazimpresion3d.com/bahia-tours?plan=p1",
+      "alias_historicos": [
+        "Página turística bilingüe",
+        "Página bilingüe para otros giros"
+      ]
     },
     {
       "id": "historico-15",
@@ -651,24 +655,6 @@
       "descripcion": "Insumos, rendimientos, mermas y consumo asociado a ventas.",
       "estado": "demo",
       "condiciones": "Validación de demostración local; producción según propuesta.",
-      "referencia": null
-    },
-    {
-      "id": "bilingue-adaptado",
-      "nombre": "Página bilingüe para otros giros",
-      "categoria": 0,
-      "minimo": null,
-      "giros": [
-        "hotel",
-        "restaurante",
-        "comercio",
-        "servicios",
-        "eventos",
-        "academia"
-      ],
-      "descripcion": "Adaptación de contenidos en dos idiomas; alcance y traducciones por confirmar.",
-      "estado": "adaptacion",
-      "condiciones": "Sujeto a cotización.",
       "referencia": null
     },
     {
