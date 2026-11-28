@@ -185,6 +185,7 @@ botonEnviar.addEventListener('click', async () => {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.ok || !data.folio) throw new Error(data.error || 'No pudimos registrar tu solicitud. Intenta nuevamente.');
+    globalThis.LP_Medicion?.emit('generate_lead',{source:'web'});
     document.querySelector('#folio-web').textContent = data.folio;
     revisionWeb.hidden = true;
     confirmacionWeb.hidden = false;
