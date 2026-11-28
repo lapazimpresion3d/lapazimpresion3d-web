@@ -31,3 +31,38 @@
 .indicacion-cliente[data-color=verde]{--tono:#166534;--fondo-nota:#f0fdf4;--borde-nota:#bbf7d0}
 .indicacion-cliente[data-color=azul]{--tono:#1e40af;--fondo-nota:#eff6ff;--borde-nota:#bfdbfe}
 .indicacion-cliente h3{font-size:1rem;margin:0 0 8px;color:inherit}.indicacion-cliente p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;color:inherit}
+
+/* Portal de proyecto: identidad, avance de materiales y estados de cada apartado */
+.contenedor{width:min(100% - 32px,960px)}
+main{padding-top:28px}h1{color:var(--marino)}
+.ficha-proyecto{background:var(--marino);color:#fff;border:0;border-top:5px solid var(--amarillo);padding:24px;box-shadow:0 6px 18px #0f23471c}
+.ficha-proyecto .ficha-etiqueta{display:block;color:#ffd969;font-size:.78rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+.ficha-proyecto #nombre-proyecto{font-size:clamp(1.6rem,4.2vw,2.3rem);line-height:1.2;color:white;overflow-wrap:anywhere;margin:6px 0 18px}
+.ficha-datos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0}
+.ficha-datos>div{background:#ffffff0d;border:1px solid #ffffff30;border-radius:9px;padding:10px 13px;min-width:0}
+.ficha-datos dt{color:#d1dff8;font-size:.8rem;font-weight:600}.ficha-datos dd{margin:4px 0 0;font-weight:700;overflow-wrap:anywhere}
+.ficha-datos #estado-proyecto{display:inline-block;background:#f6d66f;color:#342800;padding:3px 9px;border-radius:5px;font-size:.9rem}
+.avance-materiales h2,.titulo-materiales{color:var(--marino);font-size:1.25rem}
+.avance-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}
+.avance-grid>div{background:#f1f5fb;border:1px solid #dbe4f3;border-radius:9px;padding:12px;display:grid;gap:2px}
+.avance-grid strong{font-size:1.45rem;color:var(--marino);font-variant-numeric:tabular-nums}.avance-grid span{font-size:.82rem;color:#435578}
+.avance-grid .avance-verde{background:#f0fdf4;border-color:#bbf7d0}.avance-grid .avance-verde strong{color:#166534}
+#avance-pendientes{padding:10px 12px;border-radius:7px;background:#eef2f8;color:#435578;margin-bottom:0;font-weight:600}
+#avance-pendientes[data-atencion=pendiente]{background:#fff8e1;color:#854d0e}#avance-pendientes[data-atencion=correccion]{background:#fff1f2;color:#991b1b}
+.material-apartado{padding:0;border-left:5px solid #94a3b8;overflow:hidden}
+.material-cabecera{display:flex;align-items:center;gap:12px;padding:16px 20px;background:#eff4fc;border-bottom:1px solid var(--borde)}
+.material-cabecera h2{flex:1;color:var(--marino);font-size:1.16rem;line-height:1.35;min-width:0}
+.material-numero{flex:none;background:var(--marino);color:#fff;border-radius:7px;padding:5px 9px;font-weight:800;font-size:.9rem}
+.material-apartado>p,.material-apartado>label,.material-apartado>.controles{margin-left:20px;margin-right:20px}
+.material-apartado>textarea{width:calc(100% - 40px);margin:0 20px}.material-apartado>.controles{margin-bottom:20px}
+.estado-material{display:inline-flex;align-items:center;padding:5px 9px;background:#edf0f5;color:#435578;border-radius:6px;font-size:.82rem;font-weight:700}
+.estado-material[data-revision=recibido]{background:#e8f0ff;color:#184293}.estado-material[data-revision=aprobado]{background:#dcfce7;color:#166534}
+.estado-material[data-revision=requiere_correccion]{background:#ffe4e6;color:#991b1b}.estado-material[data-revision=sin_guardar],.estado-material[data-revision=guardando]{background:#fef3c7;color:#854d0e}
+.estado-material[data-revision=opcional]{background:#e8edf4;color:#435578}
+.material-apartado[data-revision=recibido]{border-left-color:#2563eb}.material-apartado[data-revision=aprobado]{border-left-color:#15803d}.material-apartado[data-revision=aprobado] .material-cabecera{background:#f0fdf4}
+.material-apartado[data-revision=requiere_correccion]{border-left-color:#b91c1c}.material-apartado[data-revision=requiere_correccion] .material-cabecera{background:#fff1f2}
+.material-apartado[data-revision=sin_guardar],.material-apartado[data-revision=guardando]{border-left-color:#d49b18}.material-apartado[data-revision=sin_guardar] .material-cabecera{background:#fff8e1}
+.material-apartado[data-revision=pendiente] .material-cabecera{background:#f4f6f9}
+.titulo-materiales{margin:26px 0 10px}.material-imagenes{border-left:5px solid var(--azul)}.material-imagenes h2{color:var(--marino)}
+.confirmacion-materiales{border-top:4px solid var(--azul);background:#f3f7ff}.confirmacion-materiales h2{font-size:1.3rem;color:var(--marino)}.confirmacion-materiales #confirmar-materiales{width:100%;min-height:50px}.confirmacion-materiales #estado-confirmacion:not(.error){color:#166534;font-weight:600}
+@media(max-width:640px){.ficha-proyecto{padding:16px}.ficha-datos,.avance-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.material-cabecera{flex-wrap:wrap;padding:13px}.material-cabecera h2{flex:1 1 calc(100% - 60px)}.material-cabecera .estado-material{margin-left:0}.material-apartado>p,.material-apartado>label,.material-apartado>.controles{margin-left:13px;margin-right:13px}.material-apartado>textarea{width:calc(100% - 26px);margin:0 13px}.material-apartado>.controles{margin-bottom:14px}.lista-archivos .archivo span{min-width:0}.barra{gap:10px}}
