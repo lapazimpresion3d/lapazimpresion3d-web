@@ -1,3 +1,4 @@
+import {proyectarNovedad} from "./novedades.mjs";
 import {WorkerEntrypoint} from "cloudflare:workers";
 import {guardarEvidencia,tablaEvidencias,proyectarEvidencia,valoresEvidencia} from "./evidencias-soporte.mjs";
 // Private Service Binding RPC only. Caller must authorize the enterprise in its own server.
@@ -178,7 +179,16 @@ export async function decidirSolucionPrivada(env,empresa,ticket,d){
  if(r[0].meta.changes===1&&r[1].meta.changes===1)return {ok:true,version:1,decision:d.decision,fecha_decision:ahora};
  const p=await anterior();return p?respuesta(p):{ok:false,error:"conflicto"};
 }
+export async function listarNovedadesPrivadas(env,empresa){
+ const ctx=await contextoSoporte(env,empresa);if(ctx.error)return {ok:false,error:ctx.error};
+ const {db,v}=ctx;
+ if(!await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='servicio_novedades'").first())return {ok:false,error:"no_disponible"};
+ const r=await db.prepare("SELECT n.id,n.titulo,n.resumen,n.fecha_publicacion,a.categoria,a.fecha_aplicacion FROM servicio_novedades n JOIN servicio_actualizaciones a ON a.id=n.actualizacion_id JOIN servicio_vinculos v ON v.id=n.vinculo_id AND v.propuesta_id=a.propuesta_id WHERE n.vinculo_id=?1 AND a.propuesta_id=?2 AND v.estado='registrado' AND n.fecha_retiro IS NULL AND a.resultado='correcto' ORDER BY n.fecha_publicacion DESC,n.id DESC LIMIT 101").bind(v.id,v.propuesta_id).all();
+ if(!await sigueVinculado(db,v,empresa))return {ok:false,error:"no_autorizado"};
+ return {ok:true,version:1,novedades:r.results.slice(0,100).map(proyectarNovedad),limitado:r.results.length>100};
+}
 export class IntegracionComercial extends WorkerEntrypoint {
+ async listarNovedades(empresa){try{return await listarNovedadesPrivadas(this.env,empresa);}catch{return {ok:false,error:"no_disponible"};}}
  async decidirSolucion(empresa,ticket,datos){try{return await decidirSolucionPrivada(this.env,empresa,ticket,datos);}catch{return {ok:false,error:'no_disponible'};}}
  async listarEvidencias(empresa,ticket){try{return await listarEvidenciasPrivadas(this.env,empresa,ticket);}catch{return {ok:false,error:"no_disponible"};}}
  async leerEvidencia(empresa,ticket,id){try{return await leerEvidenciaPrivada(this.env,empresa,ticket,id);}catch{return {ok:false,error:"no_disponible"};}}

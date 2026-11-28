@@ -1,3 +1,4 @@
+import {novedadValida} from "./novedades.mjs";
 import {correccionCostoValida} from "./correcciones-costos.mjs";
 import {situacionGarantia,decisionPosventaValida} from "./posventa.mjs";
 import {calcularRentabilidad,resumirRentabilidad} from "./rentabilidad.mjs";
@@ -1290,6 +1291,36 @@ async function api(request,env,ctx) {
       const items=r.results.slice(0,1000).map(x=>({propuesta_id:x.propuesta_id,folio:x.folio,nombre:x.nombre,proyecto:x.proyecto,paquete:x.paquete,mensualidad:x.mensualidad,pagos:x.pagos,registros_costos:x.registros_costos,resultado:calcularRentabilidad(x.cobrado,x.costos,x.minutos,x.version===null?null:{tarifa_hora:x.tarifa_hora,minutos_extra:x.minutos_extra})}));
       return json({hoy,mes,items,resumen:resumirRentabilidad(items),limitado:r.results.length>1000});
     }
+    const novedad=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/actualizaciones\/([0-9a-f-]{36})\/novedades(?:\/([0-9a-f-]{36}))?$/i);
+    if(novedad){
+      const [,pid,aid,nid]=novedad,db=env.QUIZ_DB,ahora=new Date().toISOString();
+      if(!ID_UUID.test(pid)||!ID_UUID.test(aid)||(nid&&!ID_UUID.test(nid)))return error("Identificador inválido",400);
+      const tablas=await db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('servicio_novedades','servicio_actualizaciones','servicio_vinculos')").first();
+      if(tablas.n!==3)return error("Novedades pendientes de habilitar (0026, 0018 y 0013)",503);
+      const a=await db.prepare("SELECT a.id,a.resultado,a.resumen_cliente FROM servicio_actualizaciones a JOIN propuestas_economicas e ON e.propuesta_id=a.propuesta_id WHERE a.id=?1 AND a.propuesta_id=?2 AND e.fecha_aceptacion IS NOT NULL AND e.mensualidad>0 AND e.paquete<>'solo_fisico'").bind(aid,pid).first();
+      if(!a)return error("Actualización no encontrada",404);
+      const v=await db.prepare("SELECT id,negocio_externo FROM servicio_vinculos WHERE propuesta_id=?1 AND plataforma='lapaz-comercios' AND estado='registrado'").bind(pid).first();
+      if(!nid&&request.method==="GET"){
+        const rows=await db.prepare("SELECT n.*,v.estado AS estado_vinculo,v.negocio_externo FROM servicio_novedades n JOIN servicio_vinculos v ON v.id=n.vinculo_id WHERE n.actualizacion_id=?1 AND v.propuesta_id=?2 ORDER BY n.fecha_publicacion DESC,n.id DESC LIMIT 101").bind(aid,pid).all();
+        return json({vinculo:v,publicable:a.resultado==="correcto",items:rows.results.slice(0,100),limitado:rows.results.length>100,integracion_habilitada:env.INTEGRACION_COMERCIAL_HABILITADA==="si"});
+      }
+      if(!nid&&request.method==="POST"){
+        const d=await leerJson(request,10000);
+        if(!novedadValida(d)||typeof d.id!=="string"||!ID_UUID.test(d.id)||typeof d.vinculo_id!=="string"||!ID_UUID.test(d.vinculo_id))return error("Revisa título, resumen y confirmación",400);
+        if(a.resultado!=="correcto"||!v||v.id!==d.vinculo_id)return error("Se requiere actualización correcta y vínculo vigente",409);
+        const previo=await db.prepare("SELECT * FROM servicio_novedades WHERE id=?1 AND actualizacion_id=?2").bind(d.id,aid).first();
+        if(previo)return previo.vinculo_id===v.id&&previo.titulo===d.titulo.trim()&&previo.resumen===d.resumen.trim()&&!previo.fecha_retiro?json({ok:true,repetido:true}):error("Identificador en conflicto",409);
+        const r=await db.prepare("INSERT INTO servicio_novedades(id,actualizacion_id,vinculo_id,titulo,resumen,fecha_publicacion) SELECT ?1,a.id,v.id,?2,?3,?4 FROM servicio_actualizaciones a JOIN propuestas_economicas e ON e.propuesta_id=a.propuesta_id JOIN servicio_vinculos v ON v.propuesta_id=a.propuesta_id WHERE a.id=?5 AND a.propuesta_id=?6 AND a.resultado='correcto' AND v.id=?7 AND v.estado='registrado' AND v.plataforma='lapaz-comercios' AND e.fecha_aceptacion IS NOT NULL AND e.mensualidad>0 AND e.paquete<>'solo_fisico' ON CONFLICT DO NOTHING").bind(d.id,d.titulo.trim(),d.resumen.trim(),ahora,aid,pid,v.id).run();
+        return r.meta.changes?json({ok:true},201):error("Ya existe una publicación activa o el vínculo cambió. Actualiza.",409);
+      }
+      if(nid&&request.method==="PATCH"){
+        const d=await leerJson(request,3000);
+        if(!d||d.confirmar!=="RETIRAR"||!textoEntrega(d.motivo,3,1000))return error("Confirma el retiro e indica el motivo",400);
+        const r=await db.prepare("UPDATE servicio_novedades SET fecha_retiro=?1,motivo_retiro=?2 WHERE id=?3 AND actualizacion_id=?4 AND fecha_retiro IS NULL AND EXISTS(SELECT 1 FROM servicio_vinculos v WHERE v.id=servicio_novedades.vinculo_id AND v.propuesta_id=?5)").bind(ahora,d.motivo.trim(),nid,aid,pid).run();
+        return r.meta.changes?json({ok:true}):error("Publicación inexistente o retirada",409);
+      }
+      return error("Método no permitido",405);
+    }
     const rentabilidad=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/rentabilidad(?:\/(costos|configuracion)(?:\/([0-9a-f-]{36}))?)?$/i);
     if(rentabilidad){
       const [,pid,accion,cid]=rentabilidad,db=env.QUIZ_DB,hoy=hoyMensualidad(),ahora=new Date().toISOString(),mes=url.searchParams.get("mes")||hoy.slice(0,7);
@@ -1798,6 +1829,7 @@ async function api(request,env,ctx) {
       borrar("servicio_respaldos","propuesta_id=?1");
       borrar("servicio_politicas_respaldos","propuesta_id=?1");
       borrar("servicio_ejecuciones_respaldos","propuesta_id=?1");
+      if(tablas.has("servicio_actualizaciones"))borrar("servicio_novedades","actualizacion_id IN (SELECT id FROM servicio_actualizaciones WHERE propuesta_id=?1)");
       borrar("servicio_actualizaciones","propuesta_id=?1");
       borrar("servicio_monitoreo","propuesta_id=?1");
       borrar("servicio_monitoreo_programado","propuesta_id=?1");
