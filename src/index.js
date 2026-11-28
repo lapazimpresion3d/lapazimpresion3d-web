@@ -957,6 +957,21 @@ async function api(request,env,ctx) {
       if(!objeto)return error('Imagen no encontrada',404);
       return new Response(objeto.body,{headers:{'Content-Type':adj.tipo,'Content-Disposition':`inline; filename="referencia.${IMG_MIME[adj.tipo]||'jpg'}"`,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; sandbox"}});
     }
+    // Protección conservadora: preservar cualquier solicitud con proyecto o registro económico.
+    // Las tablas de migraciones aún no instaladas no pueden contener registros.
+    async function condicionesBorrado(){
+      const nombres=["proyectos_cliente","propuestas_economicas","pagos_propuesta","suscripciones_cliente","pagos_mensualidad"];
+      const tablas=await env.QUIZ_DB.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
+      const presentes=new Set(tablas.results.map(x=>x.name));
+      return ["proyectos_cliente","propuestas_economicas","pagos_propuesta","suscripciones_cliente","pagos_mensualidad"].filter(n=>presentes.has(n)).map(n=>"NOT EXISTS (SELECT 1 FROM "+n+" t WHERE t.propuesta_id=quiz_propuestas.id)").join(" AND ")||"1=1";
+    }
+    if(path==="/api/admin/propuestas/eliminables" && request.method==="GET"){
+      const condicion=await condicionesBorrado();
+      const total=await env.QUIZ_DB.prepare("SELECT COUNT(*) AS n FROM quiz_propuestas").first();
+      const filas=await env.QUIZ_DB.prepare("SELECT id FROM quiz_propuestas WHERE "+condicion+" ORDER BY fecha,id LIMIT 1001").all();
+      if(filas.results.length>1000)return error("Hay más de 1000 solicitudes eliminables. Elimina por selección en grupos.",409);
+      return json({ids:filas.results.map(x=>x.id),protegidas:Math.max(0,total.n-filas.results.length)});
+    }
     const propuesta=path.match(/^\/api\/admin\/propuestas\/([0-9a-f-]{36})$/i);
     if(propuesta && request.method==="PATCH") {
       if(!sameOrigin(request)) return error("Origen no autorizado",403);
@@ -968,9 +983,17 @@ async function api(request,env,ctx) {
     if(propuesta && request.method==="DELETE") {
       if(!sameOrigin(request)) return error("Origen no autorizado",403);
       const fila=await env.QUIZ_DB.prepare('SELECT ficha_json FROM quiz_propuestas WHERE id=?1').bind(propuesta[1]).first();
-      const result=await env.QUIZ_DB.prepare("DELETE FROM quiz_propuestas WHERE id=?1").bind(propuesta[1]).run();
-      if(result.meta.changes>0&&fila){const imagenes=JSON.parse(fila.ficha_json).imagenes||[];if(ctx?.waitUntil)ctx.waitUntil(limpiarImagenes(env,imagenes));else await limpiarImagenes(env,imagenes);}
-      return json({ok:result.meta.changes>0});
+      if(!fila)return error("Solicitud no encontrada",404);
+      const condicion=await condicionesBorrado();
+      const imagenes=JSON.parse(fila.ficha_json).imagenes||[];
+      if(!Array.isArray(imagenes)||imagenes.some(a=>typeof a?.clave!=="string"||!a.clave.startsWith("solicitudes/"+propuesta[1]+"/")))return error("Referencias de imágenes inválidas; requiere revisión.",409);
+      if(imagenes.length&&!env.COTIZACIONES_R2)return error("Almacenamiento de imágenes no disponible.",503);
+      const result=await env.QUIZ_DB.prepare("DELETE FROM quiz_propuestas WHERE id=?1 AND "+condicion).bind(propuesta[1]).run();
+      if(!result.meta.changes)return error("Solicitud protegida por un proyecto o registro económico, o ya eliminada.",409);
+      const limpieza=await Promise.allSettled(imagenes.map(a=>env.COTIZACIONES_R2.delete(a.clave)));
+      const pendientes=limpieza.filter(x=>x.status==="rejected").length;
+      if(pendientes)console.error("Limpieza R2 pendiente para solicitud",propuesta[1],pendientes);
+      return json({ok:true,imagenes_pendientes:pendientes});
     }
     if(path==="/api/admin/diagnosticos" && request.method==="GET") {
       const status=url.searchParams.get("estado");
