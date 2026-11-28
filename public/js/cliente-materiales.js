@@ -73,7 +73,8 @@ function resumenCotizacionLlaveros(cotizacion){
  return caja;
 }
 const mensaje=document.querySelector("#mensaje-acceso"),panel=document.querySelector("#proyecto"),contenedor=document.querySelector("#secciones"),imagenes=document.querySelector("#imagenes-proyecto"),lista=document.querySelector("#lista-archivos"),estadoFotos=document.querySelector("#estado-archivos");
-let estadoProyecto="",archivos=[];
+let estadoProyecto="",archivos=[],guardados=[],confirmando=false;
+const confirmarMateriales=document.querySelector("#confirmar-materiales"),estadoConfirmacion=document.querySelector("#estado-confirmacion");
 const estadosMaterial={pendiente:"Pendiente",recibido:"Recibido · por revisar",requiere_correccion:"Requiere corrección",aprobado:"Aprobado"};
 function pintarEstado(el,estado){el.textContent=estadosMaterial[estado]||estadosMaterial.pendiente;el.dataset.revision=estado||"pendiente";}
 async function api(path,method="GET",data){
@@ -137,7 +138,7 @@ async function iniciar(){
   document.querySelector("#tipo-proyecto").textContent=config.nombre;
   const estados={preparacion:"Preparación",recabando_materiales:"Recabando materiales",en_desarrollo:"En desarrollo",en_revision:"En revisión",finalizado:"Finalizado",cancelado:"Cancelado"};
   document.querySelector("#estado-proyecto").textContent=estados[p.estado]||p.estado;
-  contenedor.replaceChildren();
+  contenedor.replaceChildren();guardados=[];
   const llaveros=p.categoria==="llaveros"&&data.cotizacion;
   const previo=llaveros?datosLlaveros(data.cotizacion):null;
   if(llaveros)contenedor.append(resumenCotizacionLlaveros(data.cotizacion));
@@ -156,12 +157,16 @@ async function iniciar(){
    const controls=document.createElement("div");controls.className="controles";
    const button=document.createElement("button");button.type="button";button.textContent="Guardar apartado";
    const estado=document.createElement("span");estado.className="mensaje";estado.setAttribute("role","status");estado.classList.add("estado-material");pintarEstado(estado,registro?.estado||"pendiente");
-   button.addEventListener("click",async()=>{
+   let ultimoGuardado=input.value;
+   async function guardar(){
+    if(button.disabled)return false;
     button.disabled=true;estado.classList.remove("error");estado.textContent="Guardando…";
-    try{await api("/api/cliente/secciones/"+clave,"PUT",{contenido:input.value});pintarEstado(estado,"recibido");}
-    catch(e){estado.textContent=e.message;estado.classList.add("error");}
+    try{const contenido=input.value;await api("/api/cliente/secciones/"+clave,"PUT",{contenido});ultimoGuardado=contenido;pintarEstado(estado,"recibido");return true;}
+    catch(e){estado.textContent=e.message;estado.classList.add("error");return false;}
     finally{button.disabled=false;}
-   });
+   }
+   button.addEventListener("click",guardar);
+   guardados.push({input,button,pendiente:()=>input.value!==ultimoGuardado,guardar});
    if(["finalizado","cancelado"].includes(p.estado)){button.disabled=true;input.readOnly=true;}
    controls.append(button,estado);
    area.append(encabezado,descripcion,label,input,controls);
@@ -173,15 +178,17 @@ async function iniciar(){
   }
   archivos=data.archivos||[];pintarArchivos();
   if(["finalizado","cancelado"].includes(p.estado)){document.querySelector("#subir-imagenes").disabled=true;imagenes.disabled=true;}
-  mensaje.hidden=true;panel.hidden=false;
+  confirmarMateriales.disabled=["finalizado","cancelado"].includes(p.estado);
+  mensaje.hidden=true;panel.hidden=false;document.querySelector("#salir").hidden=false;
   await cargarEntrega();
  }catch(e){panel.hidden=true;mensaje.hidden=false;mensaje.className="error";mensaje.textContent=e.message+". Solicita un nuevo enlace a Lapazimpresion3d si tu acceso venció.";}
 }
-document.querySelector("#subir-imagenes").addEventListener("click",async()=>{
+async function subirImagenes(){
  const files=Array.from(imagenes.files||[]),boton=document.querySelector("#subir-imagenes");
- if(!files.length){estadoFotos.textContent="Selecciona las fotografías que deseas entregar.";return;}
- if(archivos.length+files.length>30){estadoFotos.textContent="Máximo 30 imágenes por proyecto.";return;}
- if(files.some(f=>!["image/jpeg","image/png","image/webp"].includes(f.type)||f.size>4*1024*1024||!f.size)){estadoFotos.textContent="Solo JPG, PNG o WebP de hasta 4 MB por imagen.";return;}
+ if(!files.length){estadoFotos.textContent="Selecciona las fotografías que deseas entregar.";return false;}
+ if(boton.disabled)return false;
+ if(archivos.length+files.length>30){estadoFotos.textContent="Máximo 30 imágenes por proyecto.";return false;}
+ if(files.some(f=>!["image/jpeg","image/png","image/webp"].includes(f.type)||f.size>4*1024*1024||!f.size)){estadoFotos.textContent="Solo JPG, PNG o WebP de hasta 4 MB por imagen.";return false;}
  boton.disabled=true;
  let subidas=0;
  for(const f of files){
@@ -192,10 +199,24 @@ document.querySelector("#subir-imagenes").addEventListener("click",async()=>{
    const d=await resp.json().catch(()=>({}));
    if(!resp.ok)throw Error(d.error||"Error en la carga");
    archivos.unshift(d.archivo);subidas++;pintarArchivos();
-  }catch(e){estadoFotos.textContent="Se subieron "+subidas+" imágenes. Error con "+f.name+": "+e.message;boton.disabled=false;return;}
+  }catch(e){estadoFotos.textContent="Se subieron "+subidas+" imágenes. Error con "+f.name+": "+e.message;boton.disabled=false;const restantes=new DataTransfer();for(const pendiente of files.slice(subidas))restantes.items.add(pendiente);imagenes.files=restantes.files;return false;}
  }
- imagenes.value="";estadoFotos.textContent=subidas+" imagen(es) guardada(s) correctamente.";boton.disabled=false;
+ imagenes.value="";estadoFotos.textContent=subidas+" imagen(es) guardada(s) correctamente.";boton.disabled=false;return true;
+}
+document.querySelector("#subir-imagenes").addEventListener("click",subirImagenes);
+confirmarMateriales.addEventListener("click",async()=>{
+ if(confirmando)return;
+ if(guardados.some(g=>g.button.disabled)||document.querySelector("#subir-imagenes").disabled){estadoConfirmacion.textContent="Espera a que termine el guardado en curso.";return;}
+ confirmando=true;confirmarMateriales.disabled=true;estadoConfirmacion.classList.remove("error");estadoConfirmacion.textContent="Guardando materiales…";
+ try{
+  for(const g of guardados)if(g.pendiente()&&!await g.guardar()){g.input.closest("details")?.setAttribute("open","");g.input.focus();throw Error("No se pudo guardar un apartado. Revisa su mensaje e intenta nuevamente.");}
+  if(imagenes.files.length&&!await subirImagenes())throw Error("Revisa el mensaje de las imágenes e intenta nuevamente.");
+  if(guardados.some(g=>g.pendiente()))throw Error("Hay cambios nuevos sin guardar. Confirma nuevamente.");
+  if(!guardados.some(g=>g.input.value.trim())&&!archivos.length){estadoConfirmacion.textContent="No hay materiales adicionales para entregar. Puedes volver cuando los tengas.";return;}
+  estadoConfirmacion.textContent="Materiales guardados correctamente. Lapazimpresion3d puede consultarlos para su revisión. Puedes regresar y agregar información más adelante.";
+ }catch(e){estadoConfirmacion.classList.add("error");estadoConfirmacion.textContent=e.message;}
+ finally{confirmando=false;confirmarMateriales.disabled=false;}
 });
-document.querySelector("#salir").addEventListener("click",async()=>{try{await api("/api/cliente/salir","POST");}finally{location.replace("/cliente/materiales/");}});
+document.querySelector("#salir").addEventListener("click",async()=>{if(confirmando||guardados.some(g=>g.button.disabled)||document.querySelector("#subir-imagenes").disabled)return;if(!confirm(guardados.some(g=>g.pendiente())||imagenes.files.length?"Hay cambios sin guardar. ¿Cerrar sesión de todos modos?":"¿Cerrar sesión en este dispositivo? Podrás volver con tu enlace privado."))return;try{await api("/api/cliente/salir","POST");location.replace("/");}catch(e){estadoConfirmacion.textContent=e.message;}});
 iniciar();
 })();
