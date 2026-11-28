@@ -6,22 +6,43 @@ const el=(tag,t,cls)=>{const e=document.createElement(tag);if(t!==undefined)e.te
 const boton=t=>{const e=el("button",t,"secundario");e.type="button";return e;};
 const campo=(padre,t,tag="input")=>{const l=el("label",t),e=el(tag);l.append(e);padre.append(l);return e;};
 async function api(path,method="GET",body){const res=await fetch(path,{method,credentials:"same-origin",cache:"no-store",headers:body?{"Content-Type":"application/json"}:undefined,body:body?JSON.stringify(body):undefined});const d=await res.json().catch(()=>({}));if(!res.ok)throw Error(d.error||"Error "+res.status);return d;}
-let items=[],hoy="",generacion=0,ocupado=false;
-function limpiar(){generacion++;items=[];hoy="";ocupado=false;lista.replaceChildren();msg.textContent="";actualizar.disabled=false;}
+const resumen=$("servicios-resumen"),aviso=$("servicios-aviso"),buscar=$("buscar-servicios"),paqueteFiltro=$("filtro-paquete-servicios");
+const planes={"presencia-digital":["P1 — Presencia digital",1,1],"negocio-interactivo":["P2 — Negocio interactivo",3,1],"gestion-comercial":["P3 — Gestión comercial",5,2],"gestion-profesional":["P4 — Gestión profesional",10,3],"a-medida":["A medida",null,null]};
+const normalizar=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+let items=[],hoy="",generacion=0,ocupado=false,limitado=false,entregasDisponibles=false,cargado=false;
+function limpiar(){generacion++;items=[];hoy="";ocupado=false;cargado=false;limitado=false;entregasDisponibles=false;lista.replaceChildren();resumen.replaceChildren();aviso.textContent="";msg.textContent="";buscar.value="";paqueteFiltro.value="";filtro.value="";actualizar.disabled=false;}
 $("salir").addEventListener("click",limpiar);
 async function cargar(){
  if(ocupado)return;ocupado=true;const g=++generacion;actualizar.disabled=true;msg.textContent="Consultando mensualidades…";
- try{const d=await api("/api/admin/mensualidades");if(g!==generacion||$("panel").hidden)return;items=d.items;hoy=d.hoy;pintar();}
- catch(e){if(g===generacion){items=[];lista.replaceChildren();msg.textContent="No se pudo consultar: "+e.message+". Comprueba la migración 0006."}}
+ try{const d=await api("/api/admin/mensualidades");if(g!==generacion||$("panel").hidden)return;items=d.items;hoy=d.hoy;limitado=d.limitado;entregasDisponibles=d.entregas_disponibles;cargado=true;pintar();}
+ catch(e){if(g===generacion){items=[];cargado=false;lista.replaceChildren();resumen.replaceChildren();aviso.textContent="";msg.textContent="No se pudo consultar: "+e.message+". Comprueba la migración 0006."}}
  finally{if(g===generacion){ocupado=false;actualizar.disabled=false;}}
 }
 function pintar(){
  lista.replaceChildren();
- const visibles=items.filter(x=>!filtro.value||x.situacion===filtro.value);
+ if(!cargado)return;
+ resumen.replaceChildren();
+ for(const [label,n,k] of [["Contratados",items.length,""],["Al corriente",items.filter(x=>x.situacion==="al_corriente").length,"al_corriente"],["Renovación pendiente",items.filter(x=>x.situacion==="vencido").length,"vencido"],["Sin iniciar",items.filter(x=>x.situacion==="sin_iniciar").length,"sin_iniciar"]]){
+  const b=boton("");b.className="proyectos-metrica";b.append(el("strong",String(n)),el("span",label));b.setAttribute("aria-pressed",String(filtro.value===k));b.addEventListener("click",()=>{filtro.value=k;pintar();});resumen.append(b);
+ }
+ const base=items.filter(x=>x.estado==="activo").reduce((n,x)=>n+(x.mensualidad??x.tarifa_acordada),0);
+ aviso.textContent="Tarifa mensual acordada de suscripciones administrativamente activas: "+money(base)+" antes de IVA. No representa ingresos cobrados. "+(limitado?"Vista limitada a los 200 registros recientes. ":"")+(!entregasDisponibles?"Información de entrega no disponible. ":"");
+ const q=normalizar(buscar.value.trim());
+ const visibles=items.filter(x=>(!filtro.value||x.situacion===filtro.value)&&(!paqueteFiltro.value||x.paquete===paqueteFiltro.value)&&(!q||normalizar([x.nombre,x.folio,x.proyecto].join(" ")).includes(q)));
  msg.textContent=visibles.length+" de "+items.length+" servicios mostrados · máximo 200 · "+hoy;
  for(const x of visibles){
   const art=el("article",undefined,"registro");
-  art.append(el("h3",x.folio+" · "+x.nombre),el("p",x.proyecto||"Proyecto sin nombre","metadatos"),el("p",etiquetas[x.situacion]+" · "+money(x.total_mensual??x.total_acordado)+" al mes con IVA"),el("p",x.proxima?"Próximo periodo desde "+x.proxima:"Servicio aún no iniciado","metadatos"));
+  art.classList.add("servicio-contratado");
+  const plan=planes[x.paquete]||[x.paquete,null,null],cab=el("div",undefined,"servicio-contratado-cab"),id=el("div"),precio=el("div");
+  id.append(el("h3",x.proyecto||x.nombre),el("p",x.folio+" · "+x.nombre,"metadatos"),el("strong",plan[0]));
+  precio.append(el("strong",money(x.total_mensual??x.total_acordado)+" / mes"),el("p","Con IVA · importe acordado","metadatos"),el("p",etiquetas[x.situacion],"servicio-situacion"));
+  cab.append(id,precio);art.append(cab);
+  const info=el("div",undefined,"servicio-contratado-info");
+  info.append(el("p",x.proxima?"Próximo periodo desde "+x.proxima:"Servicio aún no iniciado"),el("p",x.fecha_entrega?"Entrega registrada: "+x.fecha_entrega:entregasDisponibles?"Sin entrega registrada":"Entrega no disponible"));
+  if(plan[1])info.append(el("p","Capacidad de referencia (no contrato): "+plan[1]+" usuario(s) · "+plan[2]+" sucursal(es)"));
+  if(x.garantia_hasta)info.append(el("p","Garantía registrada hasta "+x.garantia_hasta));
+  if(x.url_final){try{const u=new URL(x.url_final);if(u.protocol==="https:"&&!u.username&&!u.password){const a=el("a","Abrir sitio registrado","boton-enlace");a.href=u.href;a.target="_blank";a.rel="noopener noreferrer";info.append(a);}}catch{}}
+  art.append(info);
   const b=boton("Gestionar renovación"),caja=el("section",undefined,"economica-panel");caja.hidden=true;
   b.addEventListener("click",()=>{if(!caja.hidden){caja.hidden=true;return;}detalle(x,caja,b);});
   art.append(b,caja);lista.append(art);
@@ -66,5 +87,5 @@ async function detalle(x,caja,b){
   for(const p of d.pagos)caja.append(el("p",p.inicio+" a "+p.fin+" (fin no incluido) · "+money(p.importe)+" · Recibido "+p.fecha+" · "+p.metodo+(p.referencia?" · "+p.referencia:""),"pago-economico"));
  }catch(e){if(g===generacion)caja.replaceChildren(el("p",e.message));}finally{b.disabled=false;}
 }
-actualizar.addEventListener("click",cargar);filtro.addEventListener("change",pintar);
+actualizar.addEventListener("click",cargar);filtro.addEventListener("change",pintar);buscar.addEventListener("input",pintar);paqueteFiltro.addEventListener("change",pintar);$("titulo-mensualidades").closest("details").addEventListener("toggle",e=>{if(e.currentTarget.open&&!cargado&&!$("panel").hidden)cargar();});
 })();
