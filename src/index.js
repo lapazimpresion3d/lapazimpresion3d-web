@@ -1,5 +1,5 @@
 import {situacionGarantia,decisionPosventaValida} from "./posventa.mjs";
-import {calcularRentabilidad} from "./rentabilidad.mjs";
+import {calcularRentabilidad,resumirRentabilidad} from "./rentabilidad.mjs";
 import {respaldosHabilitados,ejecutarRespaldos} from "./respaldos-programados.mjs";
 import {sitioPermitido,ejecutarMonitoreo} from "./monitoreo-programado.mjs";
 import {guardarEvidencia,tablaEvidencias,uuidEvidencia,proyectarEvidencia,valoresEvidencia} from "./evidencias-soporte.mjs";
@@ -1273,6 +1273,16 @@ async function api(request,env,ctx) {
         return r[0].meta.changes===1&&r[1].meta.changes===1?json({ok:true}):error("El caso cambió. Actualiza.",409);
       }
       return error("Método no permitido",405);
+    }
+    if(path==="/api/admin/servicios/rentabilidad-global"&&request.method==="GET"){
+      const db=env.QUIZ_DB,hoy=hoyMensualidad(),mes=url.searchParams.get("mes")||hoy.slice(0,7);
+      if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(mes)||mes<"2000-01"||mes>hoy.slice(0,7))return error("Mes inválido",400);
+      const tablas=await db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('servicio_costos','servicio_costeo_mensual','servicio_soporte','servicio_intervenciones','pagos_mensualidad')").first();
+      if(tablas.n!==5)return error("Rentabilidad pendiente de habilitar (0006, 0011 y 0023)",503);
+      const inicio=mes+"-01",fin=new Date(Date.UTC(Number(mes.slice(0,4)),Number(mes.slice(5,7)),1)).toISOString().slice(0,10);
+      const r=await db.prepare("WITH pagos AS (SELECT propuesta_id,SUM(importe) AS cobrado,COUNT(*) AS pagos FROM pagos_mensualidad WHERE fecha>=?1 AND fecha<?2 GROUP BY propuesta_id), costos AS (SELECT propuesta_id,SUM(importe) AS costos,COUNT(*) AS registros_costos FROM servicio_costos WHERE fecha>=?1 AND fecha<?2 GROUP BY propuesta_id), tiempo AS (SELECT t.propuesta_id,SUM(i.minutos) AS minutos FROM servicio_intervenciones i JOIN servicio_soporte t ON t.id=i.soporte_id WHERE i.fecha_trabajo>=?1 AND i.fecha_trabajo<?2 GROUP BY t.propuesta_id) SELECT e.propuesta_id,q.folio,q.nombre,q.proyecto,e.paquete,e.mensualidad,e.fecha_aceptacion,COALESCE(p.cobrado,0) AS cobrado,COALESCE(p.pagos,0) AS pagos,COALESCE(c.costos,0) AS costos,COALESCE(c.registros_costos,0) AS registros_costos,COALESCE(t.minutos,0) AS minutos,m.tarifa_hora,m.minutos_extra,m.version FROM propuestas_economicas e JOIN quiz_propuestas q ON q.id=e.propuesta_id LEFT JOIN pagos p ON p.propuesta_id=e.propuesta_id LEFT JOIN costos c ON c.propuesta_id=e.propuesta_id LEFT JOIN tiempo t ON t.propuesta_id=e.propuesta_id LEFT JOIN servicio_costeo_mensual m ON m.propuesta_id=e.propuesta_id AND m.mes=?3 WHERE e.fecha_aceptacion IS NOT NULL AND e.fecha_aceptacion<?2 AND e.mensualidad>0 AND e.paquete<>'solo_fisico' AND (p.propuesta_id IS NOT NULL OR c.propuesta_id IS NOT NULL OR t.propuesta_id IS NOT NULL OR m.propuesta_id IS NOT NULL OR EXISTS(SELECT 1 FROM suscripciones_cliente s WHERE s.propuesta_id=e.propuesta_id AND s.inicio<?2 AND s.estado='activo')) ORDER BY e.propuesta_id LIMIT 1001").bind(inicio,fin,mes).all();
+      const items=r.results.slice(0,1000).map(x=>({propuesta_id:x.propuesta_id,folio:x.folio,nombre:x.nombre,proyecto:x.proyecto,paquete:x.paquete,mensualidad:x.mensualidad,pagos:x.pagos,registros_costos:x.registros_costos,resultado:calcularRentabilidad(x.cobrado,x.costos,x.minutos,x.version===null?null:{tarifa_hora:x.tarifa_hora,minutos_extra:x.minutos_extra})}));
+      return json({hoy,mes,items,resumen:resumirRentabilidad(items),limitado:r.results.length>1000});
     }
     const rentabilidad=path.match(/^\/api\/admin\/servicios\/([0-9a-f-]{36})\/rentabilidad(?:\/(costos|configuracion))?$/i);
     if(rentabilidad){

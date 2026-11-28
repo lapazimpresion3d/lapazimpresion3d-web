@@ -32,7 +32,7 @@ function pintar(){
  msg.textContent=visibles.length+" de "+items.length+" servicios mostrados · máximo 200 · "+hoy;
  for(const x of visibles){
   const art=el("article",undefined,"registro");
-  art.classList.add("servicio-contratado");
+  art.classList.add("servicio-contratado");art.dataset.propuestaId=x.propuesta_id;
   const plan=planes[x.paquete]||[x.paquete,null,null],cab=el("div",undefined,"servicio-contratado-cab"),id=el("div"),precio=el("div");
   id.append(el("h3",x.proyecto||x.nombre),el("p",x.folio+" · "+x.nombre,"metadatos"),el("strong",plan[0]));
   precio.append(el("strong",money(x.total_mensual??x.total_acordado)+" / mes"),el("p","Con IVA · importe acordado","metadatos"),el("p",etiquetas[x.situacion],"servicio-situacion"));
@@ -87,5 +87,5 @@ async function detalle(x,caja,b){
   for(const p of d.pagos)caja.append(el("p",p.inicio+" a "+p.fin+" (fin no incluido) · "+money(p.importe)+" · Recibido "+p.fecha+" · "+p.metodo+(p.referencia?" · "+p.referencia:""),"pago-economico"));
  }catch(e){if(g===generacion)caja.replaceChildren(el("p",e.message));}finally{b.disabled=false;}
 }
-actualizar.addEventListener("click",cargar);filtro.addEventListener("change",pintar);buscar.addEventListener("input",pintar);paqueteFiltro.addEventListener("change",pintar);$("titulo-mensualidades").closest("details").addEventListener("toggle",e=>{if(e.currentTarget.open&&!cargado&&!$("panel").hidden)cargar();});
+document.addEventListener("lp:rentabilidad-abrir",async e=>{const {id,mes}=e.detail;if($("panel").hidden)return;filtro.value="";buscar.value="";paqueteFiltro.value="";if(!cargado)await cargar();else pintar();const art=[...lista.children].find(a=>a.dataset.propuestaId===id);if(art){art.dispatchEvent(new CustomEvent("lp:rentabilidad-mes",{detail:mes}));art.scrollIntoView({block:"start"});}else document.dispatchEvent(new CustomEvent("lp:rentabilidad-no-encontrado"));});actualizar.addEventListener("click",cargar);filtro.addEventListener("change",pintar);buscar.addEventListener("input",pintar);paqueteFiltro.addEventListener("change",pintar);$("titulo-mensualidades").closest("details").addEventListener("toggle",e=>{if(e.currentTarget.open&&!cargado&&!$("panel").hidden)cargar();});
 })();

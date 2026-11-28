@@ -24,6 +24,7 @@ function agregar(art,x){
  g.addEventListener("submit",async e=>{e.preventDefault();if(!confirm("¿Registrar este costo interno? No se cobrará al cliente."))return;save.disabled=true;try{intento=intento||{id:crypto.randomUUID(),fecha:fecha.value,categoria:cat.value,importe:centavos(importe.value),descripcion:desc.value};await api(ruta+"/costos?mes="+d.mes,"POST",intento);if(vigente())await cargar();}catch(e){av.textContent=e.message;save.disabled=false;}});
  body.append(el("h4","Costos por categoría"));for(const z of d.desglose)body.append(el("p",cats[z.categoria]+": "+money(z.importe)));body.append(el("h4","Historial de costos del mes"));if(!d.items.length)body.append(el("p","Sin costos registrados."));for(const z of d.items){const a=el("article",undefined,"soporte-intervencion");a.append(el("strong",money(z.importe)+" · "+cats[z.categoria]),el("p",z.fecha,"metadatos"),el("p",z.descripcion));body.append(a);}if(d.limitado)body.append(el("p","Últimos 100 costos; totales incluyen todos.","metadatos"));
  }
+ art.addEventListener("lp:rentabilidad-mes",e=>{mes=e.detail;p.open=true;cargar();});
  p.addEventListener("toggle",()=>{if(p.open&&!listo)cargar();});
 }
 globalThis.LP_RENTABILIDAD={agregar};
