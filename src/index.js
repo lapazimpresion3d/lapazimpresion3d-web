@@ -429,12 +429,29 @@ function imagenReal(bytes,mime){
  return false;
 }
 async function limpiarImagenes(env,imagenes){if(!env.COTIZACIONES_R2)return;await Promise.allSettled((imagenes||[]).map(a=>env.COTIZACIONES_R2.delete(a.clave)));}
+// Validar antes de procesar el cuerpo, almacenar archivos o registrar solicitudes.
+async function verificarTurnstile(request,env,action){
+  if(!env.TURNSTILE_SECRET)return error("Verificación de seguridad no disponible. Intenta más tarde.",503);
+  const token=request.headers.get("X-Turnstile-Token");
+  if(!token||token.length>2048)return error("Completa la verificación de seguridad.",400);
+  try{
+    const body=new URLSearchParams({secret:env.TURNSTILE_SECRET,response:token});
+    const ip=request.headers.get("CF-Connecting-IP");if(ip)body.set("remoteip",ip);
+    const response=await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify",{method:"POST",body,signal:AbortSignal.timeout(10000)});
+    if(!response.ok)return error("Verificación de seguridad no disponible. Intenta nuevamente.",503);
+    const result=await response.json();
+    if(result.success!==true||result.action!==action||!["lapazimpresion3d.com","www.lapazimpresion3d.com"].includes(result.hostname)||result.hostname!==new URL(request.url).hostname)return error("Verificación de seguridad inválida o vencida. Intenta nuevamente.",403);
+    return null;
+  }catch{return error("No se pudo comprobar la verificación de seguridad. Intenta nuevamente.",503);}
+}
 async function api(request,env,ctx) {
   const url=new URL(request.url), path=url.pathname;
   if(!env.QUIZ_DB) return error("Base de datos no configurada",503);
   if(path==="/api/servicios/propuestas" && request.method==="POST") {
     if(!sameOrigin(request)) return error("Origen no autorizado",403);
     if(!await verificarLimite(request,env,"propuesta_servicio",6,3600)) return error("Demasiadas solicitudes. Intenta más tarde.",429);
+    const rechazoTurnstile=await verificarTurnstile(request,env,"cotizacion_impresion");
+    if(rechazoTurnstile)return rechazoTurnstile;
     const largo=Number(request.headers.get('content-length')||0);
     if(largo>13*1024*1024) return error("Los archivos superan el límite permitido.",413);
     if(!request.headers.get('content-type')?.toLowerCase().startsWith('multipart/form-data')) return error("Formato de solicitud inválido.",415);
@@ -474,6 +491,8 @@ async function api(request,env,ctx) {
   if(path==="/api/web/propuestas" && request.method==="POST") {
     if(!sameOrigin(request)) return error("Origen no autorizado",403);
     if(!await verificarLimite(request,env,"propuesta_web",6,3600)) return error("Demasiadas solicitudes. Intenta más tarde.",429);
+    const rechazoTurnstile=await verificarTurnstile(request,env,"cotizacion_web");
+    if(rechazoTurnstile)return rechazoTurnstile;
     const d=await leerJson(request,6000);
     if(!solicitudWebValida(d)) return error("Revisa los datos del formulario y acepta el aviso de privacidad.",400);
     const id=crypto.randomUUID(), fecha=new Date().toISOString();
@@ -495,6 +514,8 @@ async function api(request,env,ctx) {
   if(path==="/api/quiz/propuestas" && request.method==="POST") {
     if(!sameOrigin(request))return error("Origen no autorizado",403);
     if(!await verificarLimite(request,env,"propuesta",6,3600))return error("Demasiadas solicitudes. Intenta más tarde.",429);
+    const rechazoTurnstile=await verificarTurnstile(request,env,"cotizacion_quiz");
+    if(rechazoTurnstile)return rechazoTurnstile;
     const tipo=request.headers.get("content-type")?.toLowerCase()||"";
     let data, fotos=[];
     if(tipo.startsWith("multipart/form-data")){
