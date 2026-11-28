@@ -821,17 +821,36 @@ async function api(request,env,ctx) {
     const accesoProyecto=path.match(/^\/api\/admin\/proyectos\/([0-9a-f-]{36})\/acceso$/i);
     if(accesoProyecto && request.method==="POST") {
       if(!sameOrigin(request))return error("Origen no autorizado",403);
-      const p=await env.QUIZ_DB.prepare("SELECT id,estado FROM proyectos_cliente WHERE id=?1").bind(accesoProyecto[1]).first();
+      const p=await env.QUIZ_DB.prepare("SELECT id,estado,acceso_revocado,acceso_token_hash,acceso_expira FROM proyectos_cliente WHERE id=?1").bind(accesoProyecto[1]).first();
       if(!p)return error("Proyecto no encontrado",404);
       if(["cancelado","finalizado"].includes(p.estado))return error("El proyecto no admite nuevos accesos",409);
-      const token=tokenCliente(),hash=await hashTokenCliente(token),expira=new Date(Date.now()+14*86400000).toISOString();
-      await env.QUIZ_DB.prepare("UPDATE proyectos_cliente SET acceso_token_hash=?1,acceso_expira=?2,acceso_revocado=0,fecha_actualizacion=?3 WHERE id=?4")
-        .bind(hash,expira,new Date().toISOString(),p.id).run();
+      const data=await leerJson(request,256);
+      if(!data)return error("Solicitud inválida",400);
+      if(p.acceso_token_hash&&!p.acceso_revocado&&data.confirmacion!=="REGENERAR")return error("Confirma expresamente la sustitución del enlace existente",409);
+      const token=tokenCliente(),hash=await hashTokenCliente(token),expira=new Date(Date.now()+90*86400000).toISOString();
+      const resultado=await env.QUIZ_DB.prepare("UPDATE proyectos_cliente SET acceso_token_hash=?1,acceso_expira=?2,acceso_revocado=0,fecha_actualizacion=?3 WHERE id=?4 AND estado NOT IN ('finalizado','cancelado') AND acceso_token_hash IS ?5 AND acceso_revocado IS ?6")
+        .bind(hash,expira,new Date().toISOString(),p.id,p.acceso_token_hash,p.acceso_revocado).run();
+      if(!resultado.meta.changes)return error("El acceso cambió. Actualiza el panel.",409);
       // El token en el fragmento # no se envía al servidor durante la navegación.
       return json({ok:true,url:`${url.origin}/cliente/materiales/#acceso=${token}`,expira});
     }
+    if(accesoProyecto && request.method==="PATCH") {
+      if(!sameOrigin(request))return error("Origen no autorizado",403);
+      const data=await leerJson(request,256);
+      if(![30,60,90].includes(data?.dias))return error("Selecciona 30, 60 o 90 días",400);
+      const p=await env.QUIZ_DB.prepare("SELECT estado,acceso_token_hash,acceso_revocado,acceso_expira FROM proyectos_cliente WHERE id=?1").bind(accesoProyecto[1]).first();
+      if(!p)return error("Proyecto no encontrado",404);
+      if(!p.acceso_token_hash||p.acceso_revocado||["cancelado","finalizado"].includes(p.estado))return error("No hay un acceso prorrogable",409);
+      const ahora=Date.now(), anterior=Date.parse(p.acceso_expira);
+      if(!Number.isFinite(anterior)||anterior<=ahora)return error("El enlace venció. Genera uno nuevo por seguridad.",409);
+      const expira=new Date(anterior+data.dias*86400000).toISOString();
+      const r=await env.QUIZ_DB.prepare("UPDATE proyectos_cliente SET acceso_expira=?1,fecha_actualizacion=?2 WHERE id=?3 AND acceso_token_hash=?4 AND acceso_revocado=0 AND acceso_expira=?5 AND estado NOT IN ('finalizado','cancelado')").bind(expira,new Date(ahora).toISOString(),accesoProyecto[1],p.acceso_token_hash,p.acceso_expira).run();
+      return r.meta.changes?json({ok:true,expira}):error("El acceso cambió. Actualiza el panel.",409);
+    }
     if(accesoProyecto && request.method==="DELETE") {
       if(!sameOrigin(request))return error("Origen no autorizado",403);
+      const data=await leerJson(request,256);
+      if(data?.confirmacion!=="REVOCAR")return error("Confirma expresamente la revocación",400);
       const r=await env.QUIZ_DB.prepare("UPDATE proyectos_cliente SET acceso_revocado=1,acceso_token_hash=NULL,fecha_actualizacion=?1 WHERE id=?2")
         .bind(new Date().toISOString(),accesoProyecto[1]).run();
       return r.meta.changes?json({ok:true}):error("Proyecto no encontrado",404);
@@ -840,7 +859,7 @@ async function api(request,env,ctx) {
     // No se generan enlaces para clientes hasta habilitar el portal privado.
     if(path==="/api/admin/proyectos" && request.method==="GET") {
       const rows=await env.QUIZ_DB.prepare(
-        "SELECT p.id,p.propuesta_id,p.fecha_creacion,p.fecha_actualizacion,p.estado,q.folio,q.nombre,q.proyecto,q.telefono FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id ORDER BY p.fecha_actualizacion DESC LIMIT 100"
+        "SELECT p.id,p.propuesta_id,p.fecha_creacion,p.fecha_actualizacion,p.estado,p.acceso_expira,p.acceso_revocado,CASE WHEN p.acceso_token_hash IS NOT NULL THEN 1 ELSE 0 END AS tiene_acceso,q.folio,q.nombre,q.proyecto,q.telefono FROM proyectos_cliente p JOIN quiz_propuestas q ON q.id=p.propuesta_id ORDER BY p.fecha_actualizacion DESC LIMIT 100"
       ).all();
       return json({items:rows.results});
     }
